@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { parseCSV, parseDwellingTime } from './utils/csvParser';
+import { parseCSV, parseDwellingTime, parseQuantity, parseDate } from './utils/csvParser';
 import { shipmentCSVData } from './data/shipmentData';
 import { exportDataToCSV } from './utils/exportCSV';
 import Sidebar from './components/Sidebar';
@@ -134,12 +134,89 @@ function App() {
     return { totalActive, avgDwelling, maxDwelling, over90Days };
   }, [filteredData]);
 
-  // Paginated data
+  // Sorting state
+  const [sortBy, setSortBy] = useState({ key: null, direction: null }); // direction: 'asc' | 'desc' | null
+  const [openSortMenu, setOpenSortMenu] = useState(null);
+
+  const toggleSort = (key) => {
+    setSortBy((prev) => {
+      if (prev.key !== key) {
+        setCurrentPage(1);
+        return { key, direction: 'asc' };
+      }
+
+      if (prev.direction === 'asc') {
+        setCurrentPage(1);
+        return { key, direction: 'desc' };
+      }
+
+      // clear sorting
+      setCurrentPage(1);
+      return { key: null, direction: null };
+    });
+  };
+
+  const setSortDirection = (key, direction) => {
+    setSortBy({ key, direction });
+    setCurrentPage(1);
+    setOpenSortMenu(null);
+  };
+
+  // Close menu on outside click or Escape
+  useEffect(() => {
+    const onDocClick = () => setOpenSortMenu(null);
+    const onKey = (e) => { if (e.key === 'Escape') setOpenSortMenu(null); };
+
+    document.addEventListener('click', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  // Sorted data derived from filteredData
+  const sortedData = useMemo(() => {
+    if (!sortBy.key || !sortBy.direction) return filteredData;
+
+    const compare = (a, b) => {
+      const key = sortBy.key;
+
+      const getValue = (row) => {
+        if (key === 'InvoicedQuantity') return parseQuantity(row.InvoicedQuantity);
+        if (key === 'DwellingTime') return Number(row.DwellingTime) || 0;
+        if (key === 'InvoiceOrder') return parseInt(row.InvoiceOrder, 10) || 0;
+        if (key === 'PortArrivalDate') {
+          const d = parseDate(row.PortArrivalDate);
+          return d ? d.getTime() : 0;
+        }
+        const v = row[key];
+        return v ? v.toString().toLowerCase() : '';
+      };
+
+      const va = getValue(a);
+      const vb = getValue(b);
+
+      if (typeof va === 'number' && typeof vb === 'number') return va - vb;
+      if (va < vb) return -1;
+      if (va > vb) return 1;
+      return 0;
+    };
+
+    const sorted = [...filteredData].sort((a, b) => {
+      const res = compare(a, b);
+      return sortBy.direction === 'asc' ? res : -res;
+    });
+
+    return sorted;
+  }, [filteredData, sortBy]);
+
+  // Paginated data (after sorting)
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
-    return filteredData.slice(startIndex, endIndex);
-  }, [filteredData, currentPage, rowsPerPage]);
+    return sortedData.slice(startIndex, endIndex);
+  }, [sortedData, currentPage, rowsPerPage]);
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
@@ -454,17 +531,217 @@ function App() {
               <table className="w-full">
                 <thead className="bg-surface-container border-b border-[#D1D5DB]">
                   <tr>
-                    <th className="w-8 px-4 py-3"></th>
-                    <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">PO NUMBER</th>
-                    <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">ITEM & DETAILS</th>
-                    <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">UNIT</th>
-                    <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">INVOICE NUMBER</th>
-                    <th className="px-4 py-3 text-right text-label-caps text-on-surface-variant uppercase">INVOICED QUANTITY</th>
-                    <th className="px-4 py-3 text-center text-label-caps text-on-surface-variant uppercase">INVOICE ORDER</th>
-                    <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">WAY BILL NUMBER</th>
-                    <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">SHIPMENT OFFICER</th>
-                    <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">PORT ARRIVAL DATE</th>
-                    <th className="px-4 py-3 text-right text-label-caps text-on-surface-variant uppercase">DWELLING TIME</th>
+                        <th className="w-8 px-4 py-3"></th>
+                        <th
+                          onClick={() => toggleSort('PurchaseOrderNumber')}
+                          className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1">PO NUMBER {sortBy.key === 'PurchaseOrderNumber' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenSortMenu(openSortMenu === 'PurchaseOrderNumber' ? null : 'PurchaseOrderNumber'); }}
+                              className="p-1 rounded hover:bg-surface-container transition-colors opacity-0 group-hover:opacity-100"
+                              aria-label="Open sort menu"
+                            >
+                              ⋮
+                            </button>
+                          </div>
+                          {openSortMenu === 'PurchaseOrderNumber' && (
+                            <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-full mt-2 bg-white border rounded shadow-md w-44 z-50">
+                              <button onClick={() => setSortDirection('PurchaseOrderNumber', 'asc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▲ Sort by ASC</button>
+                              <button onClick={() => setSortDirection('PurchaseOrderNumber', 'desc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▼ Sort by DESC</button>
+                            </div>
+                          )}
+                        </th>
+                        <th
+                          onClick={() => toggleSort('Item')}
+                          className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1">ITEM & DETAILS {sortBy.key === 'Item' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenSortMenu(openSortMenu === 'Item' ? null : 'Item'); }}
+                              className="p-1 rounded hover:bg-surface-container transition-colors opacity-0 group-hover:opacity-100"
+                              aria-label="Open sort menu"
+                            >
+                              ⋮
+                            </button>
+                          </div>
+                          {openSortMenu === 'Item' && (
+                            <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-full mt-2 bg-white border rounded shadow-md w-44 z-50">
+                              <button onClick={() => setSortDirection('Item', 'asc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▲ Sort by ASC</button>
+                              <button onClick={() => setSortDirection('Item', 'desc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▼ Sort by DESC</button>
+                            </div>
+                          )}
+                        </th>
+                        <th
+                          onClick={() => toggleSort('Unit')}
+                          className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1">UNIT {sortBy.key === 'Unit' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenSortMenu(openSortMenu === 'Unit' ? null : 'Unit'); }}
+                              className="p-1 rounded hover:bg-surface-container transition-colors opacity-0 group-hover:opacity-100"
+                              aria-label="Open sort menu"
+                            >
+                              ⋮
+                            </button>
+                          </div>
+                          {openSortMenu === 'Unit' && (
+                            <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-full mt-2 bg-white border rounded shadow-md w-44 z-50">
+                              <button onClick={() => setSortDirection('Unit', 'asc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▲ Sort by ASC</button>
+                              <button onClick={() => setSortDirection('Unit', 'desc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▼ Sort by DESC</button>
+                            </div>
+                          )}
+                        </th>
+                        <th
+                          onClick={() => toggleSort('InvoiceNumber')}
+                          className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1">INVOICE NUMBER {sortBy.key === 'InvoiceNumber' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenSortMenu(openSortMenu === 'InvoiceNumber' ? null : 'InvoiceNumber'); }}
+                              className="p-1 rounded hover:bg-surface-container transition-colors opacity-0 group-hover:opacity-100"
+                              aria-label="Open sort menu"
+                            >
+                              ⋮
+                            </button>
+                          </div>
+                          {openSortMenu === 'InvoiceNumber' && (
+                            <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-full mt-2 bg-white border rounded shadow-md w-44 z-50">
+                              <button onClick={() => setSortDirection('InvoiceNumber', 'asc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▲ Sort by ASC</button>
+                              <button onClick={() => setSortDirection('InvoiceNumber', 'desc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▼ Sort by DESC</button>
+                            </div>
+                          )}
+                        </th>
+                        <th
+                          onClick={() => toggleSort('InvoicedQuantity')}
+                          className="px-4 py-3 text-right text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1">INVOICED QUANTITY {sortBy.key === 'InvoicedQuantity' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenSortMenu(openSortMenu === 'InvoicedQuantity' ? null : 'InvoicedQuantity'); }}
+                              className="p-1 rounded hover:bg-surface-container transition-colors opacity-0 group-hover:opacity-100"
+                              aria-label="Open sort menu"
+                            >
+                              ⋮
+                            </button>
+                          </div>
+                          {openSortMenu === 'InvoicedQuantity' && (
+                            <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-full mt-2 bg-white border rounded shadow-md w-44 z-50">
+                              <button onClick={() => setSortDirection('InvoicedQuantity', 'asc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▲ Sort by ASC</button>
+                              <button onClick={() => setSortDirection('InvoicedQuantity', 'desc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▼ Sort by DESC</button>
+                            </div>
+                          )}
+                        </th>
+                        <th
+                          onClick={() => toggleSort('InvoiceOrder')}
+                          className="px-4 py-3 text-center text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1">INVOICE ORDER {sortBy.key === 'InvoiceOrder' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenSortMenu(openSortMenu === 'InvoiceOrder' ? null : 'InvoiceOrder'); }}
+                              className="p-1 rounded hover:bg-surface-container transition-colors opacity-0 group-hover:opacity-100"
+                              aria-label="Open sort menu"
+                            >
+                              ⋮
+                            </button>
+                          </div>
+                          {openSortMenu === 'InvoiceOrder' && (
+                            <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-full mt-2 bg-white border rounded shadow-md w-44 z-50">
+                              <button onClick={() => setSortDirection('InvoiceOrder', 'asc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▲ Sort by ASC</button>
+                              <button onClick={() => setSortDirection('InvoiceOrder', 'desc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▼ Sort by DESC</button>
+                            </div>
+                          )}
+                        </th>
+                        <th
+                          onClick={() => toggleSort('WayBillNumber')}
+                          className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1">WAY BILL NUMBER {sortBy.key === 'WayBillNumber' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenSortMenu(openSortMenu === 'WayBillNumber' ? null : 'WayBillNumber'); }}
+                              className="p-1 rounded hover:bg-surface-container transition-colors opacity-0 group-hover:opacity-100"
+                              aria-label="Open sort menu"
+                            >
+                              ⋮
+                            </button>
+                          </div>
+                          {openSortMenu === 'WayBillNumber' && (
+                            <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-full mt-2 bg-white border rounded shadow-md w-44 z-50">
+                              <button onClick={() => setSortDirection('WayBillNumber', 'asc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▲ Sort by ASC</button>
+                              <button onClick={() => setSortDirection('WayBillNumber', 'desc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▼ Sort by DESC</button>
+                            </div>
+                          )}
+                        </th>
+                        <th
+                          onClick={() => toggleSort('ShipmentOfficer')}
+                          className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1">SHIPMENT OFFICER {sortBy.key === 'ShipmentOfficer' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenSortMenu(openSortMenu === 'ShipmentOfficer' ? null : 'ShipmentOfficer'); }}
+                              className="p-1 rounded hover:bg-surface-container transition-colors opacity-0 group-hover:opacity-100"
+                              aria-label="Open sort menu"
+                            >
+                              ⋮
+                            </button>
+                          </div>
+                          {openSortMenu === 'ShipmentOfficer' && (
+                            <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-full mt-2 bg-white border rounded shadow-md w-44 z-50">
+                              <button onClick={() => setSortDirection('ShipmentOfficer', 'asc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▲ Sort by ASC</button>
+                              <button onClick={() => setSortDirection('ShipmentOfficer', 'desc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▼ Sort by DESC</button>
+                            </div>
+                          )}
+                        </th>
+                        <th
+                          onClick={() => toggleSort('PortArrivalDate')}
+                          className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1">PORT ARRIVAL DATE {sortBy.key === 'PortArrivalDate' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenSortMenu(openSortMenu === 'PortArrivalDate' ? null : 'PortArrivalDate'); }}
+                              className="p-1 rounded hover:bg-surface-container transition-colors opacity-0 group-hover:opacity-100"
+                              aria-label="Open sort menu"
+                            >
+                              ⋮
+                            </button>
+                          </div>
+                          {openSortMenu === 'PortArrivalDate' && (
+                            <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-full mt-2 bg-white border rounded shadow-md w-44 z-50">
+                              <button onClick={() => setSortDirection('PortArrivalDate', 'asc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▲ Sort by ASC</button>
+                              <button onClick={() => setSortDirection('PortArrivalDate', 'desc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▼ Sort by DESC</button>
+                            </div>
+                          )}
+                        </th>
+                        <th
+                          onClick={() => toggleSort('DwellingTime')}
+                          className="px-4 py-3 text-right text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1">DWELLING TIME {sortBy.key === 'DwellingTime' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenSortMenu(openSortMenu === 'DwellingTime' ? null : 'DwellingTime'); }}
+                              className="p-1 rounded hover:bg-surface-container transition-colors opacity-0 group-hover:opacity-100"
+                              aria-label="Open sort menu"
+                            >
+                              ⋮
+                            </button>
+                          </div>
+                          {openSortMenu === 'DwellingTime' && (
+                            <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-full mt-2 bg-white border rounded shadow-md w-44 z-50">
+                              <button onClick={() => setSortDirection('DwellingTime', 'asc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▲ Sort by ASC</button>
+                              <button onClick={() => setSortDirection('DwellingTime', 'desc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▼ Sort by DESC</button>
+                            </div>
+                          )}
+                        </th>
                   </tr>
                 </thead>
                 <tbody>
