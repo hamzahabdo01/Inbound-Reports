@@ -547,7 +547,7 @@ function App() {
                             </button>
                           </div>
                           {openSortMenu === 'PurchaseOrderNumber' && (
-                            <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-full mt-2 bg-white border rounded shadow-md w-44 z-50">
+                            <div onClick={(e) => e.stopPropagation()} className="absolute left-2 top-full mt-2 bg-white border rounded shadow-md w-44 z-50">
                               <button onClick={() => setSortDirection('PurchaseOrderNumber', 'asc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▲ Sort by ASC</button>
                               <button onClick={() => setSortDirection('PurchaseOrderNumber', 'desc')} className="w-full text-left px-3 py-2 hover:bg-surface-container">▼ Sort by DESC</button>
                             </div>
