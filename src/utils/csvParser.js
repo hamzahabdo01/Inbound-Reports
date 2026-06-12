@@ -14,14 +14,23 @@ export const parseCSV = (csvText) => {
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
     const values = parseCSVLine(line);
-    
-    if (values.length === headers.length) {
-      const record = {};
-      headers.forEach((header, index) => {
-        record[header] = values[index].trim();
-      });
-      data.push(record);
+    // Tolerate mismatched column counts:
+    // - If fewer values, pad with empty strings
+    // - If more values, merge extras into the last column
+    let adjusted = values;
+    if (values.length < headers.length) {
+      adjusted = values.concat(Array(headers.length - values.length).fill(''));
+    } else if (values.length > headers.length) {
+      const head = values.slice(0, headers.length - 1);
+      const tail = values.slice(headers.length - 1).join(',');
+      adjusted = head.concat([tail]);
     }
+
+    const record = {};
+    headers.forEach((header, index) => {
+      record[header] = (adjusted[index] || '').trim();
+    });
+    data.push(record);
   }
   
   return data;

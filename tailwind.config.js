@@ -33,11 +33,12 @@ export default {
           variant: '#CFD8DC',
         },
         primary: {
-          DEFAULT: '#0B4F54',
-          dark: '#00373B',
-          hover: '#115E59',
-          container: '#115E59',
-          'on-container': '#86BFC5',
+          // Primary color mapped to success green per request
+          DEFAULT: '#10B981',
+          dark: '#0B4F54',
+          hover: '#059669',
+          container: '#86BFC5',
+          'on-container': '#ffffff',
         },
         secondary: {
           DEFAULT: '#515F74',

@@ -40,7 +40,7 @@ function Topbar() {
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-surface-container, #EAEEF0)'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-surface, #ffffff)'}
         >
-          <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
+          <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
           <span className="font-semibold">Real-time</span>
         </div>
 
@@ -56,7 +56,7 @@ function Topbar() {
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-surface, #ffffff)'}
         >
           <i className="fa-regular fa-bell text-sm"></i>
-          <span className="absolute -top-1.5 -right-1.5 bg-[#BA1A1A] text-white font-black text-[9px] px-1.5 py-0.5 rounded-full">12</span>
+          <span className="absolute -top-1.5 -right-1.5 bg-error text-white font-black text-[9px] px-1.5 py-0.5 rounded-full">12</span>
         </div>
 
         <div

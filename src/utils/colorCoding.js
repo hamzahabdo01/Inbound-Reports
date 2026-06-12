@@ -18,7 +18,8 @@ export const getDwellingTimeColor = (days) => {
     };
   } else if (days <= 90) {
     return {
-      bg: '#F97316', // Orange
+      // Use the warning token for the 61-90 bucket to keep global yellow/warning consistent
+      bg: '#D97706', // Warning yellow/amber
       text: '#FFFFFF', // White text
       label: 'Concerning'
     };
@@ -42,7 +43,7 @@ export const getDwellingTimeClasses = (days) => {
   } else if (days <= 60) {
     return 'bg-warning text-white';
   } else if (days <= 90) {
-    return 'bg-orange text-white';
+    return 'bg-warning text-white';
   } else {
     return 'bg-error text-white';
   }
@@ -59,7 +60,7 @@ export const getRiskLevel = (days) => {
   } else if (days <= 60) {
     return { label: 'MEDIUM', color: 'text-warning', bgColor: 'bg-warning/10' };
   } else if (days <= 90) {
-    return { label: 'HIGH', color: 'text-orange', bgColor: 'bg-orange/10' };
+    return { label: 'HIGH', color: 'text-warning', bgColor: 'bg-warning/10' };
   } else {
     return { label: 'CRITICAL', color: 'text-error', bgColor: 'bg-error/10' };
   }
@@ -76,7 +77,7 @@ export const getStatusDotColor = (days) => {
   } else if (days <= 60) {
     return 'bg-warning';
   } else if (days <= 90) {
-    return 'bg-orange';
+    return 'bg-warning';
   } else {
     return 'bg-error';
   }
