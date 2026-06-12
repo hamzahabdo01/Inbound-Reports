@@ -1,2 +1,2 @@
-import csvText from './PurchaseOrderData.csv?raw';
+import csvText from './purchaseOrderData.csv?raw';
 export const purchaseOrderCSVData = csvText;

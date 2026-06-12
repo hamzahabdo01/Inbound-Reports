@@ -10,9 +10,36 @@ const getStockStatus = (mos) => {
 };
 
 const formatNumber = (num) => {
-  if (num === null || num === undefined) return '0';
-  return Number(num).toLocaleString(undefined, { maximumFractionDigits: 1 });
+  if (num === null || num === undefined || num === '') return '0';
+  const val = Number(num);
+  if (isNaN(val)) return num;
+  return val.toLocaleString(undefined, { maximumFractionDigits: 1 });
 };
+
+// Hub names list for headers and keys mapping
+const HUB_KEYS = [
+  { key: 'center', label: 'Center SOH' },
+  { key: 'git', label: 'GIT' },
+  { key: 'adama', label: 'Adama' },
+  { key: 'addis_ababa', label: 'Addis Ababa' },
+  { key: 'addis_ababa_2', label: 'Addis Ababa 2' },
+  { key: 'arba_minch', label: 'Arba Minch' },
+  { key: 'assosa', label: 'Assosa' },
+  { key: 'bahir_dar', label: 'Bahir Dar' },
+  { key: 'dessie', label: 'Dessie' },
+  { key: 'dire_dawa', label: 'Dire Dawa' },
+  { key: 'gambella', label: 'Gambella' },
+  { key: 'gondar', label: 'Gondar' },
+  { key: 'hawassa', label: 'Hawassa' },
+  { key: 'jigjiga', label: 'Jigjiga' },
+  { key: 'jimma', label: 'Jimma' },
+  { key: 'kebri_dehar', label: 'Kebri Dehar' },
+  { key: 'mekele', label: 'Mekele' },
+  { key: 'negele_borena', label: 'Negele Borena' },
+  { key: 'nekemte', label: 'Nekemte' },
+  { key: 'semera', label: 'Semera' },
+  { key: 'shire', label: 'Shire' }
+];
 
 function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
   // Search query
@@ -22,15 +49,24 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
   const [statusFilter, setStatusFilter] = useState('All');
   const [venFilter, setVenFilter] = useState('All');
   
+  // Column Group Toggles to avoid cognitive overload
+  const [showContract, setShowContract] = useState(false);
+  const [showOrdered, setShowOrdered] = useState(false);
+  const [showShipped, setShowShipped] = useState(false);
+  const [showDelivered, setShowDelivered] = useState(false);
+  const [showQtyLeft, setShowQtyLeft] = useState(false);
+  const [showExpiries, setShowExpiries] = useState(false);
+  const [showHubColumns, setShowHubColumns] = useState(false);
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 12;
 
-  // Row Expansion
+  // Row Expansion (for dashboard summary view)
   const [expandedRow, setExpandedRow] = useState(null);
   const [activeTabs, setActiveTabs] = useState({}); // { [itemSn]: 'pipeline' | 'hubs' | 'expiries' }
 
-  // High-level statistics (always computed from full dataset)
+  // High-level statistics
   const stats = useMemo(() => {
     let outOfStock = 0;
     let understocked = 0;
@@ -57,16 +93,13 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
   // Filtered dataset
   const filteredData = useMemo(() => {
     return stockData.filter(item => {
-      // 1. Search Query
       const query = searchQuery.toLowerCase();
       const matchesSearch = 
         item.item.toLowerCase().includes(query) || 
         (item.sn && item.sn.toString().includes(query));
 
-      // 2. VEN Filter
       const matchesVen = venFilter === 'All' || item.ven === venFilter;
 
-      // 3. Status Filter
       let matchesStatus = true;
       if (statusFilter !== 'All') {
         const mos = item.national.mos;
@@ -92,7 +125,10 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
     }
   };
 
-  const handleRowClick = (sn) => {
+  const handleRowClick = (sn, e) => {
+    // Avoid expanding if user clicks on scrollable cells or input fields
+    if (e.target.closest('.no-row-expand')) return;
+    
     if (expandedRow === sn) {
       setExpandedRow(null);
     } else {
@@ -106,6 +142,25 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
   const setTab = (sn, tab) => {
     setActiveTabs(prev => ({ ...prev, [sn]: tab }));
   };
+
+  // Dynamic Colspan counts for parent headers
+  const getColspans = useMemo(() => {
+    return {
+      desc: 4,
+      national: 6,
+      contract: showContract ? 2 : 0,
+      ordered: showOrdered ? 3 : 0,
+      shipped: showShipped ? 3 : 0,
+      delivered: showDelivered ? 3 : 0,
+      qtyLeft: showQtyLeft ? 2 : 0,
+      expiries: showExpiries ? 1 : 0,
+      hubs: showHubColumns ? HUB_KEYS.length : 0
+    };
+  }, [showContract, showOrdered, showShipped, showDelivered, showQtyLeft, showExpiries, showHubColumns]);
+
+  const totalVisibleCols = useMemo(() => {
+    return Object.values(getColspans).reduce((sum, count) => sum + count, 0) + 2; // +2 for status badge & actions
+  }, [getColspans]);
 
   // Export CSV
   const handleExportCSV = () => {
@@ -320,23 +375,154 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
             </div>
           </div>
         </div>
+
+        {/* Column Group Selector - Hierarchical View Toggle */}
+        <div className="border-t border-outline-variant/60 pt-3">
+          <div className="flex flex-wrap items-center gap-y-2 gap-x-4">
+            <span className="text-xs font-bold text-primary-dark uppercase tracking-wider">
+              <i className="fa-solid fa-table-columns mr-1"></i> Column Visibility Selector:
+            </span>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <button 
+                onClick={() => setShowContract(!showContract)}
+                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showContract ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+              >
+                <i className={`fa-solid ${showContract ? 'fa-square-check' : 'fa-square'}`}></i> Contract
+              </button>
+              <button 
+                onClick={() => setShowOrdered(!showOrdered)}
+                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showOrdered ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+              >
+                <i className={`fa-solid ${showOrdered ? 'fa-square-check' : 'fa-square'}`}></i> Ordered (Pipeline)
+              </button>
+              <button 
+                onClick={() => setShowShipped(!showShipped)}
+                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showShipped ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+              >
+                <i className={`fa-solid ${showShipped ? 'fa-square-check' : 'fa-square'}`}></i> Shipped
+              </button>
+              <button 
+                onClick={() => setShowDelivered(!showDelivered)}
+                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showDelivered ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+              >
+                <i className={`fa-solid ${showDelivered ? 'fa-square-check' : 'fa-square'}`}></i> Delivered
+              </button>
+              <button 
+                onClick={() => setShowQtyLeft(!showQtyLeft)}
+                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showQtyLeft ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+              >
+                <i className={`fa-solid ${showQtyLeft ? 'fa-square-check' : 'fa-square'}`}></i> Quantity Left
+              </button>
+              <button 
+                onClick={() => setShowExpiries(!showExpiries)}
+                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showExpiries ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+              >
+                <i className={`fa-solid ${showExpiries ? 'fa-square-check' : 'fa-square'}`}></i> Expiry Dates
+              </button>
+              <button 
+                onClick={() => setShowHubColumns(!showHubColumns)}
+                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showHubColumns ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+              >
+                <i className={`fa-solid ${showHubColumns ? 'fa-square-check' : 'fa-square'}`}></i> Regional Hubs (21 Cols)
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Stock Table */}
       <div className="bg-white rounded-xl border border-outline-variant shadow-level-1 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto relative">
+          <table className="w-full text-left border-collapse border border-outline-variant">
             <thead>
-              <tr className="bg-surface border-b border-outline-variant text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
-                <th className="py-3.5 px-4 w-12">SN</th>
-                <th className="py-3.5 px-4 min-w-[200px]">Item Description</th>
-                <th className="py-3.5 px-4 w-24">Unit</th>
-                <th className="py-3.5 px-4 w-16 text-center">VEN</th>
-                <th className="py-3.5 px-4 w-32 text-right">National SOH</th>
-                <th className="py-3.5 px-4 w-32 text-right">Adjusted AMC</th>
-                <th className="py-3.5 px-4 w-20 text-center">MOS</th>
-                <th className="py-3.5 px-4 w-36 text-center">Stock Status</th>
-                <th className="py-3.5 px-4 w-10"></th>
+              {/* Grouped Headers (Row 1) */}
+              <tr className="bg-surface border-b border-outline-variant text-[11px] font-bold text-primary-dark uppercase tracking-wider text-center">
+                <th colSpan="4" className="py-2.5 px-4 border-r border-outline-variant sticky left-0 bg-surface z-10">Item Description</th>
+                <th colSpan="6" className="py-2.5 px-4 border-r border-outline-variant bg-surface-low">National SOH & Consumption</th>
+                {showContract && <th colSpan="2" className="py-2.5 px-4 border-r border-outline-variant bg-slate-50">Contract</th>}
+                {showOrdered && <th colSpan="3" className="py-2.5 px-4 border-r border-outline-variant bg-sky-50/50">Ordered</th>}
+                {showShipped && <th colSpan="3" className="py-2.5 px-4 border-r border-outline-variant bg-teal-50/50">Shipped</th>}
+                {showDelivered && <th colSpan="3" className="py-2.5 px-4 border-r border-outline-variant bg-emerald-50/30">Delivered</th>}
+                {showQtyLeft && <th colSpan="2" className="py-2.5 px-4 border-r border-outline-variant bg-indigo-50/40">Quantity Left</th>}
+                {showExpiries && <th colSpan="1" className="py-2.5 px-4 border-r border-outline-variant bg-purple-50/40">Expiries</th>}
+                {showHubColumns && <th colSpan={HUB_KEYS.length} className="py-2.5 px-4 border-r border-outline-variant bg-amber-50/30">Hub Stock Distribution</th>}
+                <th colSpan="2" className="py-2.5 px-4 bg-surface">Summary</th>
+              </tr>
+
+              {/* Sub Columns (Row 2) */}
+              <tr className="bg-surface border-b border-outline-variant text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+                {/* Item Description Sub Headers */}
+                <th className="py-3 px-4 border-r border-outline-variant w-12 sticky left-0 bg-surface z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">SN</th>
+                <th className="py-3 px-4 border-r border-outline-variant min-w-[240px] sticky left-12 bg-surface z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Item</th>
+                <th className="py-3 px-4 border-r border-outline-variant w-24">Unit</th>
+                <th className="py-3 px-4 border-r border-outline-variant w-16 text-center">VEN</th>
+                
+                {/* National Sub Headers */}
+                <th className="py-3 px-4 border-r border-outline-variant w-24 text-right">SOH</th>
+                <th className="py-3 px-4 border-r border-outline-variant w-20 text-center">DOS</th>
+                <th className="py-3 px-4 border-r border-outline-variant w-24 text-right">AMC</th>
+                <th className="py-3 px-4 border-r border-outline-variant w-24 text-right">Adj AMC</th>
+                <th className="py-3 px-4 border-r border-outline-variant w-20 text-center">MOS</th>
+                <th className="py-3 px-4 border-r border-outline-variant w-20 text-center">Adj MOS</th>
+
+                {/* Contract Sub Headers */}
+                {showContract && (
+                  <>
+                    <th className="py-3 px-4 border-r border-outline-variant w-28 text-right bg-slate-50/30">Quantity</th>
+                    <th className="py-3 px-4 border-r border-outline-variant w-20 text-center bg-slate-50/30">MOS</th>
+                  </>
+                )}
+
+                {/* Ordered Sub Headers */}
+                {showOrdered && (
+                  <>
+                    <th className="py-3 px-4 border-r border-outline-variant w-24 bg-sky-50/20">PO</th>
+                    <th className="py-3 px-4 border-r border-outline-variant w-28 text-right bg-sky-50/20">Quantity</th>
+                    <th className="py-3 px-4 border-r border-outline-variant w-20 text-center bg-sky-50/20">MOS</th>
+                  </>
+                )}
+
+                {/* Shipped Sub Headers */}
+                {showShipped && (
+                  <>
+                    <th className="py-3 px-4 border-r border-outline-variant w-24 bg-teal-50/20">PO</th>
+                    <th className="py-3 px-4 border-r border-outline-variant w-28 text-right bg-teal-50/20">Quantity</th>
+                    <th className="py-3 px-4 border-r border-outline-variant w-20 text-center bg-teal-50/20">MOS</th>
+                  </>
+                )}
+
+                {/* Delivered Sub Headers */}
+                {showDelivered && (
+                  <>
+                    <th className="py-3 px-4 border-r border-outline-variant w-24 bg-emerald-50/10">PO</th>
+                    <th className="py-3 px-4 border-r border-outline-variant w-28 text-right bg-emerald-50/10">Quantity</th>
+                    <th className="py-3 px-4 border-r border-outline-variant w-20 text-center bg-emerald-50/10">MOS</th>
+                  </>
+                )}
+
+                {/* Quantity Left Sub Headers */}
+                {showQtyLeft && (
+                  <>
+                    <th className="py-3 px-4 border-r border-outline-variant w-28 text-right bg-indigo-50/20">Quantity</th>
+                    <th className="py-3 px-4 border-r border-outline-variant w-20 text-center bg-indigo-50/20">MOS</th>
+                  </>
+                )}
+
+                {/* Expiries Sub Header */}
+                {showExpiries && (
+                  <th className="py-3 px-4 border-r border-outline-variant min-w-[200px] bg-purple-50/20">Expiry log</th>
+                )}
+
+                {/* Hub Sub Headers */}
+                {showHubColumns && HUB_KEYS.map((hub) => (
+                  <th key={hub.key} className="py-3 px-4 border-r border-outline-variant w-24 text-right bg-amber-50/20 font-medium">
+                    {hub.label}
+                  </th>
+                ))}
+
+                {/* Summary Badges Headers */}
+                <th className="py-3 px-4 border-r border-outline-variant w-32 text-center">Stock Status</th>
+                <th className="py-3 px-4 w-10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-surface">
@@ -350,17 +536,22 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                     <Fragment key={item.sn}>
                       {/* Master Row */}
                       <tr 
-                        onClick={() => handleRowClick(item.sn)}
+                        onClick={(e) => handleRowClick(item.sn, e)}
                         className={`cursor-pointer group hover:bg-surface-low/50 transition-colors ${
                           isExpanded ? 'bg-surface-low/30' : ''
                         }`}
                       >
-                        <td className="py-4 px-4 font-mono text-xs text-on-surface-variant">{item.sn}</td>
-                        <td className="py-4 px-4 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm">
+                        {/* Item Description Values */}
+                        <td className="py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant sticky left-0 bg-white group-hover:bg-surface-low/50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                          {item.sn}
+                        </td>
+                        <td className="py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky left-12 bg-white group-hover:bg-surface-low/50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           {item.item}
                         </td>
-                        <td className="py-4 px-4 text-xs text-on-surface-variant font-medium">{item.unit}</td>
-                        <td className="py-4 px-4 text-center">
+                        <td className="py-4 px-4 border-r border-outline-variant/60 text-xs text-on-surface-variant font-medium">
+                          {item.unit}
+                        </td>
+                        <td className="py-4 px-4 border-r border-outline-variant/60 text-center">
                           <span className={`inline-block px-2 py-0.5 text-[10px] font-extrabold rounded ${
                             item.ven === 'V' ? 'bg-purple-100 text-purple-700' :
                             item.ven === 'E' ? 'bg-sky-100 text-sky-700' :
@@ -369,16 +560,112 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                             {item.ven || '—'}
                           </span>
                         </td>
-                        <td className="py-4 px-4 text-right font-mono text-body-sm font-semibold text-slate-800">
+
+                        {/* National Values */}
+                        <td className="py-4 px-4 border-r border-outline-variant/60 text-right font-mono text-body-sm font-semibold text-slate-800">
                           {formatNumber(item.national.soh)}
                         </td>
-                        <td className="py-4 px-4 text-right font-mono text-body-sm text-on-surface-variant">
+                        <td className="py-4 px-4 border-r border-outline-variant/60 text-center font-mono text-xs text-on-surface-variant">
+                          {formatNumber(item.national.dos)}
+                        </td>
+                        <td className="py-4 px-4 border-r border-outline-variant/60 text-right font-mono text-xs text-on-surface-variant">
+                          {formatNumber(item.national.amc)}
+                        </td>
+                        <td className="py-4 px-4 border-r border-outline-variant/60 text-right font-mono text-xs text-on-surface-variant">
                           {formatNumber(item.national.adjusted_amc)}
                         </td>
-                        <td className="py-4 px-4 text-center font-mono font-bold text-body-sm">
+                        <td className="py-4 px-4 border-r border-outline-variant/60 text-center font-mono font-bold text-body-sm">
                           {formatNumber(item.national.mos)}
                         </td>
-                        <td className="py-4 px-4 text-center">
+                        <td className="py-4 px-4 border-r border-outline-variant/60 text-center font-mono text-xs text-on-surface-variant">
+                          {formatNumber(item.national.adjusted_mos)}
+                        </td>
+
+                        {/* Contract Values */}
+                        {showContract && (
+                          <>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 text-right font-mono text-xs bg-slate-50/20 text-slate-700">
+                              {formatNumber(item.contract.quantity)}
+                            </td>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 text-center font-mono text-xs bg-slate-50/20 text-slate-600">
+                              {formatNumber(item.contract.mos)}
+                            </td>
+                          </>
+                        )}
+
+                        {/* Ordered Values */}
+                        {showOrdered && (
+                          <>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant bg-sky-50/10 max-w-[120px] truncate" title={item.ordered.po}>
+                              {item.ordered.po || '—'}
+                            </td>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 text-right font-mono text-xs bg-sky-50/10 text-slate-700">
+                              {formatNumber(item.ordered.quantity)}
+                            </td>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 text-center font-mono text-xs bg-sky-50/10 text-slate-600">
+                              {formatNumber(item.ordered.mos)}
+                            </td>
+                          </>
+                        )}
+
+                        {/* Shipped Values */}
+                        {showShipped && (
+                          <>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant bg-teal-50/10 max-w-[120px] truncate" title={item.shipped.po}>
+                              {item.shipped.po || '—'}
+                            </td>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 text-right font-mono text-xs bg-teal-50/10 text-slate-700">
+                              {formatNumber(item.shipped.quantity)}
+                            </td>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 text-center font-mono text-xs bg-teal-50/10 text-slate-600">
+                              {formatNumber(item.shipped.mos)}
+                            </td>
+                          </>
+                        )}
+
+                        {/* Delivered Values */}
+                        {showDelivered && (
+                          <>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant bg-emerald-50/5 max-w-[120px] truncate" title={item.delivered.po}>
+                              {item.delivered.po || '—'}
+                            </td>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 text-right font-mono text-xs bg-emerald-50/5 text-slate-700">
+                              {formatNumber(item.delivered.quantity)}
+                            </td>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 text-center font-mono text-xs bg-emerald-50/5 text-slate-600">
+                              {formatNumber(item.delivered.mos)}
+                            </td>
+                          </>
+                        )}
+
+                        {/* Quantity Left Values */}
+                        {showQtyLeft && (
+                          <>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 text-right font-mono text-xs bg-indigo-50/10 text-slate-700">
+                              {formatNumber(item.quantity_left.quantity)}
+                            </td>
+                            <td className="py-4 px-4 border-r border-outline-variant/60 text-center font-mono text-xs bg-indigo-50/10 text-slate-600">
+                              {formatNumber(item.quantity_left.mos)}
+                            </td>
+                          </>
+                        )}
+
+                        {/* Expiries Value */}
+                        {showExpiries && (
+                          <td className="py-4 px-4 border-r border-outline-variant/60 text-xs text-on-surface-variant bg-purple-50/10 max-w-[200px] truncate" title={item.expiry_raw}>
+                            {item.expiry_raw || '—'}
+                          </td>
+                        )}
+
+                        {/* Hub Distribution SOH values */}
+                        {showHubColumns && HUB_KEYS.map((hub) => (
+                          <td key={hub.key} className="py-4 px-4 border-r border-outline-variant/60 text-right font-mono text-xs bg-amber-50/10 text-slate-700">
+                            {formatNumber(item.hubs[hub.key])}
+                          </td>
+                        ))}
+
+                        {/* Summary Badges & Collapse chevron */}
+                        <td className="py-4 px-4 border-r border-outline-variant/60 text-center">
                           <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full border ${status.color}`}>
                             {status.label}
                           </span>
@@ -393,7 +680,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                       {/* Detail Accordion Row */}
                       {isExpanded && (
                         <tr>
-                          <td colSpan="9" className="py-0 px-0 bg-surface-container-lowest border-y border-outline-variant">
+                          <td colSpan={totalVisibleCols} className="py-0 px-0 bg-surface-container-lowest border-y border-outline-variant no-row-expand">
                             <div className="p-lg space-y-md animate-slide-up">
                               {/* Detail Tabs */}
                               <div className="flex border-b border-outline-variant">
@@ -406,7 +693,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                                   }`}
                                 >
                                   <i className="fa-solid fa-route mr-2"></i>
-                                  Pipeline Details
+                                  Pipeline Summary Card View
                                 </button>
                                 <button
                                   onClick={() => setTab(item.sn, 'hubs')}
@@ -417,7 +704,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                                   }`}
                                 >
                                   <i className="fa-solid fa-hospital-user mr-2"></i>
-                                  Hub Inventory Distribution
+                                  Hub Inventory Distribution Chart
                                 </button>
                                 <button
                                   onClick={() => setTab(item.sn, 'expiries')}
@@ -428,11 +715,11 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                                   }`}
                                 >
                                   <i className="fa-solid fa-hourglass-half mr-2"></i>
-                                  Expiry Batches
+                                  Expiry Batches Timeline
                                 </button>
                               </div>
 
-                              {/* Tab Content 1: Pipeline */}
+                              {/* Tab Content 1: Pipeline Summary */}
                               {activeTab === 'pipeline' && (
                                 <div className="grid grid-cols-2 md:grid-cols-5 gap-md pt-2">
                                   {/* Contract */}
@@ -507,11 +794,11 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                                 </div>
                               )}
 
-                              {/* Tab Content 2: Hub Inventory */}
+                              {/* Tab Content 2: Hub Inventory Breakdown */}
                               {activeTab === 'hubs' && (
                                 <div className="space-y-4 pt-2">
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Main Center stock */}
+                                    {/* Central Stock */}
                                     <div className="bg-slate-50 p-lg rounded-lg border border-outline-variant flex justify-between items-center">
                                       <div>
                                         <div className="text-xs font-bold text-on-surface-variant uppercase">Central Warehouse (SOH)</div>
@@ -524,7 +811,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                                       </div>
                                     </div>
 
-                                    {/* GIT stock */}
+                                    {/* GIT */}
                                     <div className="bg-slate-50 p-lg rounded-lg border border-outline-variant flex justify-between items-center">
                                       <div>
                                         <div className="text-xs font-bold text-on-surface-variant uppercase">In Transit (GIT - Center to Hub)</div>
@@ -538,11 +825,10 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                                     </div>
                                   </div>
 
-                                  {/* Hub Breakdown */}
+                                  {/* Hub distribution list */}
                                   <div>
                                     <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-sm">Hub Distribution</h4>
                                     
-                                    {/* Compute maximum SOH for scale */}
                                     {(() => {
                                       const hubList = Object.entries(item.hubs)
                                         .filter(([key]) => key !== 'center' && key !== 'git')
@@ -591,16 +877,14 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                                 </div>
                               )}
 
-                              {/* Tab Content 3: Expiry Batches */}
+                              {/* Tab Content 3: Expiries */}
                               {activeTab === 'expiries' && (
                                 <div className="space-y-4 pt-2">
                                   {item.expiry_list && item.expiry_list.length > 0 ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-md">
                                       {item.expiry_list.map((batch, index) => {
-                                        // Parse batch year/month if needed, or color code based on arbitrary threshold
                                         let batchStyle = "border-emerald-200 bg-emerald-50 text-emerald-800";
                                         
-                                        // If date contains 2024 or 2025 (assuming current year is 2026, let's treat these as expired or critical)
                                         if (batch.date) {
                                           const isExpired = batch.date.includes('2024') || batch.date.includes('2025');
                                           const isNear = batch.date.includes('2026');
@@ -647,7 +931,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                 })
               ) : (
                 <tr>
-                  <td colSpan="9" className="py-12 text-center text-body-md text-on-surface-variant/70">
+                  <td colSpan={totalVisibleCols} className="py-12 text-center text-body-md text-on-surface-variant/70">
                     <i className="fa-solid fa-box-open text-xl mb-2 block"></i>
                     No items found matching the selected filters.
                   </td>
