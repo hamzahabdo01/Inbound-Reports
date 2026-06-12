@@ -33,10 +33,10 @@ export default {
           variant: '#CFD8DC',
         },
         primary: {
-          // Primary color mapped to success green per request
-          DEFAULT: '#10B981',
+          // Primary color mapped to navigation/brand color
+          DEFAULT: '#0B4F54',
           dark: '#0B4F54',
-          hover: '#059669',
+          hover: '#115E59',
           container: '#86BFC5',
           'on-container': '#ffffff',
         },
@@ -47,7 +47,7 @@ export default {
           DEFAULT: '#003734',
         },
         error: '#BA1A1A',
-        success: '#10B981',
+        success: '#0B4F54',
         warning: '#D97706',
         'on-primary': '#ffffff',
         background: '#F6FAFC',

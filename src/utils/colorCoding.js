@@ -6,7 +6,7 @@
 export const getDwellingTimeColor = (days) => {
   if (days <= 30) {
     return {
-      bg: '#10B981', // Success green
+      bg: '#0B4F54', // Success green (aligned with brand primary)
       text: '#FFFFFF', // White text
       label: 'Optimal'
     };
