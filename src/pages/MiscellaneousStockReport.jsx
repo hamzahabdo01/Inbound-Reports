@@ -1,5 +1,7 @@
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useMemo, Fragment, useEffect } from 'react';
 import stockData from '../data/NationalStockStatus.json';
+import { parseCSV } from '../utils/csvParser';
+import { nationalAMCCSVData } from '../data/nationalAMCData';
 
 // Status styling & logic helper
 const getStockStatus = (mos) => {
@@ -42,6 +44,8 @@ const HUB_KEYS = [
 ];
 
 function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
+  const [activeTab, setActiveTab] = useState('stock-report');
+
   // Search query
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -65,6 +69,39 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
   // Row Expansion (for dashboard summary view)
   const [expandedRow, setExpandedRow] = useState(null);
   const [activeTabs, setActiveTabs] = useState({}); // { [itemSn]: 'pipeline' | 'hubs' | 'expiries' }
+
+  // National AMC tab state
+  const [amcData, setAmcData] = useState([]);
+  const [amcSearchQuery, setAmcSearchQuery] = useState('');
+  const [amcPage, setAmcPage] = useState(1);
+  const [amcEditing, setAmcEditing] = useState({}); // { rowIndex: true }
+  const [amcDirtyValues, setAmcDirtyValues] = useState({}); // { rowIndex: 'newValue' }
+  const amcRowsPerPage = 20;
+
+  useEffect(() => {
+    const parsed = parseCSV(nationalAMCCSVData);
+    setAmcData(parsed.map(row => ({
+      ...row,
+      NationalAMC: row.NationalAMC || '0'
+    })));
+  }, []);
+
+  const filteredAmcData = useMemo(() => {
+    if (!amcSearchQuery.trim()) return amcData;
+    const q = amcSearchQuery.toLowerCase();
+    return amcData.filter(row =>
+      (row.ItemSN && row.ItemSN.toLowerCase().includes(q)) ||
+      (row.ItemName && row.ItemName.toLowerCase().includes(q)) ||
+      (row.Unit && row.Unit.toLowerCase().includes(q))
+    );
+  }, [amcData, amcSearchQuery]);
+
+  const paginatedAmcData = useMemo(() => {
+    const start = (amcPage - 1) * amcRowsPerPage;
+    return filteredAmcData.slice(start, start + amcRowsPerPage);
+  }, [filteredAmcData, amcPage]);
+
+  const amcTotalPages = Math.ceil(filteredAmcData.length / amcRowsPerPage);
 
   // High-level statistics
   const stats = useMemo(() => {
@@ -216,9 +253,9 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
 
   return (
     <div className="space-y-lg animate-fade-in">
-      {/* Header section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-md border-b border-outline-variant pb-md">
-        <div className="flex items-center gap-3">
+      {/* Tab Navigation */}
+      <div className="flex items-center justify-between gap-md border-b border-outline-variant pb-md">
+        <div className="flex items-center gap-1">
           <button
             onClick={toggleSidebar}
             className="p-2 hover:bg-surface-container rounded-lg text-on-surface-variant md:hidden"
@@ -226,12 +263,28 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
           >
             <i className="fa-solid fa-bars text-lg"></i>
           </button>
-          <div>
-            <h1 className="text-headline-lg text-primary-dark tracking-tight">Miscellaneous Stock Report</h1>
-            <p className="text-body-sm text-on-surface-variant">
-              National Stock Status and Pipeline Analysis Dashboard
-            </p>
-          </div>
+          <button
+            onClick={() => setActiveTab('stock-report')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 ${
+              activeTab === 'stock-report'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+            }`}
+          >
+            <i className="fa-solid fa-chart-simple mr-2"></i>
+            Stock Report
+          </button>
+          <button
+            onClick={() => setActiveTab('national-amc')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 ${
+              activeTab === 'national-amc'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+            }`}
+          >
+            <i className="fa-solid fa-calculator mr-2"></i>
+            National AMC
+          </button>
         </div>
         
         <button
@@ -243,6 +296,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
         </button>
       </div>
 
+      {activeTab === 'stock-report' && <>
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-md">
         {/* Total Items */}
@@ -943,29 +997,215 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
 
         {/* Pagination controls */}
         {totalPages > 1 && (
-          <div className="py-4 px-lg bg-surface border-t border-outline-variant flex items-center justify-between">
-            <span className="text-xs text-on-surface-variant font-medium">
-              Page {currentPage} of {totalPages}
-            </span>
-            <div className="inline-flex gap-2">
+          <div className="flex items-center justify-between px-lg py-4 bg-surface border-t border-outline-variant">
+            <div className="text-body-sm text-on-surface-variant">
+              Showing {Math.min((currentPage - 1) * rowsPerPage + 1, filteredData.length)}-{Math.min(currentPage * rowsPerPage, filteredData.length)} of {filteredData.length} items
+            </div>
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 border border-outline rounded-lg text-body-sm font-semibold bg-white hover:bg-surface-low disabled:opacity-50 disabled:pointer-events-none"
+                className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low"
               >
-                Previous
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
               </button>
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1.5 border border-outline rounded-lg text-body-sm font-semibold bg-white hover:bg-surface-low disabled:opacity-50 disabled:pointer-events-none"
+                className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low"
               >
-                Next
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </button>
             </div>
           </div>
         )}
       </div>
+      </>}
+
+      {activeTab === 'national-amc' && <>
+      <div className="space-y-lg animate-fade-in">
+        {/* AMC Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-md">
+          <div>
+            <h2 className="text-headline-md text-primary-dark tracking-tight">National AMC Update</h2>
+            <p className="text-body-sm text-on-surface-variant">
+              {filteredAmcData.length} items · Editable monthly consumption figures
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="relative w-96">
+              <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm"></i>
+              <input
+                type="text"
+                placeholder="Search by SN or Item Name..."
+                value={amcSearchQuery}
+                onChange={(e) => { setAmcSearchQuery(e.target.value); setAmcPage(1); }}
+                className="w-full pl-10 pr-4 py-2 border border-outline rounded-lg text-body-sm bg-white focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div className="text-xs text-on-surface-variant font-medium whitespace-nowrap">
+              Page {amcPage} of {amcTotalPages || 1}
+            </div>
+          </div>
+        </div>
+
+        {/* AMC Table */}
+        <div className="bg-white rounded-xl border border-outline-variant shadow-level-1 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface-container border-b border-outline-variant text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
+                  <th className="px-4 py-3 w-16 text-center">#</th>
+                  <th className="px-4 py-3 w-20 text-center">SN</th>
+                  <th className="px-4 py-3 min-w-[300px]">Item Name</th>
+                  <th className="px-4 py-3 w-24">Unit</th>
+                  <th className="px-4 py-3 w-40 text-right">National AMC</th>
+                  <th className="px-4 py-3 w-20 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-low">
+                {paginatedAmcData.length > 0 ? (
+                  paginatedAmcData.map((row, idx) => {
+                    const globalIdx = (amcPage - 1) * amcRowsPerPage + idx;
+                    const isEditing = amcEditing[globalIdx] === true;
+                    return (
+                      <tr key={globalIdx} className="hover:bg-surface-low/50 transition-colors">
+                        <td className="px-4 py-3 text-center text-xs text-on-surface-variant font-mono">
+                          {row.RowNumber}
+                        </td>
+                        <td className="px-4 py-3 text-center font-mono text-xs text-on-surface-variant">
+                          {row.ItemSN}
+                        </td>
+                        <td className="px-4 py-3 text-body-sm font-semibold text-primary-dark">
+                          {row.ItemName}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-on-surface-variant">
+                          {row.Unit}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              value={amcDirtyValues[globalIdx] !== undefined ? amcDirtyValues[globalIdx] : row.NationalAMC}
+                              onChange={(e) => setAmcDirtyValues(prev => ({ ...prev, [globalIdx]: e.target.value }))}
+                              className="w-32 text-right px-3 py-1.5 border border-primary rounded-lg text-body-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  const newVal = amcDirtyValues[globalIdx] !== undefined ? amcDirtyValues[globalIdx] : row.NationalAMC;
+                                  setAmcData(prev => {
+                                    const next = [...prev];
+                                    next[globalIdx] = { ...next[globalIdx], NationalAMC: newVal };
+                                    return next;
+                                  });
+                                  setAmcEditing(prev => ({ ...prev, [globalIdx]: false }));
+                                  setAmcDirtyValues(prev => ({ ...prev, [globalIdx]: undefined }));
+                                }
+                                if (e.key === 'Escape') {
+                                  setAmcEditing(prev => ({ ...prev, [globalIdx]: false }));
+                                  setAmcDirtyValues(prev => ({ ...prev, [globalIdx]: undefined }));
+                                }
+                              }}
+                            />
+                          ) : (
+                            <span className="font-mono font-semibold text-body-sm text-on-surface">
+                              {formatNumber(row.NationalAMC)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {isEditing ? (
+                            <div className="flex items-center gap-1 justify-center">
+                              <button
+                                onClick={() => {
+                                  const newVal = amcDirtyValues[globalIdx] !== undefined ? amcDirtyValues[globalIdx] : row.NationalAMC;
+                                  setAmcData(prev => {
+                                    const next = [...prev];
+                                    next[globalIdx] = { ...next[globalIdx], NationalAMC: newVal };
+                                    return next;
+                                  });
+                                  setAmcEditing(prev => ({ ...prev, [globalIdx]: false }));
+                                  setAmcDirtyValues(prev => ({ ...prev, [globalIdx]: undefined }));
+                                }}
+                                className="p-1.5 text-success hover:bg-success/10 rounded transition-colors"
+                                title="Save"
+                              >
+                                <i className="fa-solid fa-check"></i>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setAmcEditing(prev => ({ ...prev, [globalIdx]: false }));
+                                  setAmcDirtyValues(prev => ({ ...prev, [globalIdx]: undefined }));
+                                }}
+                                className="p-1.5 text-on-surface-variant hover:bg-surface-low rounded transition-colors"
+                                title="Cancel"
+                              >
+                                <i className="fa-solid fa-xmark"></i>
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setAmcEditing(prev => ({ ...prev, [globalIdx]: true }));
+                                setAmcDirtyValues(prev => ({ ...prev, [globalIdx]: row.NationalAMC }));
+                              }}
+                              className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
+                              title="Edit"
+                            >
+                              <i className="fa-solid fa-pen-to-square"></i>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-body-md text-on-surface-variant/70">
+                      <i className="fa-solid fa-box-open text-xl mb-2 block"></i>
+                      No items found matching the search query.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {amcTotalPages > 1 && (
+            <div className="flex items-center justify-between px-lg py-4 bg-surface border-t border-outline-variant">
+              <div className="text-body-sm text-on-surface-variant">
+                Showing {(amcPage - 1) * amcRowsPerPage + 1}-{Math.min(amcPage * amcRowsPerPage, filteredAmcData.length)} of {filteredAmcData.length} items
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setAmcPage(p => Math.max(1, p - 1))}
+                  disabled={amcPage === 1}
+                  className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setAmcPage(p => Math.min(amcTotalPages, p + 1))}
+                  disabled={amcPage === amcTotalPages}
+                  className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      </>}
     </div>
   );
 }
