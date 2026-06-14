@@ -2,6 +2,12 @@ import { useState, useMemo, Fragment, useEffect } from 'react';
 import stockData from '../data/NationalStockStatus.json';
 import { parseCSV } from '../utils/csvParser';
 import { nationalAMCCSVData } from '../data/nationalAMCData';
+import KPICard from '../components/KPICard';
+import SearchInput from '../components/SearchInput';
+import SimplePagination from '../components/SimplePagination';
+import EmptyState from '../components/EmptyState';
+import SelectFilter from '../components/SelectFilter';
+import ExportButton from '../components/ExportButton';
 
 // Status styling & logic helper
 const getStockStatus = (mos) => {
@@ -287,77 +293,17 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
           </button>
         </div>
         
-        <button
-          onClick={handleExportCSV}
-          className="flex items-center gap-2 px-4 py-2 border border-outline bg-white hover:bg-surface-low text-on-surface font-semibold text-body-sm rounded-lg shadow-sm"
-        >
-          <i className="fa-solid fa-file-excel text-emerald-600"></i>
-          Export Excel Data
-        </button>
+        <ExportButton onClick={handleExportCSV} label="Export Excel Data" icon="fa-file-excel" className="border-outline bg-white hover:bg-surface-low font-semibold text-body-sm shadow-sm" />
       </div>
 
       {activeTab === 'stock-report' && <>
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-md">
-        {/* Total Items */}
-        <div className="bg-white p-lg rounded-xl shadow-level-1 border border-outline-variant hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between text-on-surface-variant mb-sm">
-            <span className="text-label-caps uppercase text-xs">Total Items</span>
-            <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-500">
-              <i className="fa-solid fa-boxes-stacked"></i>
-            </div>
-          </div>
-          <div className="text-display-kpi text-slate-900 leading-none">{formatNumber(stats.total)}</div>
-          <p className="text-xs text-on-surface-variant mt-2">Monitored commodities</p>
-        </div>
-
-        {/* Out of Stock */}
-        <div className="bg-white p-lg rounded-xl shadow-level-1 border border-outline-variant hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between text-red-500 mb-sm">
-            <span className="text-label-caps uppercase text-xs text-on-surface-variant">Out of Stock</span>
-            <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-500">
-              <i className="fa-solid fa-circle-exclamation"></i>
-            </div>
-          </div>
-          <div className="text-display-kpi text-red-600 leading-none">{formatNumber(stats.outOfStock)}</div>
-          <p className="text-xs text-red-500 font-semibold mt-2">MOS = 0 Months</p>
-        </div>
-
-        {/* Understocked */}
-        <div className="bg-white p-lg rounded-xl shadow-level-1 border border-outline-variant hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between text-amber-500 mb-sm">
-            <span className="text-label-caps uppercase text-xs text-on-surface-variant">Understocked</span>
-            <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-500">
-              <i className="fa-solid fa-triangle-exclamation"></i>
-            </div>
-          </div>
-          <div className="text-display-kpi text-amber-600 leading-none">{formatNumber(stats.understocked)}</div>
-          <p className="text-xs text-amber-600 font-semibold mt-2">MOS &lt; 3 Months</p>
-        </div>
-
-        {/* Adequate */}
-        <div className="bg-white p-lg rounded-xl shadow-level-1 border border-outline-variant hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between text-emerald-500 mb-sm">
-            <span className="text-label-caps uppercase text-xs text-on-surface-variant">Adequate</span>
-            <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
-              <i className="fa-solid fa-check-double"></i>
-            </div>
-          </div>
-          <div className="text-display-kpi text-emerald-600 leading-none">{formatNumber(stats.adequate)}</div>
-          <p className="text-xs text-emerald-600 font-semibold mt-2">MOS 3 - 6 Months</p>
-        </div>
-
-        {/* Overstocked */}
-        <div className="bg-white p-lg rounded-xl shadow-level-1 border border-outline-variant hover:shadow-md transition-shadow col-span-2 lg:col-span-1">
-          <div className="flex items-center justify-between text-blue-500 mb-sm">
-            <span className="text-label-caps uppercase text-xs text-on-surface-variant">Overstocked</span>
-            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
-              <i className="fa-solid fa-circle-arrow-up"></i>
-            </div>
-          </div>
-          <div className="text-display-kpi text-blue-600 leading-none">{formatNumber(stats.overstocked)}</div>
-          <p className="text-xs text-blue-600 font-semibold mt-2">MOS &gt; 6 Months</p>
-        </div>
+        <KPICard variant="detailed" icon="fa-boxes-stacked" iconBg="bg-slate-50" iconColor="text-slate-500" label="Total Items" value={formatNumber(stats.total)} valueColor="text-slate-900" subtitle="Monitored commodities" />
+        <KPICard variant="detailed" icon="fa-circle-exclamation" iconBg="bg-red-50" iconColor="text-red-500" label="Out of Stock" value={formatNumber(stats.outOfStock)} valueColor="text-red-600" subtitle="MOS = 0 Months" trendIcon="text-red-500 font-semibold" />
+        <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg="bg-amber-50" iconColor="text-amber-500" label="Understocked" value={formatNumber(stats.understocked)} valueColor="text-amber-600" subtitle="MOS < 3 Months" trendIcon="text-amber-600 font-semibold" />
+        <KPICard variant="detailed" icon="fa-check-double" iconBg="bg-emerald-50" iconColor="text-emerald-500" label="Adequate" value={formatNumber(stats.adequate)} valueColor="text-emerald-600" subtitle="MOS 3 - 6 Months" trendIcon="text-emerald-600 font-semibold" />
+        <KPICard variant="detailed" icon="fa-circle-arrow-up" iconBg="bg-blue-50" iconColor="text-blue-500" label="Overstocked" value={formatNumber(stats.overstocked)} valueColor="text-blue-600" subtitle="MOS > 6 Months" trendIcon="text-blue-600 font-semibold" className="col-span-2 lg:col-span-1" />
       </div>
 
       {/* Control panel (Filters and search) */}
@@ -365,18 +311,8 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
         <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
           
           {/* Search bar */}
-          <div className="relative w-full lg:w-96">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm"></i>
-            <input
-              type="text"
-              placeholder="Search by SN or Item Description..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full pl-10 pr-4 py-2 border border-outline rounded-lg text-body-sm bg-white placeholder-on-surface-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
+          <div className="w-full lg:w-96">
+            <SearchInput value={searchQuery} onChange={(v) => { setSearchQuery(v); setCurrentPage(1); }} placeholder="Search by SN or Item Description..." />
           </div>
 
           {/* Filters */}
@@ -384,20 +320,18 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
             {/* Status Filter */}
             <div className="flex items-center gap-2">
               <label className="text-body-sm font-semibold text-on-surface-variant">Status:</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="px-3 py-1.5 border border-outline rounded-lg text-body-sm bg-white focus:border-primary"
-              >
-                <option value="All">All Statuses</option>
-                <option value="Out of Stock">Out of Stock</option>
-                <option value="Understocked">Understocked</option>
-                <option value="Adequate">Adequate</option>
-                <option value="Overstocked">Overstocked</option>
-              </select>
+              <SelectFilter
+                value={statusFilter || 'All'}
+                onChange={(v) => { setStatusFilter(v || 'All'); setCurrentPage(1); }}
+                options={[
+                  { value: 'Out of Stock', label: 'Out of Stock' },
+                  { value: 'Understocked', label: 'Understocked' },
+                  { value: 'Adequate', label: 'Adequate' },
+                  { value: 'Overstocked', label: 'Overstocked' }
+                ]}
+                allLabel="All Statuses"
+                className="px-3 py-1.5"
+              />
             </div>
 
             {/* VEN Buttons */}
@@ -441,43 +375,43 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                 onClick={() => setShowContract(!showContract)}
                 className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showContract ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
               >
-                <i className={`fa-solid ${showContract ? 'fa-square-check' : 'fa-square'}`}></i> Contract
+                <i className={`${showContract ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Contract
               </button>
               <button 
                 onClick={() => setShowOrdered(!showOrdered)}
                 className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showOrdered ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
               >
-                <i className={`fa-solid ${showOrdered ? 'fa-square-check' : 'fa-square'}`}></i> Ordered (Pipeline)
+                <i className={`${showOrdered ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Ordered (Pipeline)
               </button>
               <button 
                 onClick={() => setShowShipped(!showShipped)}
                 className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showShipped ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
               >
-                <i className={`fa-solid ${showShipped ? 'fa-square-check' : 'fa-square'}`}></i> Shipped
+                <i className={`${showShipped ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Shipped
               </button>
               <button 
                 onClick={() => setShowDelivered(!showDelivered)}
                 className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showDelivered ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
               >
-                <i className={`fa-solid ${showDelivered ? 'fa-square-check' : 'fa-square'}`}></i> Delivered
+                <i className={`${showDelivered ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Delivered
               </button>
               <button 
                 onClick={() => setShowQtyLeft(!showQtyLeft)}
                 className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showQtyLeft ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
               >
-                <i className={`fa-solid ${showQtyLeft ? 'fa-square-check' : 'fa-square'}`}></i> Quantity Left
+                <i className={`${showQtyLeft ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Quantity Left
               </button>
               <button 
                 onClick={() => setShowExpiries(!showExpiries)}
                 className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showExpiries ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
               >
-                <i className={`fa-solid ${showExpiries ? 'fa-square-check' : 'fa-square'}`}></i> Expiry Dates
+                <i className={`${showExpiries ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Expiry Dates
               </button>
               <button 
                 onClick={() => setShowHubColumns(!showHubColumns)}
                 className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showHubColumns ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
               >
-                <i className={`fa-solid ${showHubColumns ? 'fa-square-check' : 'fa-square'}`}></i> Regional Hubs (21 Cols)
+                <i className={`${showHubColumns ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Regional Hubs (21 Cols)
               </button>
             </div>
           </div>
@@ -591,15 +525,15 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                       {/* Master Row */}
                       <tr 
                         onClick={(e) => handleRowClick(item.sn, e)}
-                        className={`cursor-pointer group hover:bg-surface-low/50 transition-colors ${
+                        className={`cursor-pointer group hover:bg-surface-container-low transition-colors ${
                           isExpanded ? 'bg-surface-low/30' : ''
                         }`}
                       >
                         {/* Item Description Values */}
-                        <td className="py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant sticky left-0 bg-white group-hover:bg-surface-low/50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                        <td className="py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant sticky left-0 bg-white group-hover:bg-surface-container-low z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           {item.sn}
                         </td>
-                        <td className="py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky left-12 bg-white group-hover:bg-surface-low/50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                        <td className="py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky left-12 bg-white group-hover:bg-surface-container-low z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           {item.item}
                         </td>
                         <td className="py-4 px-4 border-r border-outline-variant/60 text-xs text-on-surface-variant font-medium">
@@ -984,45 +918,21 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                   );
                 })
               ) : (
-                <tr>
-                  <td colSpan={totalVisibleCols} className="py-12 text-center text-body-md text-on-surface-variant/70">
-                    <i className="fa-solid fa-box-open text-xl mb-2 block"></i>
-                    No items found matching the selected filters.
-                  </td>
-                </tr>
+                <EmptyState colSpan={totalVisibleCols} message="No items found matching the selected filters." icon="fa-box-open" />
               )}
             </tbody>
           </table>
         </div>
 
         {/* Pagination controls */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-lg py-4 bg-surface border-t border-outline-variant">
-            <div className="text-body-sm text-on-surface-variant">
-              Showing {Math.min((currentPage - 1) * rowsPerPage + 1, filteredData.length)}-{Math.min(currentPage * rowsPerPage, filteredData.length)} of {filteredData.length} items
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
+        <SimplePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredData.length}
+          itemsPerPage={rowsPerPage}
+          onPageChange={handlePageChange}
+          label="items"
+        />
       </div>
       </>}
 
@@ -1073,7 +983,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                     const globalIdx = (amcPage - 1) * amcRowsPerPage + idx;
                     const isEditing = amcEditing[globalIdx] === true;
                     return (
-                      <tr key={globalIdx} className="hover:bg-surface-low/50 transition-colors">
+                      <tr key={globalIdx} className="hover:bg-surface-container-low transition-colors">
                         <td className="px-4 py-3 text-center text-xs text-on-surface-variant font-mono">
                           {row.RowNumber}
                         </td>
@@ -1164,45 +1074,21 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                     );
                   })
                 ) : (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center text-body-md text-on-surface-variant/70">
-                      <i className="fa-solid fa-box-open text-xl mb-2 block"></i>
-                      No items found matching the search query.
-                    </td>
-                  </tr>
+                  <EmptyState colSpan={6} message="No items found matching the search query." icon="fa-box-open" />
                 )}
               </tbody>
             </table>
           </div>
 
           {/* Pagination */}
-          {amcTotalPages > 1 && (
-            <div className="flex items-center justify-between px-lg py-4 bg-surface border-t border-outline-variant">
-              <div className="text-body-sm text-on-surface-variant">
-                Showing {(amcPage - 1) * amcRowsPerPage + 1}-{Math.min(amcPage * amcRowsPerPage, filteredAmcData.length)} of {filteredAmcData.length} items
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setAmcPage(p => Math.max(1, p - 1))}
-                  disabled={amcPage === 1}
-                  className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setAmcPage(p => Math.min(amcTotalPages, p + 1))}
-                  disabled={amcPage === amcTotalPages}
-                  className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )}
+          <SimplePagination
+            currentPage={amcPage}
+            totalPages={amcTotalPages}
+            totalItems={filteredAmcData.length}
+            itemsPerPage={amcRowsPerPage}
+            onPageChange={(p) => setAmcPage(p)}
+            label="items"
+          />
         </div>
       </div>
       </>}

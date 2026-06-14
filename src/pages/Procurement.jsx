@@ -3,6 +3,10 @@ import { parseCSV } from '../utils/csvParser';
 import tenderProcessCSV from '../data/tenderProcess.csv?raw';
 import contractProcessForSeaCSV from '../data/contractProcessforSea.csv?raw';
 import contractProcessForAirCSV from '../data/contractProcessforAir.csv?raw';
+import SearchInput from '../components/SearchInput';
+import SimplePagination from '../components/SimplePagination';
+import EmptyState from '../components/EmptyState';
+import SelectFilter from '../components/SelectFilter';
 
 const TENDER_STAGES = [
   { id: 1, name: 'Preparation & Budget Analysis' },
@@ -727,28 +731,22 @@ function Procurement() {
 
       {/* Search and Filters row */}
       <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-level-2 flex flex-col md:flex-row items-center gap-md">
-        <div className="flex-1 w-full relative">
-          <i className="fa-solid fa-magnifying-glass text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2"></i>
-          <input
-            type="text"
-            placeholder={activeTab === 'tender' ? 'Search by Tender No or Responsible...' : 'Search by PO No, Tender No, or Invoice No...'}
+        <div className="flex-1 w-full">
+          <SearchInput
             value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-            className="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+            onChange={(v) => { setSearchQuery(v); setCurrentPage(1); }}
+            placeholder={activeTab === 'tender' ? 'Search by Tender No or Responsible...' : 'Search by PO No, Tender No, or Invoice No...'}
           />
         </div>
         
         {activeTab === 'tender' && (
-          <select
-            value={responsibleFilter}
-            onChange={(e) => { setResponsibleFilter(e.target.value); setCurrentPage(1); }}
-            className="w-full md:w-56 px-4 py-2 border border-outline-variant rounded-lg text-body-md bg-white focus:outline-none focus:border-primary"
-          >
-            <option value="">Responsible: All</option>
-            {responsibles.map(r => (
-              <option key={r} value={r}>{r}</option>
-            ))}
-          </select>
+          <SelectFilter
+            value={responsibleFilter || ''}
+            onChange={(v) => { setResponsibleFilter(v || ''); setCurrentPage(1); }}
+            options={responsibles}
+            placeholder="Responsible: All"
+            className="w-full md:w-56"
+          />
         )}
       </div>
 
@@ -797,11 +795,7 @@ function Procurement() {
             </thead>
             <tbody className="divide-y divide-outline-variant/30">
               {paginatedData.length === 0 ? (
-                <tr>
-                  <td colSpan={activeTab === 'tender' ? 13 : 15} className="px-4 py-16 text-center text-body-md text-on-surface-variant">
-                    No records found matching filters
-                  </td>
-                </tr>
+                <EmptyState colSpan={activeTab === 'tender' ? 13 : 15} message="No records found matching filters" icon="fa-box-open" />
               ) : (
                 paginatedData.map((row, index) => {
                   const isSelected = selectedRow && (activeTab === 'tender' ? selectedRow['Tender No'] === row['Tender No'] : selectedRow['PO No'] === row['PO No']);
@@ -856,30 +850,14 @@ function Procurement() {
           </table>
         </div>
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="px-lg py-md bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
-            <div className="text-body-sm text-on-surface-variant">
-              Showing {(currentPage - 1) * rowsPerPage + 1} to {Math.min(currentPage * rowsPerPage, filteredData.length)} of {filteredData.length} records
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-outline-variant bg-white text-on-surface disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low transition-all"
-              >
-                <i className="fa-solid fa-chevron-left text-xs"></i>
-              </button>
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-outline-variant bg-white text-on-surface disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low transition-all"
-              >
-                <i className="fa-solid fa-chevron-right text-xs"></i>
-              </button>
-            </div>
-          </div>
-        )}
+        <SimplePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredData.length}
+          itemsPerPage={rowsPerPage}
+          onPageChange={(p) => setCurrentPage(p)}
+          label="records"
+        />
       </div>
     </div>
   );

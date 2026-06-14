@@ -1,6 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { parseCSV, parseQuantity } from '../utils/csvParser';
 import { purchaseOrderCSVData } from '../data/purchaseOrderData';
+import KPICard from '../components/KPICard';
+import SearchInput from '../components/SearchInput';
+import SimplePagination from '../components/SimplePagination';
+import EmptyState from '../components/EmptyState';
+import LoadingState from '../components/LoadingState';
+import SelectFilter from '../components/SelectFilter';
 
 const COLUMNS = [
   'SN',
@@ -168,88 +174,35 @@ function PurchaseOrderFollowUp() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="text-body-md text-on-surface-variant">Loading purchase order data...</div>
-      </div>
-    );
+    return <LoadingState message="Loading purchase order data..." />;
   }
 
   return (
     <div ref={mainRef}>
       {/* Stats cards */}
       <div className="grid grid-cols-4 gap-4 mb-lg">
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <i className="fa-solid fa-database text-lg text-on-surface-variant"></i>
-            <div className="text-label-caps text-on-surface-variant uppercase text-[11px]">Total Records</div>
-          </div>
-          <div className="flex items-baseline gap-3">
-            <div className="text-display-kpi text-on-surface font-extrabold">{stats.total.toLocaleString()}</div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <i className="fa-solid fa-file-lines text-lg text-on-surface-variant"></i>
-            <div className="text-label-caps text-on-surface-variant uppercase text-[11px]">With PO</div>
-          </div>
-          <div className="flex items-baseline gap-3">
-            <div className="text-display-kpi text-on-surface font-extrabold">{stats.withPO.toLocaleString()}</div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <i className="fa-solid fa-circle-check text-lg text-success"></i>
-            <div className="text-label-caps text-on-surface-variant uppercase text-[11px]">Cleared</div>
-          </div>
-          <div className="flex items-baseline gap-3">
-            <div className="text-display-kpi text-success font-extrabold">{stats.cleared.toLocaleString()}</div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <i className="fa-solid fa-triangle-exclamation text-lg text-error"></i>
-            <div className="text-label-caps text-on-surface-variant uppercase text-[11px]">Stalled / At Risk</div>
-          </div>
-          <div className="flex items-baseline gap-3">
-            <div className="text-display-kpi text-error font-extrabold">{stats.critical.toLocaleString()}</div>
-          </div>
-        </div>
+        <KPICard icon="fa-database" label="Total Records" value={stats.total.toLocaleString()} />
+        <KPICard icon="fa-file-lines" label="With PO" value={stats.withPO.toLocaleString()} />
+        <KPICard icon="fa-circle-check" iconColor="text-success" label="Cleared" value={stats.cleared.toLocaleString()} valueColor="text-success" />
+        <KPICard icon="fa-triangle-exclamation" iconColor="text-error" label="Stalled / At Risk" value={stats.critical.toLocaleString()} valueColor="text-error" />
       </div>
 
       {/* Search and filter */}
       <div className="bg-surface-container-lowest border border-[#D1D5DB] rounded-lg p-4 mb-md">
         <div className="flex items-center gap-3">
-          <div className="flex-1 relative">
-            <svg className="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search Items, PO Number, Tender..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-[#D1D5DB] rounded text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-            />
-          </div>
-          <select
+          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search Items, PO Number, Tender..." />
+          <SelectFilter
             value={statusFilter || 'All'}
-            onChange={(e) => setStatusFilter(e.target.value === 'All' ? null : e.target.value)}
-            className="px-4 py-2 border border-[#D1D5DB] rounded text-body-md focus:outline-none focus:border-primary bg-surface-container-lowest"
-          >
-            {statuses.map(s => (
-              <option key={s} value={s}>{s === 'All' ? 'Status: All' : s}</option>
-            ))}
-          </select>
-          <select
+            onChange={(v) => setStatusFilter(v === 'All' ? null : v)}
+            options={statuses.filter(s => s !== 'All')}
+            allLabel="Status: All"
+          />
+          <SelectFilter
             value={activityFilter || 'All'}
-            onChange={(e) => setActivityFilter(e.target.value === 'All' ? null : e.target.value)}
-            className="px-4 py-2 border border-[#D1D5DB] rounded text-body-md focus:outline-none focus:border-primary bg-surface-container-lowest"
-          >
-            {activities.map(a => (
-              <option key={a} value={a}>{a === 'All' ? 'Activity: All' : a}</option>
-            ))}
-          </select>
+            onChange={(v) => setActivityFilter(v === 'All' ? null : v)}
+            options={activities.filter(a => a !== 'All')}
+            allLabel="Activity: All"
+          />
         </div>
       </div>
 
@@ -272,11 +225,7 @@ function PurchaseOrderFollowUp() {
             </thead>
             <tbody>
               {paginatedData.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-4 py-16 text-center text-body-md text-on-surface-variant">
-                    No purchase orders found
-                  </td>
-                </tr>
+                <EmptyState colSpan={9} message="No purchase orders found" icon="fa-box-open" />
               ) : (
                 paginatedData.map((row, i) => {
                   const hasPO = row.PurchaseOrderNumber && row.PurchaseOrderNumber.trim() !== '';
@@ -311,32 +260,14 @@ function PurchaseOrderFollowUp() {
         </div>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-          <div className="text-body-sm text-on-surface-variant">
-          Showing {limitedDisplay.length > 0 ? (currentPage - 1) * ROWS_PER_PAGE + 1 : 0}-{Math.min(currentPage * ROWS_PER_PAGE, limitedDisplay.length)} of {limitedDisplay.length} records
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={limitedDisplay.length}
+        itemsPerPage={ROWS_PER_PAGE}
+        onPageChange={(p) => setCurrentPage(p)}
+        label="records"
+      />
     </div>
   );
 }

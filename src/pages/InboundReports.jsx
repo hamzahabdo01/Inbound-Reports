@@ -3,6 +3,14 @@ import { parseCSV, parseDwellingTime, parseQuantity, parseDate } from '../utils/
 import { shipmentCSVData } from '../data/shipmentData';
 import { exportDataToCSV } from '../utils/exportCSV';
 import PurchaseOrderFollowUp from './PurchaseOrderFollowUp';
+import KPICard from '../components/KPICard';
+import SearchInput from '../components/SearchInput';
+import TabGroup from '../components/TabGroup';
+import SimplePagination from '../components/SimplePagination';
+import EmptyState from '../components/EmptyState';
+import LoadingState from '../components/LoadingState';
+import SelectFilter from '../components/SelectFilter';
+import ExportButton from '../components/ExportButton';
 
 const ALL_COLUMNS = [
   'PurchaseOrderNumber',
@@ -262,39 +270,21 @@ function InboundReports({ sidebarVisible, toggleSidebar }) {
   const hasActiveFilters = searchQuery.trim() || officerFilter || arrivalDateFilter || dwellingTimeFilter || quickFilter;
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="text-header-sm text-on-surface-variant">Loading...</div>
-      </div>
-    );
+    return <LoadingState message="Loading shipment data..." fullScreen />;
   }
 
   return (
     <>
       {/* Header */}
       <div className="flex items-center justify-between mb-lg">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setActiveTab('shipment')}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 ${
-              activeTab === 'shipment'
-                ? 'bg-primary text-white shadow-sm'
-                : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-            }`}
-          >
-            Shipment Dwelling Time
-          </button>
-          <button
-            onClick={() => setActiveTab('purchase-order')}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 ${
-              activeTab === 'purchase-order'
-                ? 'bg-primary text-white shadow-sm'
-                : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-            }`}
-          >
-            Purchase Order Follow Up
-          </button>
-        </div>
+        <TabGroup
+          tabs={[
+            { id: 'shipment', label: 'Shipment Dwelling Time', icon: 'fa-ship' },
+            { id: 'purchase-order', label: 'Purchase Order Follow Up', icon: 'fa-file-lines' }
+          ]}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        />
         <div className="flex items-center gap-2">
           <button
             onClick={toggleSidebar}
@@ -303,15 +293,7 @@ function InboundReports({ sidebarVisible, toggleSidebar }) {
           >
             <i className={`fa-solid ${sidebarVisible ? 'fa-bars' : 'fa-columns'} text-on-surface`}></i>
           </button>
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border rounded text-body-md text-on-surface hover:bg-surface-container-low transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Export Report
-          </button>
+          <ExportButton onClick={handleExport} label="Export Report" />
         </div>
       </div>
 
@@ -323,112 +305,43 @@ function InboundReports({ sidebarVisible, toggleSidebar }) {
       <>
       {/* KPI Cards */}
       <div className="grid grid-cols-4 gap-4 mb-lg">
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <i className="fa-solid fa-boxes-stacked text-lg text-on-surface-variant"></i>
-            <div className="text-label-caps text-on-surface-variant uppercase text-[11px]">Active Shipments</div>
-          </div>
-          <div className="flex items-baseline gap-3">
-            <div className="text-display-kpi text-on-surface font-extrabold">{kpis.totalActive}</div>
-            <span className="flex items-center text-body-sm text-success">
-              <i className="fa-solid fa-check text-xs mr-1"></i>
-              2.4%
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <i className="fa-solid fa-clock text-lg text-on-surface-variant"></i>
-            <div className="text-label-caps text-on-surface-variant uppercase text-[11px]">Avg Dwelling</div>
-          </div>
-          <div className="flex items-baseline gap-3">
-            <div className="text-display-kpi text-on-surface font-extrabold">{kpis.avgDwelling}</div>
-            <span className="text-body-sm text-on-surface-variant">days</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <i className="fa-solid fa-triangle-exclamation text-lg text-error"></i>
-            <div className="text-label-caps text-on-surface-variant uppercase text-[11px]">Max Dwelling</div>
-          </div>
-          <div className="flex items-baseline gap-3">
-            <div className="text-display-kpi text-error font-extrabold">{kpis.maxDwelling}</div>
-            <span className="flex items-center text-body-sm text-error">
-              <i className="fa-solid fa-check text-xs mr-1"></i>
-              12%
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <i className="fa-solid fa-circle-exclamation text-lg text-error"></i>
-            <div className="text-label-caps text-on-surface-variant uppercase text-[11px]">&gt; 90 Days</div>
-          </div>
-          <div className="flex items-baseline gap-3">
-            <div className="text-display-kpi text-error font-extrabold">{kpis.over90Days}</div>
-            <span className="text-body-sm text-on-surface-variant">critical</span>
-          </div>
-        </div>
+        <KPICard icon="fa-boxes-stacked" label="Active Shipments" value={kpis.totalActive} trend={<><i className="fa-solid fa-check text-xs mr-1"></i>2.4%</>} trendIcon="text-success" />
+        <KPICard icon="fa-clock" label="Avg Dwelling" value={kpis.avgDwelling} trend="days" />
+        <KPICard icon="fa-triangle-exclamation" iconColor="text-error" label="Max Dwelling" value={kpis.maxDwelling} valueColor="text-error" trend={<><i className="fa-solid fa-check text-xs mr-1"></i>12%</>} trendIcon="text-error" />
+        <KPICard icon="fa-circle-exclamation" iconColor="text-error" label="> 90 Days" value={kpis.over90Days} valueColor="text-error" trend="critical" />
       </div>
 
       {/* Search and Filters */}
       <div className="bg-surface-container-lowest border border-[#D1D5DB] rounded-lg p-4 mb-md">
         <div className="flex items-center gap-3 mb-md">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <svg className="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search POs, Medicines, Suppliers"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-[#D1D5DB] rounded text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-            />
-          </div>
+          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search POs, Medicines, Suppliers" />
 
-          {/* Officer Filter */}
-          <select
+          <SelectFilter
             value={officerFilter || ''}
-            onChange={(e) => setOfficerFilter(e.target.value || null)}
-            className="px-4 py-2 border border-[#D1D5DB] rounded text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 bg-surface-container-lowest"
-          >
-            <option value="">Officer: All</option>
-            {[...new Set(data.map(row => row.ShipmentOfficer).filter(Boolean))].map(officer => (
-              <option key={officer} value={officer}>{officer}</option>
-            ))}
-          </select>
+            onChange={setOfficerFilter}
+            options={[...new Set(data.map(row => row.ShipmentOfficer).filter(Boolean))]}
+            placeholder="Officer: All"
+          />
 
-          {/* Arrival Date Filter */}
-          <select
+          <SelectFilter
             value={arrivalDateFilter || ''}
-            onChange={(e) => setArrivalDateFilter(e.target.value || null)}
-            className="px-4 py-2 border border-[#D1D5DB] rounded text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 bg-surface-container-lowest"
-          >
-            <option value="">Arrival Date: Any</option>
-            {[...new Set(data.map(row => row.PortArrivalDate).filter(Boolean))].map(date => (
-              <option key={date} value={date}>{date}</option>
-            ))}
-          </select>
+            onChange={setArrivalDateFilter}
+            options={[...new Set(data.map(row => row.PortArrivalDate).filter(Boolean))]}
+            placeholder="Arrival Date: Any"
+          />
 
-          {/* Dwelling Time Filter */}
-          <select
+          <SelectFilter
             value={dwellingTimeFilter || ''}
-            onChange={(e) => setDwellingTimeFilter(e.target.value || null)}
-            className="px-4 py-2 border border-[#D1D5DB] rounded text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 bg-surface-container-lowest"
-          >
-            <option value="">Dwelling Time: Any</option>
-            <option value=">90">&gt; 90 days</option>
-            <option value="60-90">60-90 days</option>
-            <option value="30-60">30-60 days</option>
-            <option value="<30">&lt; 30 days</option>
-          </select>
+            onChange={setDwellingTimeFilter}
+            options={[
+              { value: '>90', label: '> 90 days' },
+              { value: '60-90', label: '60-90 days' },
+              { value: '30-60', label: '30-60 days' },
+              { value: '<30', label: '< 30 days' }
+            ]}
+            placeholder="Dwelling Time: Any"
+          />
 
-          {/* Clear All */}
           {hasActiveFilters && (
             <button
               onClick={handleClearAll}
@@ -706,11 +619,7 @@ function InboundReports({ sidebarVisible, toggleSidebar }) {
             </thead>
             <tbody>
               {paginatedData.length === 0 ? (
-                <tr>
-                  <td colSpan={11} className="px-4 py-16 text-center text-body-md text-on-surface-variant">
-                    No shipments found
-                  </td>
-                </tr>
+                <EmptyState colSpan={11} message="No shipments found" icon="fa-box-open" />
               ) : (
                 paginatedData.map((row, index) => {
                   const dwellingDays = row.DwellingTime;
@@ -749,32 +658,14 @@ function InboundReports({ sidebarVisible, toggleSidebar }) {
         </div>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="text-body-sm text-on-surface-variant">
-          Showing {Math.min((currentPage - 1) * rowsPerPage + 1, filteredData.length)}-{Math.min(currentPage * rowsPerPage, filteredData.length)} of {filteredData.length} shipments
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="p-2 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-low"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      <SimplePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredData.length}
+        itemsPerPage={rowsPerPage}
+        onPageChange={(p) => setCurrentPage(p)}
+        label="shipments"
+      />
       </>
       )}
     </>
