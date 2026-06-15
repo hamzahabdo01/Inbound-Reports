@@ -270,7 +270,7 @@ function Procurement() {
         label: stage.name, 
         count, 
         percent: 0, 
-        color: ['#00695C', '#E65100', '#C2185B', '#1976D2', '#388E3C', '#FBC02D', '#795548', '#512DA8'][i % 8] 
+        color: ['#00373B', '#0B4F54', '#216E6A', '#4A9598', '#86BFC5', '#515F74', '#D97706', '#059669'][i % 8] 
       };
     });
     

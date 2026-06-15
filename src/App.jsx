@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import InboundReports from './pages/InboundReports';
 import Procurement from './pages/Procurement';
 import MiscellaneousStockReport from './pages/MiscellaneousStockReport';
+import ShipmentStatus from './pages/ShipmentStatus';
 
 function Placeholder({ title }) {
   const iconMap = {
@@ -53,6 +54,8 @@ function App() {
         return <MiscellaneousStockReport {...extraProps} />;
       case 'Procurement':
         return <Procurement {...extraProps} />;
+      case 'Shipment Status':
+        return <ShipmentStatus {...extraProps} />;
       default:
         return <Placeholder title={activeSection} />;
     }

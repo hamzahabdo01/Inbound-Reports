@@ -24,8 +24,9 @@ Corporate Modernism with Minimalist lean. Deep forest teals and steel slates on 
 | Outline Variant / Gray Border | `#CFD8DC` |
 | Text Primary | `#0A3235` |
 | Error | `#BA1A1A` |
-| Success | `#10B981` |
+| Success | `#059669` |
 | Warning | `#D97706` |
+| Blue (Informational) | `#3B82F6` |
 
 ## Typography
 
@@ -55,6 +56,25 @@ Font: **Plus Jakarta Sans** throughout.
 | 0 — Flat | App background | None |
 | 1 — Floating | Cards | `0px 4px 20px rgba(10, 50, 53, 0.06)` |
 | 2 — Overlay | Modals, Dropdowns | `0px 12px 32px rgba(10, 50, 53, 0.12)` |
+
+## Charts & Data Visualization
+
+### Pie / Donut Charts
+All pie and donut charts MUST use a brand-cohesive categorical palette drawn from the design system tokens. This ensures visual distinction between segments while remaining on-brand. Teal variants dominate (4 of 8) with complementary design system accent colors providing contrast.
+
+| Segment | Hex | Source |
+|---------|-----|--------|
+| 1 | `#00373B` | Primary Dark |
+| 2 | `#0B4F54` | Primary |
+| 3 | `#216E6A` | Medium teal (between Primary & Tertiary) |
+| 4 | `#4A9598` | Medium-light teal |
+| 5 | `#86BFC5` | On Primary Container |
+| 6 | `#515F74` | Secondary (Steel Slate) |
+| 7 | `#D97706` | Warning |
+| 8 | `#059669` | Success |
+
+### Bar / Area Charts
+Use `#00373B` (Primary Dark) for line strokes and area fills. Use `opacity-10` for filled areas and `strokeWidth="4"` for line strokes.
 
 ## Component Rules
 

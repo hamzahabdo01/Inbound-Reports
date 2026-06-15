@@ -47,7 +47,7 @@ export default {
           DEFAULT: '#003734',
         },
         error: '#BA1A1A',
-        success: '#0B4F54',
+        success: '#059669',
         warning: '#D97706',
         'on-primary': '#ffffff',
         background: '#F6FAFC',

@@ -302,7 +302,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
         <KPICard variant="detailed" icon="fa-boxes-stacked" iconBg="bg-slate-50" iconColor="text-slate-500" label="Total Items" value={formatNumber(stats.total)} valueColor="text-slate-900" subtitle="Monitored commodities" />
         <KPICard variant="detailed" icon="fa-circle-exclamation" iconBg="bg-red-50" iconColor="text-red-500" label="Out of Stock" value={formatNumber(stats.outOfStock)} valueColor="text-red-600" subtitle="MOS = 0 Months" trendIcon="text-red-500 font-semibold" />
         <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg="bg-amber-50" iconColor="text-amber-500" label="Understocked" value={formatNumber(stats.understocked)} valueColor="text-amber-600" subtitle="MOS < 3 Months" trendIcon="text-amber-600 font-semibold" />
-        <KPICard variant="detailed" icon="fa-check-double" iconBg="bg-emerald-50" iconColor="text-emerald-500" label="Adequate" value={formatNumber(stats.adequate)} valueColor="text-emerald-600" subtitle="MOS 3 - 6 Months" trendIcon="text-emerald-600 font-semibold" />
+        <KPICard variant="detailed" icon="fa-check-double" iconBg="bg-emerald-50" iconColor="text-emerald-600" label="Adequate" value={formatNumber(stats.adequate)} valueColor="text-emerald-600" subtitle="MOS 3 - 6 Months" trendIcon="text-emerald-600 font-semibold" />
         <KPICard variant="detailed" icon="fa-circle-arrow-up" iconBg="bg-blue-50" iconColor="text-blue-500" label="Overstocked" value={formatNumber(stats.overstocked)} valueColor="text-blue-600" subtitle="MOS > 6 Months" trendIcon="text-blue-600 font-semibold" className="col-span-2 lg:col-span-1" />
       </div>
 
