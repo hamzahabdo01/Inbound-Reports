@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { shipmentStatusHPRData, shipmentStatusRDFData } from '../data/shipmentStatusData';
 import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../data/purchaseOrderDetailData';
 import StatCard from '../components/StatCard';
-import DonutChart from '../components/DonutChart';
+import PieChart from '../components/PieChart';
 import HBarChart from '../components/HBarChart';
 
 // ─── CSV Parser ────────────────────────────────────────────────────────────────
@@ -631,7 +631,7 @@ function ShipmentStatus() {
                 <h3 className="text-sm font-bold text-[#181C1E]">GRNF Status Distribution</h3>
                 <p className="text-xs text-[#707979] mt-0.5">{activeOrg} — breakdown of receipt completion levels</p>
               </div>
-              <DonutChart data={donutData} subtitle="Total" />
+              <PieChart data={donutData} />
             </div>
 
             {/* Horizontal Bar — PO Type */}

@@ -4,6 +4,7 @@ import InboundReports from './pages/InboundReports';
 import Procurement from './pages/Procurement';
 import MiscellaneousStockReport from './pages/MiscellaneousStockReport';
 import ShipmentStatus from './pages/ShipmentStatus';
+import ProgramDashboard from './pages/ProgramDashboard';
 
 function Placeholder({ title }) {
   const iconMap = {
@@ -50,6 +51,8 @@ function App() {
     switch (activeSection) {
       case 'Inbound Report':
         return <InboundReports {...extraProps} />;
+      case 'Program':
+        return <ProgramDashboard {...extraProps} />;
       case 'Miscellaneous Stock Report':
         return <MiscellaneousStockReport {...extraProps} />;
       case 'Procurement':
@@ -63,9 +66,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-surface flex">
-      {sidebarVisible && (
-        <Sidebar activeSection={activeSection} onNavigate={setActiveSection} />
-      )}
+      <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} />
       <main className="flex-1 overflow-auto">
         <div className="max-w-container mx-auto px-lg py-lg">
           {renderPage({ sidebarVisible, toggleSidebar })}

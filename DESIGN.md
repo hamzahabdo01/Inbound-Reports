@@ -59,8 +59,8 @@ Font: **Plus Jakarta Sans** throughout.
 
 ## Charts & Data Visualization
 
-### Pie / Donut Charts
-All pie and donut charts MUST use a brand-cohesive categorical palette drawn from the design system tokens. This ensures visual distinction between segments while remaining on-brand. Teal variants dominate (4 of 8) with complementary design system accent colors providing contrast.
+### Pie Charts
+All pie charts MUST use a brand-cohesive categorical palette drawn from the design system tokens. This ensures visual distinction between segments while remaining on-brand. Teal variants dominate (4 of 8) with complementary design system accent colors providing contrast.
 
 | Segment | Hex | Source |
 |---------|-----|--------|

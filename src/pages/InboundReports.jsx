@@ -25,7 +25,7 @@ const ALL_COLUMNS = [
   'DwellingTime'
 ];
 
-function InboundReports({ sidebarVisible, toggleSidebar }) {
+function InboundReports() {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -286,13 +286,6 @@ function InboundReports({ sidebarVisible, toggleSidebar }) {
           onChange={setActiveTab}
         />
         <div className="flex items-center gap-2">
-          <button
-            onClick={toggleSidebar}
-            aria-label={sidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
-            className="p-2 rounded border border-outline bg-surface-container-lowest hover:bg-surface-container transition-colors"
-          >
-            <i className={`fa-solid ${sidebarVisible ? 'fa-bars' : 'fa-columns'} text-on-surface`}></i>
-          </button>
           <ExportButton onClick={handleExport} label="Export Report" />
         </div>
       </div>

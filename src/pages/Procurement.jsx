@@ -3,6 +3,7 @@ import { parseCSV } from '../utils/csvParser';
 import tenderProcessCSV from '../data/tenderProcess.csv?raw';
 import contractProcessForSeaCSV from '../data/contractProcessforSea.csv?raw';
 import contractProcessForAirCSV from '../data/contractProcessforAir.csv?raw';
+import PieChart from '../components/PieChart';
 import SearchInput from '../components/SearchInput';
 import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
@@ -59,7 +60,6 @@ function Procurement() {
 
   // Visualization modes
   const [visMode, setVisMode] = useState('pipeline'); // 'pipeline' | 'chart' | 'trend'
-  const [hoveredSlice, setHoveredSlice] = useState(null);
   const [hoveredMonthIdx, setHoveredMonthIdx] = useState(null);
 
   // Sorting state
@@ -260,29 +260,14 @@ function Procurement() {
     return dates;
   };
 
-  // Donut slices proportions based on counts
-  const donutStats = useMemo(() => {
-    let total = 0;
-    const stats = currentStages.filter(s => s.id <= 8).map((stage, i) => {
-      const count = stageCounts[stage.id] || 0;
-      total += count;
-      return { 
-        label: stage.name, 
-        count, 
-        percent: 0, 
-        color: ['#00373B', '#0B4F54', '#216E6A', '#4A9598', '#86BFC5', '#515F74', '#D97706', '#059669'][i % 8] 
-      };
-    });
-    
-    let currentOffset = 0;
-    return stats.map(s => {
-      s.percent = total === 0 ? '0%' : ((s.count / total) * 100).toFixed(1) + '%';
-      const dash = (s.count / (total || 1)) * 408.4; 
-      const offset = currentOffset;
-      currentOffset -= dash;
-      return { ...s, strokeDash: `${dash} 408.4`, offset };
-    });
-  }, [stageCounts, currentStages]);
+  // Pie slices based on counts
+  const pieData = useMemo(() => (
+    currentStages.filter(s => s.id <= 8).map((stage, i) => ({
+      label: stage.name,
+      value: stageCounts[stage.id] || 0,
+      color: ['#00373B', '#0B4F54', '#216E6A', '#4A9598', '#86BFC5', '#515F74', '#D97706', '#059669'][i % 8],
+    }))
+  ), [stageCounts, currentStages]);
 
   return (
     <div className="space-y-lg animate-fade-in">
@@ -410,9 +395,9 @@ function Procurement() {
       </div>
 
       {/* Visualizer card & sidebar dates panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-lg">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] gap-lg">
         {/* Stage Visualizer */}
-        <div className="lg:col-span-2 bg-white rounded-xl p-md shadow-level-2 border border-outline-variant flex flex-col">
+        <div className="bg-white rounded-xl p-md shadow-level-2 border border-outline-variant flex flex-col self-start">
           <div className="flex items-center justify-between border-b border-outline-variant/30 pb-xs mb-sm relative z-20">
             <h3 className="text-header-sm font-bold text-on-surface">Stage Visualizer</h3>
             <div className="flex items-center gap-1 bg-surface-container-low p-0.5 rounded-lg border border-outline-variant/30">
@@ -452,9 +437,9 @@ function Procurement() {
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col justify-between">
+          <div className="h-[460px]">
             {visMode === 'pipeline' && (
-              <div className="flex-1 flex flex-col justify-around py-1">
+              <div className="h-full flex flex-col justify-around py-1">
                 {currentStages.filter(s => s.id <= 8).map((stage) => {
                   const count = stageCounts[stage.id] || 0;
                   const totalCount = filteredData.length || 1;
@@ -484,75 +469,15 @@ function Procurement() {
             )}
 
             {visMode === 'chart' && (
-              <div className="flex-1 flex flex-col items-center justify-start gap-md py-2 h-full">
-                {/* Donut Chart SVG */}
-                <div className="relative w-full h-80 shrink-0 flex items-center justify-center mt-2">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 160 160">
-                    <defs>
-                      <filter id="hover-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.15" />
-                      </filter>
-                    </defs>
-                    
-                    {donutStats.map((slice, index) => (
-                      <circle
-                        key={index}
-                        cx="80"
-                        cy="80"
-                        r="65"
-                        fill="transparent"
-                        stroke={slice.color}
-                        strokeWidth={hoveredSlice === index ? '30' : '22'}
-                        strokeDasharray={slice.strokeDash}
-                        strokeDashoffset={slice.offset}
-                        filter={hoveredSlice === index ? 'url(#hover-shadow)' : ''}
-                        className="cursor-pointer transition-all duration-200"
-                        onMouseEnter={() => setHoveredSlice(index)}
-                        onMouseLeave={() => setHoveredSlice(null)}
-                      />
-                    ))}
-                  </svg>
-                  
-                  {/* Center Info Text */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none p-4">
-                    <span className="text-5xl leading-none font-black text-[#00373B]">
-                      {hoveredSlice !== null ? donutStats[hoveredSlice].count : filteredData.length}
-                    </span>
-                    <span className="text-xs font-black text-on-surface-variant uppercase tracking-wider mt-2">
-                      {hoveredSlice !== null ? donutStats[hoveredSlice].label : (activeTab === 'tender' ? 'Total Tenders' : 'Total Contracts')}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Explanatory Info Card */}
-                <div className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl p-md space-y-sm mt-auto">
-                  <span className="text-xs font-bold text-primary block uppercase tracking-wider">Beginner Guide: Distribution</span>
-                  {hoveredSlice === null ? (
-                    <p className="text-sm text-on-surface leading-normal">
-                      Hover over any colored segment in the donut chart to inspect active items. The chart reflects the currently filtered dataset.
-                    </p>
-                  ) : (
-                    <div className="text-sm space-y-1">
-                      <div className="font-bold text-on-surface">
-                        {donutStats[hoveredSlice].label} Stage
-                      </div>
-                      <p className="text-on-surface-variant text-xs leading-normal">
-                        Count: **{donutStats[hoveredSlice].count}** ({donutStats[hoveredSlice].percent} of active pipeline). 
-                        {activeTab === 'contract' && hoveredSlice === 0 && ' This stage covers initial receipt of contract details and registration on CMS.'}
-                        {activeTab === 'contract' && hoveredSlice === 1 && ' This stage verifies that the supplier has successfully submitted performance security bonds.'}
-                        {activeTab === 'contract' && hoveredSlice === 2 && ' This stage represents Letter of Credit processing and currency allocations.'}
-                        {activeTab === 'contract' && hoveredSlice === 3 && ' This stage includes transit documents clearance and custom authority payments.'}
-                      </p>
-                    </div>
-                  )}
-                </div>
+              <div className="h-full flex items-center justify-center px-3 py-2">
+                <PieChart data={pieData} />
               </div>
             )}
 
             {visMode === 'trend' && (
-              <div className="flex-1 flex flex-col items-center justify-start gap-md py-2 h-full">
+              <div className="h-full flex flex-col items-center justify-start gap-md py-1">
                 {/* SVG Interactive Area Chart */}
-                <div className="relative w-full h-80 shrink-0 mt-2 bg-surface-container-lowest rounded-lg border border-outline-variant/30 p-4">
+                <div className="relative w-full flex-1 min-h-0 mt-2 bg-surface-container-lowest rounded-lg border border-outline-variant/30 p-4">
                   <svg className="w-full h-full" viewBox="0 0 780 220" preserveAspectRatio="none">
                     {[0, 200, 400, 600, 800, 1000].map((val) => {
                       const y = 180 - (val / 1000) * 150;
