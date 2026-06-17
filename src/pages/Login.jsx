@@ -46,7 +46,7 @@ export default function Login({ onLogin }) {
             Fanos Dashboard
           </h1>
           <p className="mt-4 text-base leading-relaxed text-[#86BFC5]/80 max-w-sm">
-            Centralized dashboard for monitoring shipments, inventory levels, and procurement across Ethiopia's medical supply network.
+            For monitoring shipments and procurement across Ethiopia's medical supply network.
           </p>
 
           <div className="mt-8 space-y-4">
