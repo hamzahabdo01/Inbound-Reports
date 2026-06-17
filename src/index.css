@@ -86,6 +86,19 @@
   .animate-slide-up {
     animation: slideUp 0.3s ease-out;
   }
+
+  /* Section highlight flash — triggered by ProgramSectionNav on scroll-to */
+  @keyframes sectionHighlight {
+    0%   { background-color: #ffffff; }
+    20%  { background-color: rgba(11, 79, 84, 0.09); }
+    65%  { background-color: rgba(11, 79, 84, 0.06); }
+    100% { background-color: #ffffff; }
+  }
+
+  .section-highlight {
+    animation: sectionHighlight 1600ms ease-out forwards !important;
+    border-radius: 12px;
+  }
 }
 
 /* Custom scrollbar - Deep Eucalyptus Design System */

@@ -67,7 +67,7 @@ function App() {
   return (
     <div className="min-h-screen bg-surface flex">
       <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 max-h-screen overflow-auto">
         <div className="max-w-container mx-auto px-lg py-lg">
           {renderPage({ sidebarVisible, toggleSidebar })}
         </div>
