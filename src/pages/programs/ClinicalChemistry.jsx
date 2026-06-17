@@ -55,7 +55,7 @@ function ClinicalChemistry({ programType = 'Health Program' }) {
 
       {/* ── Overview: KPI cards ──────────────────────────────────────────── */}
       <section id="cc-kpis">
-        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
+        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}>
           <ProgramCard icon="fa-boxes-stacked"        label="SOH"        value={formatCompact(kpis.soh)}     helper={`${ccStockRows.length} SKUs`} tone="neutral" />
           <ProgramCard icon="fa-cart-shopping"        label="Ordered"    value={formatCompact(kpis.ordered)} helper="in purchase orders"           tone="info"    />
           <ProgramCard icon="fa-truck-fast"           label="QIT"        value={formatCompact(kpis.qit)}     helper="qty in transit"               tone="success" />
@@ -80,10 +80,14 @@ function ClinicalChemistry({ programType = 'Health Program' }) {
       {/* ── Procurement Agents + Funding Source ──────────────────────────── */}
       <section id="cc-agents" className="grid grid-cols-2 gap-5">
         <ProgramPanel title="Procurement Agents" subtitle="PO line count by product and funding source">
-          <PieChart data={ccDonorChart} />
+          <div className="-mt-3 px-5 pb-5">
+            <PieChart data={ccDonorChart} />
+          </div>
         </ProgramPanel>
         <ProgramPanel title="Funding Source" subtitle="Incoming shipment funder share">
-          <PieChart data={ccFundingChart} />
+          <div className="-mt-3 px-5 pb-5">
+            <PieChart data={ccFundingChart} />
+          </div>
         </ProgramPanel>
       </section>
 
