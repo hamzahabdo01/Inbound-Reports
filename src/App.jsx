@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import Sidebar from './components/Sidebar';
+import Login from './pages/Login';
 import InboundReports from './pages/InboundReports';
 import Procurement from './pages/Procurement';
 import MiscellaneousStockReport from './pages/MiscellaneousStockReport';
@@ -42,8 +43,13 @@ function Placeholder({ title }) {
 }
 
 function App() {
-  const [activeSection, setActiveSection] = useState('Inbound Report');
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [activeSection, setActiveSection] = useState('Dashboard');
   const [sidebarVisible, setSidebarVisible] = useState(true);
+
+  if (!loggedIn) {
+    return <Login onLogin={() => setLoggedIn(true)} />;
+  }
 
   const toggleSidebar = () => setSidebarVisible(v => !v);
 
@@ -66,7 +72,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-surface flex">
-      <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} />
+      <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={() => setLoggedIn(false)} />
       <main className="flex-1 max-h-screen overflow-auto">
         <div className="max-w-container mx-auto px-lg py-lg">
           {renderPage({ sidebarVisible, toggleSidebar })}

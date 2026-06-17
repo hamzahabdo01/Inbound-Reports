@@ -64,7 +64,7 @@ const navItems = [
   },
 ];
 
-function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse }) {
+function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLogout }) {
   const [expanded, setExpanded] = useState({});
 
   const toggle = (label) => {
@@ -194,11 +194,16 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse }) {
         </nav>
       </div>
 
-      <div className="px-2 xl:px-3 py-2 border-t border-white/10 flex items-center justify-center">
-        <div className="flex items-center gap-2 text-white/40">
-          <i className="fa-regular fa-circle-check text-[10px] text-sidebar-accent"></i>
-          <span className="text-[10px] font-medium">v2.0.0</span>
-        </div>
+      <div className="px-2 xl:px-3 py-2 border-t border-white/10 space-y-2">
+        <button
+          onClick={onLogout}
+          className={`w-full flex items-center gap-3 py-2 rounded-lg text-sm text-white/50 hover:text-error hover:bg-white/5 transition-all duration-150 ${collapsed ? 'justify-center px-3' : 'pl-5 pr-3'}`}
+          title="Logout"
+        >
+          <i className="fa-solid fa-right-from-bracket text-sm w-4 text-center shrink-0"></i>
+          <span className={`truncate ${collapsed ? 'hidden' : ''}`}>Logout</span>
+        </button>
+
       </div>
     </aside>
   );
