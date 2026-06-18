@@ -298,10 +298,10 @@ function InboundReports() {
       <>
       {/* KPI Cards */}
       <div className="grid grid-cols-4 gap-4 mb-lg">
-        <KPICard icon="fa-boxes-stacked" label="Active Shipments" value={kpis.totalActive} trend={<><i className="fa-solid fa-check text-xs mr-1"></i>2.4%</>} trendIcon="text-success" />
-        <KPICard icon="fa-clock" label="Avg Dwelling" value={kpis.avgDwelling} trend="days" />
-        <KPICard icon="fa-triangle-exclamation" iconColor="text-error" label="Max Dwelling" value={kpis.maxDwelling} valueColor="text-error" trend={<><i className="fa-solid fa-check text-xs mr-1"></i>12%</>} trendIcon="text-error" />
-        <KPICard icon="fa-circle-exclamation" iconColor="text-error" label="> 90 Days" value={kpis.over90Days} valueColor="text-error" trend="critical" />
+        <KPICard variant="detailed" icon="fa-boxes-stacked" iconBg="bg-emerald-50" iconColor="text-emerald-600" label="Active Shipments" value={kpis.totalActive} valueColor="text-emerald-600" subtitle="2.4% increase" />
+        <KPICard variant="detailed" icon="fa-clock" label="Avg Dwelling" value={kpis.avgDwelling} subtitle="average days" />
+        <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg="bg-red-50" iconColor="text-red-500" label="Max Dwelling" value={kpis.maxDwelling} valueColor="text-red-600" subtitle="12% increase" />
+        <KPICard variant="detailed" icon="fa-circle-exclamation" iconBg="bg-red-50" iconColor="text-red-500" label="> 90 Days" value={kpis.over90Days} valueColor="text-red-600" subtitle="critical items" />
       </div>
 
       {/* Search and Filters */}

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { shipmentStatusHPRData, shipmentStatusRDFData } from '../data/shipmentStatusData';
 import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../data/purchaseOrderDetailData';
 import StatCard from '../components/StatCard';
+import KPICard from '../components/KPICard';
 import PieChart from '../components/PieChart';
 import HBarChart from '../components/HBarChart';
 
@@ -589,38 +590,10 @@ function ShipmentStatus() {
         <>
           {/* KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard
-              icon="fa-truck-fast"
-              label="Total Shipments"
-              value={stats.total}
-              bgIcon="bg-[#0B4F54]/10"
-              valueColor="text-[#0B4F54]"
-              trendLabel="HPR active shipments"
-            />
-            <StatCard
-              icon="fa-circle-check"
-              label="≥99% GRNF"
-              value={stats.highGRNF}
-              bgIcon="bg-[#059669]/10"
-              valueColor="text-[#059669]"
-              trendLabel={`${((stats.highGRNF / stats.total) * 100).toFixed(0)}% of total`}
-            />
-            <StatCard
-              icon="fa-circle-xmark"
-              label="0% GRNF"
-              value={stats.zeroGRNF}
-              bgIcon="bg-[#BA1A1A]/10"
-              valueColor="text-[#BA1A1A]"
-              trendLabel="Requires attention"
-            />
-            <StatCard
-              icon="fa-trophy"
-              label="100% Complete"
-              value={stats.fullGRNF}
-              bgIcon="bg-[#059669]/10"
-              valueColor="text-[#059669]"
-              trendLabel="Fully received"
-            />
+            <KPICard variant="detailed" icon="fa-truck-fast" iconBg="bg-[#0B4F54]/10" iconColor="text-[#0B4F54]" label="Total Shipments" value={stats.total} valueColor="text-[#0B4F54]" subtitle="HPR active shipments" />
+            <KPICard variant="detailed" icon="fa-circle-check" iconBg="bg-[#059669]/10" iconColor="text-[#059669]" label="≥99% GRNF" value={stats.highGRNF} valueColor="text-[#059669]" subtitle={`${((stats.highGRNF / stats.total) * 100).toFixed(0)}% of total`} />
+            <KPICard variant="detailed" icon="fa-circle-xmark" iconBg="bg-[#BA1A1A]/10" iconColor="text-[#BA1A1A]" label="0% GRNF" value={stats.zeroGRNF} valueColor="text-[#BA1A1A]" subtitle="Requires attention" />
+            <KPICard variant="detailed" icon="fa-trophy" iconBg="bg-[#059669]/10" iconColor="text-[#059669]" label="100% Complete" value={stats.fullGRNF} valueColor="text-[#059669]" subtitle="Fully received" />
           </div>
 
           {/* Charts Row */}

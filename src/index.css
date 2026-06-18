@@ -115,6 +115,26 @@
     animation: slideToRight 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* Slide from bottom animation */
+  @keyframes slideFromBottom {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0%); }
+  }
+
+  .animate-slide-from-bottom {
+    animation: slideFromBottom 250ms ease forwards;
+  }
+
+  /* Slide to bottom (out) animation */
+  @keyframes slideToBottom {
+    from { transform: translateY(0%); }
+    to   { transform: translateY(100%); }
+  }
+
+  .animate-slide-to-bottom {
+    animation: slideToBottom 250ms ease forwards;
+  }
+
   /* Fade out animation */
   @keyframes fadeOut {
     from {
