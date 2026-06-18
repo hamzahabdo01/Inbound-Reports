@@ -35,7 +35,7 @@ const CC_SECTIONS = [
   { id: 'cc-country',      label: 'Country' },
 ];
 
-function ClinicalChemistry({ programType = 'Health Program' }) {
+function ClinicalChemistry({ programType = 'HPR' }) {
 
   const kpis = useMemo(() => ({
     soh:        ccStockRows.reduce((s, r) => s + r.SOH, 0),

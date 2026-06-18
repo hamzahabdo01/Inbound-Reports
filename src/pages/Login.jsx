@@ -6,11 +6,27 @@ const VALID_PASSWORD = 'pass2pass'
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [site, setSite] = useState('Others')
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [focusedField, setFocusedField] = useState(null)
+  const [showSitePanel, setShowSitePanel] = useState(false)
+  const [sitePanelClosing, setSitePanelClosing] = useState(false)
+
+  const closeSitePanel = () => {
+    setSitePanelClosing(true)
+    setTimeout(() => { setShowSitePanel(false); setSitePanelClosing(false) }, 250)
+  }
+
+  const sites = [
+    'Others', 'Adama Hub', 'Bahir Dar Hub', 'Home Office', 'Dessie Hub',
+    'Dire Dawa Hub', 'Gondar Hub', 'Addis Ababa Hub', 'Hawassa Hub',
+    'Jimma Hub', 'Mekele Hub', 'Amazon', 'Negele Borena Hub', 'Nekemte Hub',
+    'Shire Hub', 'Gambella Hub', 'Assosa Hub', 'Arba Minch Hub', 'Semera Hub',
+    'Jigjiga Hub', 'Addis Ababa [2] Hub', 'Kebri Dar Hub',
+  ].sort((a, b) => a === 'Others' ? -1 : b === 'Others' ? 1 : a.localeCompare(b))
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -140,6 +156,19 @@ export default function Login({ onLogin }) {
               </div>
             </div>
 
+            <div>
+              <label className="block text-label-sm text-on-surface mb-1.5">Site</label>
+              <button
+                type="button"
+                onClick={() => setShowSitePanel(true)}
+                className={`w-full h-12 flex items-center gap-3 px-3.5 rounded-lg border transition-all duration-200 text-left ${site !== 'Others' ? 'border-primary ring-2 ring-primary/10' : 'border-outline-variant hover:border-outline'}`}
+              >
+                <i className="fa-solid fa-location-dot text-sm text-primary" />
+                <span className="flex-1 text-body-md text-on-surface font-medium">{site}</span>
+                <i className="fa-solid fa-chevron-right text-xs text-on-surface-variant/30" />
+              </button>
+            </div>
+
             <label className="flex items-center gap-2 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -181,6 +210,34 @@ export default function Login({ onLogin }) {
 
         </div>
       </div>
+
+      {/* Site Panel */}
+      {showSitePanel && (
+        <div className="fixed inset-0 z-50 flex">
+          <div className={`flex-1 bg-black/20 backdrop-blur-sm animate-fade-in ${sitePanelClosing ? 'animate-fade-out' : ''}`} onClick={closeSitePanel} />
+          <div className={`w-[400px] bg-[#0B4F54] shadow-2xl flex flex-col ${sitePanelClosing ? 'animate-slide-to-right' : 'animate-slide-from-right'}`}>
+            <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
+              <h3 className="text-lg font-semibold text-white tracking-tight">Select Site</h3>
+              <button onClick={closeSitePanel} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-white/60">
+                <i className="fa-solid fa-xmark text-lg" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto py-2">
+              {sites.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => { setSite(s); closeSitePanel() }}
+                  className={`w-full flex items-center gap-3 px-6 py-3 text-left text-body-md transition-colors hover:bg-white/10 ${s === site ? 'bg-white/15 text-white font-semibold' : 'text-white/70'}`}
+                >
+                  <i className={`fa-solid fa-location-dot text-sm w-4 ${s === site ? 'text-white' : 'text-white/40'}`} />
+                  <span className="flex-1">{s}</span>
+                  {s === site && <i className="fa-solid fa-check text-white text-sm" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -13,6 +13,7 @@ import IssuedItemsTable from '../../components/program/IssuedItemsTable';
 import PurchaseOrderTable from '../../components/program/PurchaseOrderTable';
 import RecentReceivesTable from '../../components/program/RecentReceivesTable';
 import PieChart from '../../components/PieChart';
+import ProgramItemDetail from '../../components/program/ProgramItemDetail';
 import { parseCSV, parseQuantity } from '../../utils/csvParser';
 import stockStatusCsv from '../../data/Stock Status_ National.csv?raw';
 import hubBreakdownCsv from '../../data/Stock on Hand_ Regional Hubs Breakdown.csv?raw';
@@ -126,6 +127,7 @@ function ChildHealth() {
   const [productFilter, setProductFilter] = useState('');
   const [siteFilter,    setSiteFilter]    = useState('All');
   const [hubTypeFilter, setHubTypeFilter] = useState('All');
+  const [selectedProduct, setSelectedProduct] = useState('');
 
   const stockRows      = useMemo(() => normalizeStockRows(), []);
   const hubData        = useMemo(() => normalizeHubRows(), []);
@@ -301,6 +303,26 @@ function ChildHealth() {
 
   const hasFilters = Boolean(query.trim() || statusFilter || productFilter);
   const clearFilters = () => { setQuery(''); setStatusFilter(''); setProductFilter(''); };
+  const selectedStockRow = useMemo(
+    () => stockRows.find((row) => row.ProductCN === selectedProduct),
+    [stockRows, selectedProduct],
+  );
+
+  if (selectedProduct && selectedStockRow) {
+    return (
+      <ProgramItemDetail
+        programName="Child Health"
+        productName={selectedProduct}
+        itemOptions={stockRows.map((row) => ({ label: row.ProductCN, status: row.SS }))}
+        stockRow={selectedStockRow}
+        purchaseOrders={purchaseOrders}
+        recentReceives={recentReceives}
+        hubRows={hubData.rows}
+        onBack={() => setSelectedProduct('')}
+        onSelectItem={setSelectedProduct}
+      />
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -332,7 +354,7 @@ function ChildHealth() {
           title="Stock Status National"
           subtitle={`${filteredStock.length} of ${stockRows.length} products`}
         >
-          <NationalStockTable rows={filteredStock} />
+          <NationalStockTable rows={filteredStock} onSelectItem={setSelectedProduct} />
         </ProgramPanel>
       </section>
 

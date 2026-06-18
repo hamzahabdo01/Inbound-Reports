@@ -87,6 +87,48 @@
     animation: slideUp 0.3s ease-out;
   }
 
+  /* Slide from right animation */
+  @keyframes slideFromRight {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  .animate-slide-from-right {
+    animation: slideFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Slide to right (out) animation */
+  @keyframes slideToRight {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-slide-to-right {
+    animation: slideToRight 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Fade out animation */
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  .animate-fade-out {
+    animation: fadeOut 0.25s ease-out;
+  }
+
   /* Section highlight flash — triggered by ProgramSectionNav on scroll-to */
   @keyframes sectionHighlight {
     0%   { background-color: #ffffff; }
@@ -98,6 +140,30 @@
   .section-highlight {
     animation: sectionHighlight 1600ms ease-out forwards !important;
     border-radius: 12px;
+  }
+
+  .program-item-switcher-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #0B4F54 #EAEEF0;
+  }
+
+  .program-item-switcher-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .program-item-switcher-scroll::-webkit-scrollbar-track {
+    background: #EAEEF0;
+    border-radius: 9999px;
+  }
+
+  .program-item-switcher-scroll::-webkit-scrollbar-thumb {
+    background: #0B4F54;
+    border-radius: 9999px;
+    border: 1px solid #EAEEF0;
+  }
+
+  .program-item-switcher-scroll::-webkit-scrollbar-thumb:hover {
+    background: #115E59;
   }
 }
 

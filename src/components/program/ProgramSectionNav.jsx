@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
  * On hover: expands left to reveal full section labels.
  * Active dot = current section in view (IntersectionObserver).
  */
-function ProgramSectionNav({ sections }) {
+function ProgramSectionNav({ sections, scrollOffset = 120 }) {
   const [active, setActive] = useState(sections[0]?.id ?? '');
   const [expanded, setExpanded] = useState(false);
 
@@ -35,7 +35,7 @@ function ProgramSectionNav({ sections }) {
     const el = document.getElementById(id);
     if (!el) return;
     const scrollContainer = el.closest('main') ?? document.querySelector('main') ?? window;
-    const offset = 120;
+    const offset = scrollOffset;
     if (scrollContainer === window) {
       const top = el.getBoundingClientRect().top + window.scrollY - offset;
       window.scrollTo({ top, behavior: 'smooth' });

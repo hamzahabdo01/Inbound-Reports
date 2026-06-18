@@ -4,19 +4,10 @@ const palette = ['#4A9598', '#216E6A', '#86BFC5', '#D97706', '#515F74', '#0B4F54
 
 // Y-axis grid lines config
 const Y_TICKS = [0, 20, 40, 60, 80, 100];
-const CHART_LEFT_OFFSET = 44; // px reserved for Y-axis labels
+const CHART_LEFT_OFFSET = 44;
 
-/**
- * ProgramStackedBarChart
- *
- * Props:
- *  - data: Array<{ label: string, segments: Array<{ label: string, value: number }> }>
- *  - height: number (default 220) — chart body height in px
- *  - normalized: boolean (default false) — when true, renders a 100% normalized stacked bar
- *    with Y-axis labeled 0–100%. When false, renders absolute values.
- *  - yLabel: string — optional Y-axis label
- */
-function ProgramStackedBarChart({ data = [], height = 220, normalized = false, yLabel }) {
+function ProgramStackedBarChart({ data = [], height = 220, normalized = false, yLabel, yTicks }) {
+  const ticks = yTicks || Y_TICKS;
   const [hoveredBar, setHoveredBar] = useState(null);
   const [hoveredSeg, setHoveredSeg] = useState(null);
   const [tooltip, setTooltip] = useState(null);
@@ -70,7 +61,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
               {yLabel}
             </div>
           )}
-          {[...Y_TICKS].reverse().map((tick) => (
+          {[...ticks].reverse().map((tick) => (
             <span key={tick} className="text-[10px] font-semibold text-on-surface-variant text-right block leading-none">
               {tick}%
             </span>
@@ -80,17 +71,21 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
         {/* Chart body */}
         <div className="flex-1 relative" style={{ height: height + 24 }}>
           {/* Grid lines */}
-          {Y_TICKS.map((tick) => (
+          {ticks.map((tick) => {
+            const tickMax = ticks[ticks.length - 1] || 100;
+            const pct = (tick / tickMax) * 100;
+            return (
             <div
               key={tick}
               className="absolute left-0 right-0 border-t"
               style={{
-                bottom: `calc(24px + ${tick}%)`,
+                bottom: `calc(24px + ${pct}%)`,
                 borderColor: tick === 0 ? '#CFD8DC' : '#EAEEF0',
                 borderWidth: tick === 0 ? '1px' : '1px',
               }}
             />
-          ))}
+            );
+          })}
 
           {/* Bars row */}
           <div className="absolute left-0 right-0 bottom-6 flex items-end gap-1.5" style={{ height }}>
