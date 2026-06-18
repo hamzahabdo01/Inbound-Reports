@@ -163,27 +163,19 @@
   }
 
   .program-item-switcher-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: #0B4F54 #EAEEF0;
+    scrollbar-width: none;
   }
 
   .program-item-switcher-scroll::-webkit-scrollbar {
-    height: 6px;
+    display: none;
   }
 
-  .program-item-switcher-scroll::-webkit-scrollbar-track {
-    background: #EAEEF0;
-    border-radius: 9999px;
+  /* Hide scrollbar for program chips scrollable row */
+  .scrollbar-none {
+    scrollbar-width: none;
   }
-
-  .program-item-switcher-scroll::-webkit-scrollbar-thumb {
-    background: #0B4F54;
-    border-radius: 9999px;
-    border: 1px solid #EAEEF0;
-  }
-
-  .program-item-switcher-scroll::-webkit-scrollbar-thumb:hover {
-    background: #115E59;
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 }
 

@@ -7,21 +7,24 @@ export const PROGRAM_ITEMS = [
 function ProgramChips({ active, onChange }) {
   return (
     <div className="border-b border-outline-variant/30 py-2">
-      <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-1.5">
-        {PROGRAM_ITEMS.map((item) => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => onChange?.(item)}
-            className={`px-2 py-1 rounded text-[11px] font-bold text-center truncate transition-colors ${
-              item === active
-                ? 'bg-primary text-white'
-                : 'bg-white text-on-surface-variant border border-outline-variant hover:border-primary hover:text-primary'
-            }`}
-          >
-            {item}
-          </button>
-        ))}
+      <div className="relative">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {PROGRAM_ITEMS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => onChange?.(item)}
+              className={`shrink-0 px-3 py-1.5 rounded text-[11px] font-bold text-center transition-colors ${
+                item === active
+                  ? 'bg-primary text-white'
+                  : 'bg-white text-on-surface-variant border border-outline-variant hover:border-primary hover:text-primary'
+              }`}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-[#F6FAFC] to-transparent" />
       </div>
     </div>
   );

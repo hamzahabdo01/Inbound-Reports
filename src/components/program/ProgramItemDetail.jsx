@@ -233,31 +233,34 @@ function ProgramItemSwitcher({ items = [], selectedItem, onSelectItem }) {
   if (!items.length || !onSelectItem) return null;
 
   return (
-    <div className="sticky top-[72px] z-[9] -mx-lg border-b border-outline-variant bg-[#F6FAFC]/95 px-lg py-3 backdrop-blur">
-      <div className="program-item-switcher-scroll flex items-center gap-2 overflow-x-auto pb-2">
-        {items.map((item) => {
-          const label = typeof item === 'string' ? item : item.label;
-          const status = typeof item === 'string' ? '' : item.status;
-          const active = label === selectedItem;
+    <div className="sticky top-[50px] z-[9] -mx-lg border-b border-outline-variant bg-[#F6FAFC]/95 px-lg py-1.5 backdrop-blur">
+      <div className="relative">
+        <div className="program-item-switcher-scroll flex items-center gap-1.5 overflow-x-auto pb-1">
+          {items.map((item) => {
+            const label = typeof item === 'string' ? item : item.label;
+            const status = typeof item === 'string' ? '' : item.status;
+            const active = label === selectedItem;
 
-          return (
-            <button
-              key={label}
-              type="button"
-              onClick={() => onSelectItem(label)}
-              className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-body-sm font-bold ${
-                active
-                  ? 'border-primary bg-primary text-white shadow-[0px_4px_14px_rgba(10,50,53,0.16)]'
-                  : 'border-outline-variant bg-white text-on-surface-variant hover:border-primary/40 hover:text-primary'
-              }`}
-            >
-              <span>{label}</span>
-              {status && (
-                <span className={`h-2 w-2 rounded-full ${status === 'Stocked Out' ? 'bg-error' : status === 'Below EOP' ? 'bg-warning' : 'bg-success'}`} />
-              )}
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={label}
+                type="button"
+                onClick={() => onSelectItem(label)}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[12px] font-bold ${
+                  active
+                    ? 'border-primary bg-primary text-white shadow-[0px_4px_14px_rgba(10,50,53,0.16)]'
+                    : 'border-outline-variant bg-white text-on-surface-variant hover:border-primary/40 hover:text-primary'
+                }`}
+              >
+                <span>{label}</span>
+                {status && (
+                  <span className={`h-1.5 w-1.5 rounded-full ${status === 'Stocked Out' ? 'bg-error' : status === 'Below EOP' ? 'bg-warning' : 'bg-success'}`} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-[#F6FAFC] to-transparent" />
       </div>
     </div>
   );
@@ -440,14 +443,14 @@ function ProgramItemDetail({
 
   return (
     <div className="space-y-5">
-      <ProgramSectionNav sections={DETAIL_SECTIONS} scrollOffset={250} />
+      <ProgramSectionNav sections={DETAIL_SECTIONS} scrollOffset={160} />
       <ProgramItemSwitcher
         items={itemOptions}
         selectedItem={productName}
         onSelectItem={onSelectItem}
       />
 
-      <div className="sticky top-[140px] z-[8] -mx-lg bg-[#F6FAFC]/95 px-lg py-2 backdrop-blur border-b border-outline-variant">
+      <div className="sticky top-[98px] z-[8] -mx-lg bg-[#F6FAFC]/95 px-lg py-1.5 backdrop-blur border-b border-outline-variant">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <button
