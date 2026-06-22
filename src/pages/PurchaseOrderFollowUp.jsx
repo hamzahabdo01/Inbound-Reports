@@ -181,10 +181,10 @@ function PurchaseOrderFollowUp() {
     <div ref={mainRef}>
       {/* Stats cards */}
       <div className="grid grid-cols-4 gap-4 mb-lg">
-        <KPICard icon="fa-database" label="Total Records" value={stats.total.toLocaleString()} />
-        <KPICard icon="fa-file-lines" label="With PO" value={stats.withPO.toLocaleString()} />
-        <KPICard icon="fa-circle-check" iconColor="text-success" label="Cleared" value={stats.cleared.toLocaleString()} valueColor="text-success" />
-        <KPICard icon="fa-triangle-exclamation" iconColor="text-error" label="Stalled / At Risk" value={stats.critical.toLocaleString()} valueColor="text-error" />
+        <KPICard variant="detailed" icon="fa-database" iconBg="bg-surface-container" iconColor="text-primary" label="Total Records" value={stats.total.toLocaleString()} subtitle="all entries" />
+        <KPICard variant="detailed" icon="fa-file-lines" iconBg="bg-surface-container" iconColor="text-primary" label="With PO" value={stats.withPO.toLocaleString()} subtitle="has purchase order" />
+        <KPICard variant="detailed" icon="fa-circle-check" iconBg="bg-success/10" iconColor="text-success" label="Cleared" value={stats.cleared.toLocaleString()} valueColor="text-success" subtitle="fully processed" />
+        <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg="bg-error/10" iconColor="text-error" label="Stalled / At Risk" value={stats.critical.toLocaleString()} valueColor="text-error" subtitle="requires attention" />
       </div>
 
       {/* Search and filter */}

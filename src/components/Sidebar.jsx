@@ -35,9 +35,9 @@ const navItems = [
     children: [
       { label: 'Miscellaneous Stock Report' },
       { label: 'Inbound Report' },
-      { label: 'LC CAD Expiry' },
       { label: 'Shipment Status' },
       { label: 'Procurement' },
+      { label: 'PO Performance and Compliance' },
     ],
   },
   {

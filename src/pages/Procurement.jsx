@@ -8,6 +8,7 @@ import SearchInput from '../components/SearchInput';
 import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
 import SelectFilter from '../components/SelectFilter';
+import KPICard from '../components/KPICard';
 
 const TENDER_STAGES = [
   { id: 1, name: 'Preparation & Budget Analysis' },
@@ -337,65 +338,17 @@ function Procurement() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-lg">
         {/* KPI Cards */}
         <div className="lg:col-span-2 grid grid-cols-3 gap-md">
-          <div className="bg-white rounded-xl p-md shadow-level-2 border border-outline-variant flex flex-col justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-sidebar-bg/10 flex items-center justify-center text-sidebar-bg">
-                <i className="fa-solid fa-folder-tree text-sm"></i>
-              </div>
-              <span className="text-label-caps text-on-surface-variant uppercase text-[11px]">
-                {activeTab === 'tender' ? 'Active Tenders' : 'Active Contracts'}
-              </span>
-            </div>
-            <div className="text-display-kpi text-on-surface mt-sm">
-              {activeTab === 'tender' ? '11' : '504'}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-md shadow-level-2 border border-outline-variant flex flex-col justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-sidebar-bg/10 flex items-center justify-center text-sidebar-bg">
-                <i className="fa-solid fa-list-check text-sm"></i>
-              </div>
-              <span className="text-label-caps text-on-surface-variant uppercase text-[11px]">
-                {activeTab === 'tender' ? 'Total Tenders' : 'Total Contracts'}
-              </span>
-            </div>
-            <div className="text-display-kpi text-on-surface mt-sm">
-              {activeTab === 'tender' ? '11' : '525'}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-md shadow-level-2 border border-outline-variant flex flex-col justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center text-warning">
-                <i className="fa-solid fa-sack-dollar text-sm"></i>
-              </div>
-              <span className="text-label-caps text-on-surface-variant uppercase text-[11px]">Total Value</span>
-            </div>
-            <div className="text-display-kpi text-on-surface mt-sm">
-              {activeTab === 'tender' 
-                ? '$8 B' 
-                : (contractTypeFilter === 'Air' ? '$3 B' : '$10.1 B')}
-            </div>
-          </div>
+          <KPICard variant="detailed" icon="fa-folder-tree"   iconBg="bg-primary/10" iconColor="text-primary" label={activeTab === 'tender' ? 'Active Tenders' : 'Active Contracts'} value={activeTab === 'tender' ? '11' : '504'} subtitle="currently in process" />
+          <KPICard variant="detailed" icon="fa-list-check"    iconBg="bg-primary/10" iconColor="text-primary" label={activeTab === 'tender' ? 'Total Tenders' : 'Total Contracts'} value={activeTab === 'tender' ? '11' : '525'} subtitle="total records" />
+          <KPICard variant="detailed" icon="fa-sack-dollar"   iconBg="bg-warning/10" iconColor="text-warning" label="Total Value" value={activeTab === 'tender' ? '$8 B' : (contractTypeFilter === 'Air' ? '$3 B' : '$10.1 B')} subtitle="estimated budget" />
         </div>
 
         {/* Timeline start date info */}
-        <div className="bg-white rounded-xl p-md shadow-level-2 border border-outline-variant flex items-center justify-between">
-          <div>
-            <span className="text-label-caps text-on-surface-variant uppercase text-[11px]">Process Start Date</span>
-            <div className="text-headline-md text-sidebar-bg mt-xs font-bold">
-              {activeTab === 'tender' ? '30 Nov 2023' : '18 Jul 2023'}
-            </div>
-          </div>
-          <div className="w-12 h-12 rounded-full bg-sidebar-bg/10 flex items-center justify-center text-sidebar-bg">
-            <i className="fa-solid fa-calendar-check text-lg"></i>
-          </div>
-        </div>
+        <KPICard variant="detailed" icon="fa-calendar-check" iconBg="bg-primary/10" iconColor="text-primary" label="Process Start Date" value={activeTab === 'tender' ? '30 Nov 2023' : '18 Jul 2023'} subtitle="baseline date" />
       </div>
 
       {/* Visualizer card & sidebar dates panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] gap-lg">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2.05fr)_minmax(320px,1fr)] gap-lg">
         {/* Stage Visualizer */}
         <div className="bg-white rounded-xl p-md shadow-level-2 border border-outline-variant flex flex-col self-start">
           <div className="flex items-center justify-between border-b border-outline-variant/30 pb-xs mb-sm relative z-20">

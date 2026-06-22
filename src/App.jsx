@@ -5,6 +5,7 @@ import InboundReports from './pages/InboundReports';
 import Procurement from './pages/Procurement';
 import MiscellaneousStockReport from './pages/MiscellaneousStockReport';
 import ShipmentStatus from './pages/ShipmentStatus';
+import PoPerformanceCompliance from './pages/PoPerformanceCompliance';
 import ProgramDashboard from './pages/ProgramDashboard';
 
 function Placeholder({ title }) {
@@ -17,9 +18,9 @@ function Placeholder({ title }) {
     eRIS: 'fa-file-shield',
     AEFI: 'fa-triangle-exclamation',
     'Miscellaneous Stock Report': 'fa-boxes-stacked',
-    'LC CAD Expiry': 'fa-clock',
     'Shipment Status': 'fa-truck',
     Procurement: 'fa-cart-shopping',
+    'PO Performance and Compliance': 'fa-chart-bar',
     RDF: 'fa-flag',
     'Facility Dashboard': 'fa-hospital',
     RRF: 'fa-clipboard-list',
@@ -65,6 +66,8 @@ function App() {
         return <Procurement {...extraProps} />;
       case 'Shipment Status':
         return <ShipmentStatus {...extraProps} />;
+      case 'PO Performance and Compliance':
+        return <PoPerformanceCompliance {...extraProps} />;
       default:
         return <Placeholder title={activeSection} />;
     }

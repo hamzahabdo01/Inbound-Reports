@@ -7,6 +7,7 @@ import ProgramMiniTable from './ProgramMiniTable';
 import PurchaseOrderTable from './PurchaseOrderTable';
 import RecentReceivesTable from './RecentReceivesTable';
 import PieChart from '../PieChart';
+import KPICard from '../KPICard';
 
 const formatNumber = (value) => new Intl.NumberFormat('en').format(value || 0);
 const compactNumber = (value) =>
@@ -109,38 +110,6 @@ function DetailChartPanel({ title, icon = 'fa-circle-info', action, children }) 
   );
 }
 
-function DetailMetricTile({ icon, label, value, helper, tone = 'neutral' }) {
-  const toneMap = {
-    neutral: 'bg-surface-container text-primary',
-    success: 'bg-success/10 text-success',
-    warning: 'bg-warning/10 text-warning',
-    error: 'bg-error/10 text-error',
-    info: 'bg-[#3B82F6]/10 text-[#3B82F6]',
-  };
-
-  return (
-    <div className="flex min-w-0 rounded-lg border border-outline-variant bg-white px-4 py-3 shadow-[0px_2px_10px_rgba(10,50,53,0.04)]">
-      <div className="flex w-full items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-[11px] font-extrabold uppercase tracking-[0.04em] text-on-surface-variant">
-            {label}
-          </p>
-          <p className="mt-1.5 text-[30px] font-extrabold leading-9 text-on-surface">
-            {value}
-          </p>
-          {helper && (
-            <p className="mt-0.5 truncate text-[13px] font-semibold leading-5 text-on-surface-variant" title={helper}>
-              {helper}
-            </p>
-          )}
-        </div>
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${toneMap[tone]}`}>
-          <i className={`fa-solid ${icon} text-sm`} />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function EmptyDataTable({ title, columns, subtitle = '', rows = [] }) {
   return (
@@ -470,14 +439,14 @@ function ProgramItemDetail({
         <div className="grid grid-cols-[180px_minmax(0,1fr)] items-stretch gap-4">
           <NationalMosBelowEop stockRow={stockRow} />
           <div className="grid h-full grid-cols-4 grid-rows-2 items-stretch gap-2">
-          <DetailMetricTile icon="fa-boxes-stacked" label="AMC" value={compactNumber(amc)} helper="Avg monthly" tone="neutral" />
-          <DetailMetricTile icon="fa-warehouse" label="SOH" value={compactNumber(soh)} helper="Stock on hand" tone="success" />
-          <DetailMetricTile icon="fa-cart-shopping" label="Ordered" value={compactNumber(totalPO || stockRow?.QuantityPurchaseOrder)} helper={`${productPOs.length} PO lines`} tone="neutral" />
-          <DetailMetricTile icon="fa-route" label="GIT" value={compactNumber(stockRow?.GIT)} helper="In transit" tone="success" />
-          <DetailMetricTile icon="fa-box-open" label="Wastage" value={compactNumber(wastage)} helper="Reported waste" tone={wastage > 0 ? 'warning' : 'neutral'} />
-          <DetailMetricTile icon="fa-clock" label="nExpiry" value={compactNumber(nearExpiry)} helper="Near expiry" tone={nearExpiry > 0 ? 'warning' : 'neutral'} />
-          <DetailMetricTile icon="fa-triangle-exclamation" label="Gap" value={compactNumber(gap)} helper="Gap to max" tone={gap > 0 ? 'warning' : 'success'} />
-          <DetailMetricTile icon="fa-circle-plus" label="Overage" value={compactNumber(overage)} helper="Above max" tone={overage > 0 ? 'error' : 'neutral'} />
+          <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-surface-container" iconColor="text-primary" label="AMC"     value={compactNumber(amc)}          subtitle="Avg monthly" />
+          <KPICard variant="detailed" icon="fa-warehouse"          iconBg="bg-success/10"       iconColor="text-success"  label="SOH"     value={compactNumber(soh)}          subtitle="Stock on hand" />
+          <KPICard variant="detailed" icon="fa-cart-shopping"      iconBg="bg-surface-container" iconColor="text-primary" label="Ordered" value={compactNumber(totalPO || stockRow?.QuantityPurchaseOrder)} subtitle={`${productPOs.length} PO lines`} />
+          <KPICard variant="detailed" icon="fa-route"              iconBg="bg-success/10"       iconColor="text-success"  label="GIT"     value={compactNumber(stockRow?.GIT)} subtitle="In transit" />
+          <KPICard variant="detailed" icon="fa-box-open"           iconBg={wastage > 0 ? 'bg-warning/10' : 'bg-surface-container'} iconColor={wastage > 0 ? 'text-warning' : 'text-primary'} label="Wastage"  value={compactNumber(wastage)}       subtitle="Reported waste" />
+          <KPICard variant="detailed" icon="fa-clock"              iconBg={nearExpiry > 0 ? 'bg-warning/10' : 'bg-surface-container'} iconColor={nearExpiry > 0 ? 'text-warning' : 'text-primary'} label="nExpiry"  value={compactNumber(nearExpiry)}    subtitle="Near expiry" />
+          <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg={gap > 0 ? 'bg-warning/10' : 'bg-success/10'} iconColor={gap > 0 ? 'text-warning' : 'text-success'} label="Gap"      value={compactNumber(gap)}           subtitle="Gap to max" />
+          <KPICard variant="detailed" icon="fa-circle-plus"        iconBg={overage > 0 ? 'bg-error/10' : 'bg-surface-container'} iconColor={overage > 0 ? 'text-error' : 'text-primary'} label="Overage"  value={compactNumber(overage)}       subtitle="Above max" />
         </div>
           </div>
         </section>

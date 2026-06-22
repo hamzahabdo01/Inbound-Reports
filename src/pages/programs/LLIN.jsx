@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import ProgramCard from '../../components/program/ProgramCard';
+import KPICard from '../../components/KPICard';
 import ProgramPanel from '../../components/program/ProgramPanel';
 import ProgramSectionNav from '../../components/program/ProgramSectionNav';
 import ProgramStackedBarChart from '../../components/program/ProgramStackedBarChart';
@@ -121,12 +121,12 @@ function LlinProgram() {
       {/* ── Overview: KPI cards ──────────────────────────────────────────── */}
       <section id="llin-overview">
         <div className="grid grid-cols-6 gap-3">
-          <ProgramCard icon="fa-boxes-stacked"      label="SOH"     value={formatCompact(totalSoh)}     helper="current stock"        tone="success" />
-          <ProgramCard icon="fa-cart-shopping"       label="Ordered" value={formatCompact(totalOrdered)} helper="total PO quantity"    tone="neutral" />
-          <ProgramCard icon="fa-truck-fast"          label="Shipped" value={formatCompact(totalShipped)} helper="total shipped"        tone="info" />
-          <ProgramCard icon="fa-warehouse"           label="Received"value={formatCompact(totalReceived)}helper="total received"        tone="success" />
-          <ProgramCard icon="fa-clock-rotate-left"   label="Pending" value={formatCompact(totalPending)} helper="pending delivery"     tone="warning" />
-          <ProgramCard icon="fa-circle-exclamation"  label="Damaged" value="10.9K"                        helper="reported damage"      tone="warning" />
+          <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-success/10" iconColor="text-success" label="SOH"     value={formatCompact(totalSoh)}     subtitle="current stock" />
+          <KPICard variant="detailed" icon="fa-cart-shopping"       iconBg="bg-surface-container" iconColor="text-primary" label="Ordered" value={formatCompact(totalOrdered)} subtitle="total PO quantity" />
+          <KPICard variant="detailed" icon="fa-truck-fast"          iconBg="bg-[#3B82F6]/10" iconColor="text-[#3B82F6]" label="Shipped" value={formatCompact(totalShipped)} subtitle="total shipped" />
+          <KPICard variant="detailed" icon="fa-warehouse"           iconBg="bg-success/10" iconColor="text-success" label="Received"value={formatCompact(totalReceived)}subtitle="total received" />
+          <KPICard variant="detailed" icon="fa-clock-rotate-left"   iconBg="bg-warning/10" iconColor="text-warning" label="Pending" value={formatCompact(totalPending)} subtitle="pending delivery" />
+          <KPICard variant="detailed" icon="fa-circle-exclamation"  iconBg="bg-warning/10" iconColor="text-warning" label="Damaged" value="10.9K"                        subtitle="reported damage" />
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3">

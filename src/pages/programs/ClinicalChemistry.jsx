@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import ProgramCard from '../../components/program/ProgramCard';
+import KPICard from '../../components/KPICard';
 import ProgramPanel from '../../components/program/ProgramPanel';
 import ProgramSectionNav from '../../components/program/ProgramSectionNav';
 import ProgramStackedBarChart from '../../components/program/ProgramStackedBarChart';
@@ -56,14 +56,14 @@ function ClinicalChemistry({ programType = 'HPR' }) {
       {/* ── Overview: KPI cards ──────────────────────────────────────────── */}
       <section id="cc-kpis">
         <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}>
-          <ProgramCard icon="fa-boxes-stacked"        label="SOH"        value={formatCompact(kpis.soh)}     helper={`${ccStockRows.length} SKUs`} tone="neutral" />
-          <ProgramCard icon="fa-cart-shopping"        label="Ordered"    value={formatCompact(kpis.ordered)} helper="in purchase orders"           tone="info"    />
-          <ProgramCard icon="fa-truck-fast"           label="QIT"        value={formatCompact(kpis.qit)}     helper="qty in transit"               tone="success" />
-          <ProgramCard icon="fa-triangle-exclamation" label="Expired"    value={kpis.expired}                helper="expired items"                tone={kpis.expired    ? 'error'   : 'success'} />
-          <ProgramCard icon="fa-clock-rotate-left"    label=">sExpiry"   value={kpis.nearExpiry}             helper="expiring soon"                tone={kpis.nearExpiry ? 'warning' : 'success'} />
-          <ProgramCard icon="fa-box-open"             label="Damaged"    value={kpis.damaged}                helper="damaged items"                tone={kpis.damaged    ? 'error'   : 'success'} />
-          <ProgramCard icon="fa-circle-minus"         label="Gap"        value={kpis.gap}                    helper="below EOP or stocked out"     tone={kpis.gap        ? 'error'   : 'success'} />
-          <ProgramCard icon="fa-circle-plus"          label="Overage"    value={kpis.overage}                helper="excess stock items"           tone={kpis.overage    ? 'warning' : 'success'} />
+          <KPICard variant="detailed" icon="fa-boxes-stacked"        iconBg="bg-surface-container" iconColor="text-primary" label="SOH"        value={formatCompact(kpis.soh)}     subtitle={`${ccStockRows.length} SKUs`} />
+          <KPICard variant="detailed" icon="fa-cart-shopping"        iconBg="bg-[#3B82F6]/10" iconColor="text-[#3B82F6]" label="Ordered"    value={formatCompact(kpis.ordered)} subtitle="in purchase orders" />
+          <KPICard variant="detailed" icon="fa-truck-fast"           iconBg="bg-success/10" iconColor="text-success" label="QIT"        value={formatCompact(kpis.qit)}     subtitle="qty in transit" />
+          <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg={kpis.expired ? 'bg-error/10' : 'bg-success/10'} iconColor={kpis.expired ? 'text-error' : 'text-success'} label="Expired"    value={kpis.expired}                subtitle="expired items" />
+          <KPICard variant="detailed" icon="fa-clock-rotate-left"    iconBg={kpis.nearExpiry ? 'bg-warning/10' : 'bg-success/10'} iconColor={kpis.nearExpiry ? 'text-warning' : 'text-success'} label=">sExpiry"   value={kpis.nearExpiry}             subtitle="expiring soon" />
+          <KPICard variant="detailed" icon="fa-box-open"             iconBg={kpis.damaged ? 'bg-error/10' : 'bg-success/10'} iconColor={kpis.damaged ? 'text-error' : 'text-success'} label="Damaged"    value={kpis.damaged}                subtitle="damaged items" />
+          <KPICard variant="detailed" icon="fa-circle-minus"         iconBg={kpis.gap ? 'bg-error/10' : 'bg-success/10'} iconColor={kpis.gap ? 'text-error' : 'text-success'} label="Gap"        value={kpis.gap}                    subtitle="below EOP or stocked out" />
+          <KPICard variant="detailed" icon="fa-circle-plus"          iconBg={kpis.overage ? 'bg-warning/10' : 'bg-success/10'} iconColor={kpis.overage ? 'text-warning' : 'text-success'} label="Overage"    value={kpis.overage}                subtitle="excess stock items" />
         </div>
       </section>
 

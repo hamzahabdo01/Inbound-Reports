@@ -85,6 +85,60 @@ Use `#00373B` (Primary Dark) for line strokes and area fills. Use `opacity-10` f
 - **Table Header**: `#CFD8DC` bg, uppercase 12px labels
 - **Divider**: clean rows separated by 1px `#F0F4F6`
 
+## KPICard (`variant="detailed"`)
+
+Unified metric card used across all pages.
+
+### Props
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `icon` | `string` | yes | Font Awesome icon class (e.g. `"fa-boxes-stacked"`) |
+| `iconBg` | `string` | yes | Tailwind background class for icon circle |
+| `iconColor` | `string` | yes | Tailwind text color class for icon |
+| `label` | `string` | yes | Upper-cased title |
+| `value` | `string\|number` | yes | Large display number |
+| `valueColor` | `string` | no | Tailwind text color for value (defaults to `text-on-surface`) |
+| `subtitle` | `string` | no | Small helper text below value |
+| `variant` | `"detailed"` | no | Activates the detailed card layout |
+
+### Structure
+
+```
+┌──────────────────────────┐
+│  LABEL              [icon] │
+│                          │
+│  VALUE                   │
+│  subtitle                │
+└──────────────────────────┘
+```
+
+- White background, `rounded-xl`, `border-outline-variant` border, Level 1 shadow
+- `hover:shadow-md` transition
+- `p-lg` (16px) internal padding
+- Icon: `w-8 h-8 rounded-full` circle
+- Value: `text-display-kpi leading-none` (28px / 800 weight via Tailwind config)
+- Subtitle: `text-xs font-semibold`
+
+### Tone Mapping (iconBg / iconColor)
+
+Use these standard patterns for semantic states:
+
+| Tone | iconBg | iconColor | valueColor |
+|------|--------|-----------|------------|
+| Neutral | `bg-surface-container` | `text-primary` | `text-on-surface` |
+| Success | `bg-success/10` | `text-success` | `text-success` |
+| Warning | `bg-warning/10` | `text-warning` | `text-warning` |
+| Error | `bg-error/10` | `text-error` | `text-error` |
+| Info | `bg-[#3B82F6]/10` | `text-[#3B82F6]` | `text-[#3B82F6]` |
+
+For dynamic tones based on data (e.g. "Expired" shows error only when value > 0), inline the conditional:
+
+```jsx
+iconBg={kpis.expired ? 'bg-error/10' : 'bg-success/10'}
+iconColor={kpis.expired ? 'text-error' : 'text-success'}
+```
+
 ## Layout
 
 - Max width: 1280px, centered

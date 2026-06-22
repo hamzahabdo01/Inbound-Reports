@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import ProgramCard from '../../components/program/ProgramCard';
+import KPICard from '../../components/KPICard';
 import ProgramFilters from '../../components/program/ProgramFilters';
 import ProgramPanel from '../../components/program/ProgramPanel';
 import ProgramChartRow from '../../components/program/ProgramChartRow';
@@ -332,12 +332,12 @@ function ChildHealth() {
       {/* ── Overview: KPI cards + filters ────────────────────────────────── */}
       <section id="ch-kpis" className="space-y-5">
         <div className="grid grid-cols-6 gap-3">
-          <ProgramCard icon="fa-boxes-stacked"      label="SOH"       value={formatCompact(kpis.totalSoh)}  helper={`${stockRows.length} SKUs`}           tone="success" />
-          <ProgramCard icon="fa-truck-ramp-box"     label="Issued"    value={formatCompact(recentReceives.reduce((s, r) => s + r.QuantityReceived, 0))} helper="recent receives" tone="info" />
-          <ProgramCard icon="fa-layer-group"        label="Planned"   value={formatCompact(kpis.poQuantity)} helper={`${purchaseOrders.length} PO lines`} tone="neutral" />
-          <ProgramCard icon="fa-route"              label="GIT"       value={formatCompact(kpis.git)}        helper="in transit"                          tone="success" />
-          <ProgramCard icon="fa-circle-exclamation" label="Expired"   value={kpis.atRisk}                   helper="risk items"                          tone={kpis.atRisk ? 'error' : 'success'} />
-          <ProgramCard icon="fa-clock-rotate-left"  label="Re Expiry" value={stockRows.filter((r) => r.MOS < 3).length} helper="MOS below 3"            tone="warning" />
+          <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-success/10" iconColor="text-success" label="SOH"       value={formatCompact(kpis.totalSoh)}  subtitle={`${stockRows.length} SKUs`} />
+          <KPICard variant="detailed" icon="fa-truck-ramp-box"     iconBg="bg-[#3B82F6]/10" iconColor="text-[#3B82F6]" label="Issued"    value={formatCompact(recentReceives.reduce((s, r) => s + r.QuantityReceived, 0))} subtitle="recent receives" />
+          <KPICard variant="detailed" icon="fa-layer-group"        iconBg="bg-surface-container" iconColor="text-primary" label="Planned"   value={formatCompact(kpis.poQuantity)} subtitle={`${purchaseOrders.length} PO lines`} />
+          <KPICard variant="detailed" icon="fa-route"              iconBg="bg-success/10" iconColor="text-success" label="GIT"       value={formatCompact(kpis.git)}        subtitle="in transit" />
+          <KPICard variant="detailed" icon="fa-circle-exclamation" iconBg={kpis.atRisk ? 'bg-error/10' : 'bg-success/10'} iconColor={kpis.atRisk ? 'text-error' : 'text-success'} label="Expired"   value={kpis.atRisk}                   subtitle="risk items" />
+          <KPICard variant="detailed" icon="fa-clock-rotate-left"  iconBg="bg-warning/10" iconColor="text-warning" label="Re Expiry" value={stockRows.filter((r) => r.MOS < 3).length} subtitle="MOS below 3" />
         </div>
         <ProgramFilters
           query={query}           onQueryChange={setQuery}
@@ -485,9 +485,9 @@ function ChildHealth() {
       <section id="ch-mos">
         <ProgramPanel title="National MOS" subtitle="Months of stock by product">
           <div className="grid grid-cols-3 gap-3 px-5 pt-4 pb-2">
-            <ProgramCard icon="fa-chart-simple"   label="Actual"          value={mosStats.actual.toFixed(1)} helper="avg MOS"      tone="info"    />
-            <ProgramCard icon="fa-bullseye"       label="Ideal"           value={String(mosStats.ideal)}    helper="target months" tone="success" />
-            <ProgramCard icon="fa-scale-balanced" label="Actual vs Ideal" value={`${mosStats.gap > 0 ? '+' : ''}${mosStats.gap.toFixed(1)}`} helper={`months ${mosStats.gap <= 0 ? 'below' : 'above'} target`} tone={mosStats.gap <= 0 ? 'success' : 'warning'} />
+            <KPICard variant="detailed" icon="fa-chart-simple"   iconBg="bg-[#3B82F6]/10" iconColor="text-[#3B82F6]" label="Actual"          value={mosStats.actual.toFixed(1)} subtitle="avg MOS" />
+            <KPICard variant="detailed" icon="fa-bullseye"       iconBg="bg-success/10" iconColor="text-success" label="Ideal"           value={String(mosStats.ideal)}    subtitle="target months" />
+            <KPICard variant="detailed" icon="fa-scale-balanced" iconBg={mosStats.gap <= 0 ? 'bg-success/10' : 'bg-warning/10'} iconColor={mosStats.gap <= 0 ? 'text-success' : 'text-warning'} label="Actual vs Ideal" value={`${mosStats.gap > 0 ? '+' : ''}${mosStats.gap.toFixed(1)}`} subtitle={`months ${mosStats.gap <= 0 ? 'below' : 'above'} target`} />
           </div>
           <ProgramBarChart data={mosChart} valueFormatter={(v) => Number(v).toFixed(1)} />
         </ProgramPanel>
