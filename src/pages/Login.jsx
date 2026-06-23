@@ -1,51 +1,72 @@
-import { useState } from 'react'
-
-const VALID_USERNAME = 'TestAdmin'
-const VALID_PASSWORD = 'pass2pass'
+import { useState, useEffect, useRef } from 'react'
+import { login, logout, fetchEnvironments } from '../api/auth'
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [site, setSite] = useState('Others')
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [focusedField, setFocusedField] = useState(null)
-  const [showSitePanel, setShowSitePanel] = useState(false)
-  const [sitePanelClosing, setSitePanelClosing] = useState(false)
+  const [environments, setEnvironments] = useState([])
+  const [selectedEnv, setSelectedEnv] = useState(null)
+  const [showEnvPanel, setShowEnvPanel] = useState(false)
+  const [envPanelClosing, setEnvPanelClosing] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
 
-  const closeSitePanel = () => {
-    setSitePanelClosing(true)
-    setTimeout(() => { setShowSitePanel(false); setSitePanelClosing(false) }, 250)
+  const closeEnvPanel = () => {
+    setEnvPanelClosing(true)
+    setTimeout(() => { setShowEnvPanel(false); setEnvPanelClosing(false) }, 250)
   }
 
-  const sites = [
-    'Others', 'Adama Hub', 'Bahir Dar Hub', 'Home Office', 'Dessie Hub',
-    'Dire Dawa Hub', 'Gondar Hub', 'Addis Ababa Hub', 'Hawassa Hub',
-    'Jimma Hub', 'Mekele Hub', 'Amazon', 'Negele Borena Hub', 'Nekemte Hub',
-    'Shire Hub', 'Gambella Hub', 'Assosa Hub', 'Arba Minch Hub', 'Semera Hub',
-    'Jigjiga Hub', 'Addis Ababa [2] Hub', 'Kebri Dar Hub',
-  ].sort((a, b) => a === 'Others' ? -1 : b === 'Others' ? 1 : a.localeCompare(b))
+  const fetched = useRef(false)
+  useEffect(() => {
+    if (fetched.current) return
+    fetched.current = true
+    fetchEnvironments()
+      .then((res) => {
+        const list = res?.Data || (Array.isArray(res) ? res : [])
+        const all = [...list, { Environment: 'Others', EnvironmentCode: '' }]
+        setEnvironments(all)
+        setSelectedEnv(all[all.length - 1])
+      })
+      .catch(() => {})
+  }, [])
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const handleLogin = async () => {
     setError('')
 
     if (!username.trim()) { setError('Username is required'); return }
     if (!password.trim()) { setError('Password is required'); return }
 
-    if (username.trim() !== VALID_USERNAME || password !== VALID_PASSWORD) {
-      setError('Invalid username or password')
-      return
-    }
-
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      await login(username.trim(), password, selectedEnv?.EnvironmentCode || '')
       onLogin?.()
-    }, 800)
+    } catch (err) {
+      if (err.code === 'ERR_NETWORK') {
+        setError('Unable to connect to the server. Please check your network connection.')
+      } else if (err.response) {
+        const status = err.response.status
+        const data = err.response.data
+        if (status === 401) {
+          setError('Invalid username or password.')
+        } else if (status === 403) {
+          setError('Your account does not have permission to access this system.')
+        } else if (status === 429) {
+          setError('Too many login attempts. Please wait a moment and try again.')
+        } else if (status >= 500) {
+          setError('Server error. Please try again later.')
+        } else {
+          setError(data?.message || data?.title || data?.detail || 'Login failed. Please try again.')
+        }
+      } else {
+        setError(err.message || 'An unexpected error occurred. Please try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -118,7 +139,7 @@ export default function Login({ onLogin }) {
           </div>
 
           <div className="bg-white border border-[#E5E7EB] rounded-xl p-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-5">
               <div>
                 <label htmlFor="username" className="block text-label-sm text-on-surface mb-1.5">Username</label>
                 <div className={`relative rounded-lg border transition-all duration-200 ${error && !username.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'username' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#E5E7EB] hover:border-[#1a4a47]/40'}`}>
@@ -192,11 +213,11 @@ export default function Login({ onLogin }) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowSitePanel(true)}
-                  className={`w-full h-12 flex items-center gap-3 px-3.5 rounded-lg border transition-all duration-200 text-left ${site !== 'Others' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#E5E7EB] hover:border-[#1a4a47]/40'}`}
+                  onClick={() => setShowEnvPanel(true)}
+                  className={`w-full h-12 flex items-center gap-3 px-3.5 rounded-lg border transition-all duration-200 text-left ${selectedEnv ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#E5E7EB] hover:border-[#1a4a47]/40'}`}
                 >
                   <i className="fa-solid fa-location-dot text-sm text-[#1a4a47]" />
-                  <span className="flex-1 text-body-md text-on-surface font-medium">{site}</span>
+                  <span className="flex-1 text-body-md text-on-surface font-medium">{selectedEnv?.Environment || 'Select site'}</span>
                   <i className="fa-solid fa-chevron-right text-xs text-[#9CA3AF]" />
                 </button>
               </div>
@@ -219,8 +240,9 @@ export default function Login({ onLogin }) {
               )}
 
               <button
-                type="submit"
+                type="button"
                 disabled={loading}
+                onClick={handleLogin}
                 className="relative w-full h-12 rounded-lg bg-[#1a4a47] text-white text-label-sm hover:bg-[#1f5a56] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150 overflow-hidden"
               >
                 {loading ? (
@@ -232,7 +254,7 @@ export default function Login({ onLogin }) {
                   'Sign in'
                 )}
               </button>
-            </form>
+            </div>
           </div>
 
           <div className="mt-8 text-center">
@@ -245,26 +267,28 @@ export default function Login({ onLogin }) {
       </div>
 
       {/* Site Panel */}
-      {showSitePanel && (
+      {showEnvPanel && (
         <div className="fixed inset-0 z-50 flex flex-col-reverse lg:flex-row">
-          <div className={`flex-1 bg-black/20 backdrop-blur-sm animate-fade-in ${sitePanelClosing ? 'animate-fade-out' : ''}`} onClick={closeSitePanel} />
-          <div className={`w-full lg:w-[400px] bg-[#0B4F54] shadow-2xl flex flex-col rounded-t-2xl lg:rounded-none ${sitePanelClosing ? 'animate-slide-to-bottom lg:animate-slide-to-right' : 'animate-slide-from-bottom lg:animate-slide-from-right'}`}>
+          <div className={`flex-1 bg-black/20 backdrop-blur-sm animate-fade-in ${envPanelClosing ? 'animate-fade-out' : ''}`} onClick={closeEnvPanel} />
+          <div className={`w-full lg:w-[400px] bg-[#0B4F54] shadow-2xl flex flex-col rounded-t-2xl lg:rounded-none ${envPanelClosing ? 'animate-slide-to-bottom lg:animate-slide-to-right' : 'animate-slide-from-bottom lg:animate-slide-from-right'}`}>
             <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
               <h3 className="text-lg font-semibold text-white tracking-tight">Select Site</h3>
-              <button onClick={closeSitePanel} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-white/60">
+              <button onClick={closeEnvPanel} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-white/60">
                 <i className="fa-solid fa-xmark text-lg" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto py-2">
-              {sites.map((s) => (
+              {environments.length === 0 ? (
+                <div className="px-6 py-8 text-center text-white/50 text-body-sm">No sites available</div>
+              ) : environments.map((env) => (
                 <button
-                  key={s}
-                  onClick={() => { setSite(s); closeSitePanel() }}
-                  className={`w-full flex items-center gap-3 px-6 py-3 text-left text-body-md transition-colors hover:bg-white/10 ${s === site ? 'bg-white/15 text-white font-semibold' : 'text-white/70'}`}
+                  key={env.EnvironmentCode}
+                  onClick={() => { setSelectedEnv(env); closeEnvPanel() }}
+                  className={`w-full flex items-center gap-3 px-6 py-3 text-left text-body-md transition-colors hover:bg-white/10 ${env.EnvironmentCode === selectedEnv?.EnvironmentCode ? 'bg-white/15 text-white font-semibold' : 'text-white/70'}`}
                 >
-                  <i className={`fa-solid fa-location-dot text-sm w-4 ${s === site ? 'text-white' : 'text-white/40'}`} />
-                  <span className="flex-1">{s}</span>
-                  {s === site && <i className="fa-solid fa-check text-white text-sm" />}
+                  <i className={`fa-solid fa-location-dot text-sm w-4 ${env.EnvironmentCode === selectedEnv?.EnvironmentCode ? 'text-white' : 'text-white/40'}`} />
+                  <span className="flex-1">{env.Environment}</span>
+                  {env.EnvironmentCode === selectedEnv?.EnvironmentCode && <i className="fa-solid fa-check text-white text-sm" />}
                 </button>
               ))}
             </div>
@@ -276,36 +300,3 @@ export default function Login({ onLogin }) {
   )
 }
 
-/*
-  CHANGELOG — Login.jsx
-  ----------------------
-  [Fix 1 - Autofill]
-  Removed invalid `WebkitAutofillColor` style prop from both input elements —
-  it is not a real CSS property and had no effect. Replaced with a <style> tag
-  injected at the top of the component return using -webkit-box-shadow inset
-  override to suppress Chrome's autofill background color. The 5000s transition
-  delay on background-color prevents Chrome from ever visually applying the
-  yellow tint during normal session duration.
-
-  [Fix 2 - Panel Background]
-  Changed the right panel outer div background from bg-[#F6FAFC] to bg-white.
-  The form card's own border (border-[#E5E7EB]) provides sufficient visual
-  separation. The tinted outer background was adding unnecessary layering and
-  reducing overall crispness.
-
-  [Fix 3 - Button Font Weight]
-  Removed font-semibold from the submit button className. The text-label-sm
-  design token handles font sizing and likely font-weight already; the extra
-  utility class risked a specificity conflict. If text-label-sm does not set
-  font-weight, use font-medium as a safe alternative.
-
-  [Fix 4 - Mobile Site Panel]
-  The site selector drawer now renders as a bottom sheet on mobile and as a
-  right-side drawer on lg+ screens. Changes: overlay container uses
-  flex-col-reverse lg:flex-row to anchor panel position by breakpoint; panel
-  uses w-full lg:w-[400px] and responsive slide animations; rounded-t-2xl
-  lg:rounded-none gives the bottom sheet its characteristic top corners.
-  IMPORTANT: animate-slide-from-bottom and animate-slide-to-bottom keyframes
-  must be added to the global CSS file (index.css / globals.css) separately —
-  they are not defined inside this component.
-*/
