@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 const formatNumber = (value) => new Intl.NumberFormat('en').format(value || 0);
 
 const statuses = [
-  { label: 'Excess', color: '#00373B' },
+  { label: 'Excess', color: '#0B4F54' },
   { label: 'Normal', color: '#059669' },
   { label: 'Below Min', color: '#D97706' },
   { label: 'Below EOP', color: '#EA580C' },
@@ -34,8 +34,8 @@ function HubHeatmap({ rows, products, thresholds }) {
         const t = getThresholds(p);
         const sA = getCellStatus(a[p] || 0, t);
         const sB = getCellStatus(b[p] || 0, t);
-        if (sA.label === 'Stocked Out' || sA.label === 'Below EOP') riskA++;
-        if (sB.label === 'Stocked Out' || sB.label === 'Below EOP') riskB++;
+        if (sA.label === 'Stocked Out' || sA.label === 'Below EOP' || sA.label === 'Excess') riskA++;
+        if (sB.label === 'Stocked Out' || sB.label === 'Below EOP' || sB.label === 'Excess') riskB++;
       });
       return riskB - riskA;
     });
@@ -52,7 +52,7 @@ function HubHeatmap({ rows, products, thresholds }) {
   const end = Math.min(page * rowsPerPage, sortedRows.length);
 
   const getPillStyle = (status, value) => {
-    const isCritical = !value || status.label === 'Stocked Out' || status.label === 'Below EOP';
+    const isCritical = !value || status.label === 'Stocked Out' || status.label === 'Below EOP' || status.label === 'Excess';
     const isWarning = status.label === 'Below Min';
     if (isCritical) {
       return { backgroundColor: status.color, color: '#ffffff', fontWeight: 600 };
@@ -85,7 +85,7 @@ function HubHeatmap({ rows, products, thresholds }) {
               products.forEach(p => {
                 const val = row[p] || 0;
                 const s = getCellStatus(val, getThresholds(p));
-                if (s.label === 'Stocked Out' || s.label === 'Below EOP') riskCount++;
+                if (s.label === 'Stocked Out' || s.label === 'Below EOP' || s.label === 'Excess') riskCount++;
               });
 
               return (

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import KPICard from '../../components/KPICard';
 import ProgramPanel from '../../components/program/ProgramPanel';
-import ProgramSectionNav from '../../components/program/ProgramSectionNav';
+import SectionNavigator from '../../components/SectionNavigator';
 import ProgramStackedBarChart from '../../components/program/ProgramStackedBarChart';
 import ProgramBarChart from '../../components/program/ProgramBarChart';
 import ProgramMiniTable from '../../components/program/ProgramMiniTable';
@@ -116,14 +116,14 @@ function LlinProgram() {
 
   return (
     <div className="space-y-5">
-      <ProgramSectionNav sections={LLIN_SECTIONS} />
+      <SectionNavigator sections={LLIN_SECTIONS} />
 
       {/* ── Overview: KPI cards ──────────────────────────────────────────── */}
       <section id="llin-overview">
         <div className="grid grid-cols-6 gap-3">
           <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-success/10" iconColor="text-success" label="SOH"     value={formatCompact(totalSoh)}     subtitle="current stock" />
           <KPICard variant="detailed" icon="fa-cart-shopping"       iconBg="bg-surface-container" iconColor="text-primary" label="Ordered" value={formatCompact(totalOrdered)} subtitle="total PO quantity" />
-          <KPICard variant="detailed" icon="fa-truck-fast"          iconBg="bg-[#3B82F6]/10" iconColor="text-[#3B82F6]" label="Shipped" value={formatCompact(totalShipped)} subtitle="total shipped" />
+          <KPICard variant="detailed" icon="fa-truck-fast"          iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Shipped" value={formatCompact(totalShipped)} subtitle="total shipped" />
           <KPICard variant="detailed" icon="fa-warehouse"           iconBg="bg-success/10" iconColor="text-success" label="Received"value={formatCompact(totalReceived)}subtitle="total received" />
           <KPICard variant="detailed" icon="fa-clock-rotate-left"   iconBg="bg-warning/10" iconColor="text-warning" label="Pending" value={formatCompact(totalPending)} subtitle="pending delivery" />
           <KPICard variant="detailed" icon="fa-circle-exclamation"  iconBg="bg-warning/10" iconColor="text-warning" label="Damaged" value="10.9K"                        subtitle="reported damage" />

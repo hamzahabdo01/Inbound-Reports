@@ -78,7 +78,7 @@ function App() {
     <div className="min-h-screen bg-surface flex">
       <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={() => { authLogout(); setLoggedIn(false) }} />
       <main className="flex-1 max-h-screen overflow-auto">
-        <div className="max-w-container mx-auto px-lg py-lg">
+        <div className="max-w-container mx-auto px-lg pb-lg">
           {renderPage({ sidebarVisible, toggleSidebar })}
         </div>
       </main>

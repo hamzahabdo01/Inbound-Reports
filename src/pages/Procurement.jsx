@@ -9,6 +9,7 @@ import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
 import SelectFilter from '../components/SelectFilter';
 import KPICard from '../components/KPICard';
+import StickyHeader from '../components/StickyHeader';
 
 const TENDER_STAGES = [
   { id: 1, name: 'Preparation & Budget Analysis' },
@@ -273,7 +274,7 @@ function Procurement() {
   return (
     <div className="space-y-lg animate-fade-in">
       {/* Top Tabs / Nav */}
-      <div className="flex items-center justify-between pb-4 border-b border-outline-variant">
+      <StickyHeader className="border-b border-outline-variant">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveTab('tender')}
@@ -296,7 +297,7 @@ function Procurement() {
             Contract Process
           </button>
         </div>
-      </div>
+      </StickyHeader>
 
       {/* Contract Sub-filters */}
       {activeTab === 'contract' && (

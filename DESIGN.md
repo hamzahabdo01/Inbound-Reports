@@ -26,7 +26,7 @@ Corporate Modernism with Minimalist lean. Deep forest teals and steel slates on 
 | Error | `#BA1A1A` |
 | Success | `#059669` |
 | Warning | `#D97706` |
-| Blue (Informational) | `#3B82F6` |
+| Informational (Muted Teal-Blue) | `#4A8EA5` |
 
 ## Typography
 
@@ -130,7 +130,7 @@ Use these standard patterns for semantic states:
 | Success | `bg-success/10` | `text-success` | `text-success` |
 | Warning | `bg-warning/10` | `text-warning` | `text-warning` |
 | Error | `bg-error/10` | `text-error` | `text-error` |
-| Info | `bg-[#3B82F6]/10` | `text-[#3B82F6]` | `text-[#3B82F6]` |
+| Info | `bg-[#4A8EA5]/10` | `text-[#4A8EA5]` | `text-[#4A8EA5]` |
 
 For dynamic tones based on data (e.g. "Expired" shows error only when value > 0), inline the conditional:
 

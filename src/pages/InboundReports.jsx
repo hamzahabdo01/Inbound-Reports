@@ -11,6 +11,7 @@ import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
 import SelectFilter from '../components/SelectFilter';
 import ExportButton from '../components/ExportButton';
+import StickyHeader from '../components/StickyHeader';
 
 const ALL_COLUMNS = [
   'PurchaseOrderNumber',
@@ -276,7 +277,7 @@ function InboundReports() {
   return (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between mb-lg">
+      <StickyHeader className="mb-lg">
         <TabGroup
           tabs={[
             { id: 'shipment', label: 'Shipment Dwelling Time', icon: 'fa-ship' },
@@ -288,7 +289,7 @@ function InboundReports() {
         <div className="flex items-center gap-2">
           <ExportButton onClick={handleExport} label="Export Report" />
         </div>
-      </div>
+      </StickyHeader>
 
       {activeTab === 'purchase-order' && (
         <PurchaseOrderFollowUp />
@@ -382,8 +383,8 @@ function InboundReports() {
             onClick={() => handleQuickFilter('recently-arrived')}
             className={`px-3 py-1 rounded-full text-body-sm transition-colors ${
               quickFilter === 'recently-arrived'
-                ? 'bg-[#3B82F6] text-white'
-                : 'bg-[#3B82F6]/10 text-[#3B82F6] hover:bg-[#3B82F6]/20'
+                ? 'bg-[#4A8EA5] text-white'
+                : 'bg-[#4A8EA5]/10 text-[#4A8EA5] hover:bg-[#4A8EA5]/20'
             }`}
           >
             Recently Arrived

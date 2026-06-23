@@ -41,7 +41,7 @@ function NationalStockTable({ rows, onSelectItem }) {
                 <div className="flex items-center gap-2">
                   <span className="w-20 h-2 rounded-full bg-surface-container-low overflow-hidden">
                     <span
-                      className={`block h-full ${row.MOS <= 1 ? 'bg-error' : row.MOS < 6 ? 'bg-warning' : 'bg-success'}`}
+                      className={`block h-full ${row.SS === 'Stocked Out' ? 'bg-error' : row.SS === 'Below EOP' ? 'bg-warning' : row.SS === 'Excess' ? 'bg-primary' : row.MOS <= 1 ? 'bg-error' : row.MOS < 6 ? 'bg-warning' : 'bg-success'}`}
                       style={{ width: `${Math.min((row.MOS / 12) * 100, 100)}%` }}
                     />
                   </span>

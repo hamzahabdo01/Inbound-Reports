@@ -8,13 +8,14 @@ import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
 import SelectFilter from '../components/SelectFilter';
 import ExportButton from '../components/ExportButton';
+import StickyHeader from '../components/StickyHeader';
 
 // Status styling & logic helper
 const getStockStatus = (mos) => {
   if (mos === 0) return { label: 'Out of Stock', color: 'bg-red-50 text-red-700 border-red-200' };
   if (mos > 0 && mos < 3) return { label: 'Understocked', color: 'bg-amber-50 text-amber-700 border-amber-200' };
   if (mos >= 3 && mos <= 6) return { label: 'Adequate', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
-  return { label: 'Overstocked', color: 'bg-blue-50 text-blue-700 border-blue-200' };
+  return { label: 'Overstocked', color: 'bg-[#4A8EA5]/10 text-[#4A8EA5] border-[#4A8EA5]/20' };
 };
 
 const formatNumber = (num) => {
@@ -205,6 +206,8 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
     return Object.values(getColspans).reduce((sum, count) => sum + count, 0) + 2; // +2 for status badge & actions
   }, [getColspans]);
 
+  const maxTotalCols = 4 + 6 + 2 + 3 + 3 + 3 + 2 + 1 + HUB_KEYS.length + 2; // all columns always counted
+
   // Export CSV
   const handleExportCSV = () => {
     const headers = [
@@ -260,7 +263,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
   return (
     <div className="space-y-lg animate-fade-in">
       {/* Tab Navigation */}
-      <div className="flex items-center justify-between gap-md border-b border-outline-variant pb-md">
+      <StickyHeader className="gap-md border-b border-outline-variant">
         <div className="flex items-center gap-1">
           <button
             onClick={toggleSidebar}
@@ -294,7 +297,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
         </div>
         
         <ExportButton onClick={handleExportCSV} label="Export Excel Data" icon="fa-file-excel" className="border-outline bg-white hover:bg-surface-low font-semibold text-body-sm shadow-sm" />
-      </div>
+      </StickyHeader>
 
       {activeTab === 'stock-report' && <>
       {/* KPI Cards Grid */}
@@ -303,7 +306,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
         <KPICard variant="detailed" icon="fa-circle-exclamation" iconBg="bg-red-50" iconColor="text-red-500" label="Out of Stock" value={formatNumber(stats.outOfStock)} valueColor="text-red-600" subtitle="MOS = 0 Months" trendIcon="text-red-500 font-semibold" />
         <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg="bg-amber-50" iconColor="text-amber-500" label="Understocked" value={formatNumber(stats.understocked)} valueColor="text-amber-600" subtitle="MOS < 3 Months" trendIcon="text-amber-600 font-semibold" />
         <KPICard variant="detailed" icon="fa-check-double" iconBg="bg-emerald-50" iconColor="text-emerald-600" label="Adequate" value={formatNumber(stats.adequate)} valueColor="text-emerald-600" subtitle="MOS 3 - 6 Months" trendIcon="text-emerald-600 font-semibold" />
-        <KPICard variant="detailed" icon="fa-circle-arrow-up" iconBg="bg-blue-50" iconColor="text-blue-500" label="Overstocked" value={formatNumber(stats.overstocked)} valueColor="text-blue-600" subtitle="MOS > 6 Months" trendIcon="text-blue-600 font-semibold" className="col-span-2 lg:col-span-1" />
+        <KPICard variant="detailed" icon="fa-circle-arrow-up" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Overstocked" value={formatNumber(stats.overstocked)} valueColor="text-[#4A8EA5]" subtitle="MOS > 6 Months" trendIcon="text-[#4A8EA5] font-semibold" className="col-span-2 lg:col-span-1" />
       </div>
 
       {/* Control panel (Filters and search) */}
@@ -442,8 +445,8 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                 {/* Item Description Sub Headers */}
                 <th className="py-3 px-4 border-r border-outline-variant w-12 sticky left-0 bg-surface z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">SN</th>
                 <th className="py-3 px-4 border-r border-outline-variant min-w-[240px] sticky left-12 bg-surface z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Item</th>
-                <th className="py-3 px-4 border-r border-outline-variant w-24">Unit</th>
-                <th className="py-3 px-4 border-r border-outline-variant w-16 text-center">VEN</th>
+                <th className="py-3 px-4 border-r border-outline-variant w-24 sticky left-[285px] bg-surface z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Unit</th>
+                <th className="py-3 px-4 border-r border-outline-variant w-16 text-center sticky left-[354px] bg-surface z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">VEN</th>
                 
                 {/* National Sub Headers */}
                 <th className="py-3 px-4 border-r border-outline-variant w-24 text-right">SOH</th>
@@ -498,7 +501,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
 
                 {/* Expiries Sub Header */}
                 {showExpiries && (
-                  <th className="py-3 px-4 border-r border-outline-variant min-w-[200px] bg-purple-50/20">Expiry log</th>
+                  <th className="py-3 px-4 border-r border-outline-variant min-w-[280px] bg-purple-50/20">Expiry log</th>
                 )}
 
                 {/* Hub Sub Headers */}
@@ -536,10 +539,10 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                         <td className="py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky left-12 bg-white group-hover:bg-surface-container-low z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           {item.item}
                         </td>
-                        <td className="py-4 px-4 border-r border-outline-variant/60 text-xs text-on-surface-variant font-medium">
+                        <td className="py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky left-[285px] bg-white group-hover:bg-surface-container-low z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           {item.unit}
                         </td>
-                        <td className="py-4 px-4 border-r border-outline-variant/60 text-center">
+                        <td className="py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky left-[354px] bg-white group-hover:bg-surface-container-low z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           <span className={`inline-block px-2 py-0.5 text-[10px] font-extrabold rounded ${
                             item.ven === 'V' ? 'bg-purple-100 text-purple-700' :
                             item.ven === 'E' ? 'bg-sky-100 text-sky-700' :
@@ -640,7 +643,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
 
                         {/* Expiries Value */}
                         {showExpiries && (
-                          <td className="py-4 px-4 border-r border-outline-variant/60 text-xs text-on-surface-variant bg-purple-50/10 max-w-[200px] truncate" title={item.expiry_raw}>
+                          <td className="py-4 px-4 border-r border-outline-variant/60 text-xs text-on-surface-variant bg-purple-50/10" title={item.expiry_raw}>
                             {item.expiry_raw || '—'}
                           </td>
                         )}
@@ -668,7 +671,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                       {/* Detail Accordion Row */}
                       {isExpanded && (
                         <tr>
-                          <td colSpan={totalVisibleCols} className="py-0 px-0 bg-surface-container-lowest border-y border-outline-variant no-row-expand">
+                          <td colSpan={maxTotalCols} className="py-0 px-0 bg-surface-container-lowest border-y border-outline-variant no-row-expand">
                             <div className="p-lg space-y-md animate-slide-up">
                               {/* Detail Tabs */}
                               <div className="flex border-b border-outline-variant">

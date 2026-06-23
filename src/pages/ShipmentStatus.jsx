@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import StickyHeader from '../components/StickyHeader';
 import { shipmentStatusHPRData, shipmentStatusRDFData } from '../data/shipmentStatusData';
 import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../data/purchaseOrderDetailData';
 import StatCard from '../components/StatCard';
@@ -124,7 +125,7 @@ function POTypeBadge({ type }) {
     'FCA':             'bg-[#0B4F54]/10 text-[#0B4F54]',
     'FOB':             'bg-[#515F74]/10 text-[#515F74]',
     'Cost and Freight':'bg-[#D97706]/10 text-[#D97706]',
-    'CPT':             'bg-[#3B82F6]/10 text-[#3B82F6]',
+    'CPT':             'bg-[#4A8EA5]/10 text-[#4A8EA5]',
     'Local Purchase':  'bg-[#059669]/10 text-[#059669]',
   };
   const cls = map[type?.trim()] || 'bg-[#DFE3E5] text-[#404849]';
@@ -558,7 +559,7 @@ function ShipmentStatus() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* ── Header Row ────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <StickyHeader className="flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#0A3235] tracking-tight leading-tight">
             Shipment Status
@@ -570,7 +571,7 @@ function ShipmentStatus() {
         <div className="flex items-center gap-4">
           <OrgToggle value={activeOrg} onChange={(org) => { setActiveOrg(org); }} />
         </div>
-      </div>
+      </StickyHeader>
 
       {/* ── Loading Skeleton ──────────────────────────────────────────── */}
       {isLoading && (

@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import KPICard from '../../components/KPICard';
 import ProgramPanel from '../../components/program/ProgramPanel';
-import ProgramSectionNav from '../../components/program/ProgramSectionNav';
+import SectionNavigator from '../../components/SectionNavigator';
 import ProgramStackedBarChart from '../../components/program/ProgramStackedBarChart';
 import ProgramMiniTable from '../../components/program/ProgramMiniTable';
 import NationalStockTable from '../../components/program/NationalStockTable';
@@ -48,22 +48,58 @@ function ClinicalChemistry({ programType = 'HPR' }) {
     overage:    ccStockRows.filter((r) => r.SS === 'Excess').length,
   }), []);
 
+  const [kpiPage, setKpiPage] = useState(0);
+
+  const kpiCards = [
+    { icon: 'fa-circle-minus',         iconBg: kpis.gap ? 'bg-error/10' : 'bg-success/10', iconColor: kpis.gap ? 'text-error' : 'text-success', label: 'Gap',        value: kpis.gap,         subtitle: 'below EOP or stocked out' },
+    { icon: 'fa-triangle-exclamation', iconBg: kpis.expired ? 'bg-error/10' : 'bg-success/10', iconColor: kpis.expired ? 'text-error' : 'text-success', label: 'Expired',    value: kpis.expired,     subtitle: 'expired items' },
+    { icon: 'fa-clock-rotate-left',    iconBg: kpis.nearExpiry ? 'bg-warning/10' : 'bg-success/10', iconColor: kpis.nearExpiry ? 'text-warning' : 'text-success', label: '>sExpiry',   value: kpis.nearExpiry,  subtitle: 'expiring soon' },
+    { icon: 'fa-circle-plus',          iconBg: kpis.overage ? 'bg-warning/10' : 'bg-success/10', iconColor: kpis.overage ? 'text-warning' : 'text-success', label: 'Overage',    value: kpis.overage,     subtitle: 'excess stock items' },
+    { icon: 'fa-boxes-stacked',        iconBg: 'bg-surface-container', iconColor: 'text-primary', label: 'SOH',        value: formatCompact(kpis.soh),  subtitle: `${ccStockRows.length} SKUs` },
+    { icon: 'fa-cart-shopping',        iconBg: 'bg-[#4A8EA5]/10', iconColor: 'text-[#4A8EA5]', label: 'Ordered',    value: formatCompact(kpis.ordered), subtitle: 'in purchase orders' },
+    { icon: 'fa-truck-fast',           iconBg: 'bg-success/10', iconColor: 'text-success', label: 'QIT',        value: formatCompact(kpis.qit),  subtitle: 'qty in transit' },
+    { icon: 'fa-box-open',             iconBg: kpis.damaged ? 'bg-error/10' : 'bg-success/10', iconColor: kpis.damaged ? 'text-error' : 'text-success', label: 'Damaged',    value: kpis.damaged,     subtitle: 'damaged items' },
+  ];
+
+  const kpiTotalPages = Math.ceil(kpiCards.length / 4);
+  const visibleCards = kpiCards.slice(kpiPage * 4, kpiPage * 4 + 4);
+
   return (
     <div className="space-y-5">
 
-      <ProgramSectionNav sections={CC_SECTIONS} />
+      <SectionNavigator sections={CC_SECTIONS} />
 
       {/* ── Overview: KPI cards ──────────────────────────────────────────── */}
       <section id="cc-kpis">
-        <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(8, 1fr)' }}>
-          <KPICard variant="detailed" icon="fa-boxes-stacked"        iconBg="bg-surface-container" iconColor="text-primary" label="SOH"        value={formatCompact(kpis.soh)}     subtitle={`${ccStockRows.length} SKUs`} />
-          <KPICard variant="detailed" icon="fa-cart-shopping"        iconBg="bg-[#3B82F6]/10" iconColor="text-[#3B82F6]" label="Ordered"    value={formatCompact(kpis.ordered)} subtitle="in purchase orders" />
-          <KPICard variant="detailed" icon="fa-truck-fast"           iconBg="bg-success/10" iconColor="text-success" label="QIT"        value={formatCompact(kpis.qit)}     subtitle="qty in transit" />
-          <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg={kpis.expired ? 'bg-error/10' : 'bg-success/10'} iconColor={kpis.expired ? 'text-error' : 'text-success'} label="Expired"    value={kpis.expired}                subtitle="expired items" />
-          <KPICard variant="detailed" icon="fa-clock-rotate-left"    iconBg={kpis.nearExpiry ? 'bg-warning/10' : 'bg-success/10'} iconColor={kpis.nearExpiry ? 'text-warning' : 'text-success'} label=">sExpiry"   value={kpis.nearExpiry}             subtitle="expiring soon" />
-          <KPICard variant="detailed" icon="fa-box-open"             iconBg={kpis.damaged ? 'bg-error/10' : 'bg-success/10'} iconColor={kpis.damaged ? 'text-error' : 'text-success'} label="Damaged"    value={kpis.damaged}                subtitle="damaged items" />
-          <KPICard variant="detailed" icon="fa-circle-minus"         iconBg={kpis.gap ? 'bg-error/10' : 'bg-success/10'} iconColor={kpis.gap ? 'text-error' : 'text-success'} label="Gap"        value={kpis.gap}                    subtitle="below EOP or stocked out" />
-          <KPICard variant="detailed" icon="fa-circle-plus"          iconBg={kpis.overage ? 'bg-warning/10' : 'bg-success/10'} iconColor={kpis.overage ? 'text-warning' : 'text-success'} label="Overage"    value={kpis.overage}                subtitle="excess stock items" />
+        <div className="space-y-3">
+          <div className="grid grid-cols-4 gap-3">
+            {visibleCards.map((c) => (
+              <KPICard key={c.label} variant="detailed" {...c} />
+            ))}
+          </div>
+          {kpiTotalPages > 1 && (
+            <div className="flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setKpiPage((p) => Math.max(p - 1, 0))}
+                disabled={kpiPage === 0}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                aria-label="Previous KPI page"
+              >
+                <i className="fa-solid fa-chevron-left text-xs"></i>
+              </button>
+              <span className="text-xs font-semibold text-on-surface-variant">{kpiPage + 1}/{kpiTotalPages}</span>
+              <button
+                type="button"
+                onClick={() => setKpiPage((p) => Math.min(p + 1, kpiTotalPages - 1))}
+                disabled={kpiPage === kpiTotalPages - 1}
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                aria-label="Next KPI page"
+              >
+                <i className="fa-solid fa-chevron-right text-xs"></i>
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

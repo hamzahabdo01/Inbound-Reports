@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import ProgramPanel from './ProgramPanel';
 import ProgramBarChart from './ProgramBarChart';
 import ProgramStackedBarChart from './ProgramStackedBarChart';
-import ProgramSectionNav from './ProgramSectionNav';
+import SectionNavigator from '../SectionNavigator';
 import ProgramMiniTable from './ProgramMiniTable';
 import PurchaseOrderTable from './PurchaseOrderTable';
 import RecentReceivesTable from './RecentReceivesTable';
@@ -412,7 +412,7 @@ function ProgramItemDetail({
 
   return (
     <div className="space-y-5">
-      <ProgramSectionNav sections={DETAIL_SECTIONS} scrollOffset={160} />
+      <SectionNavigator sections={DETAIL_SECTIONS} scrollOffset={160} />
       <ProgramItemSwitcher
         items={itemOptions}
         selectedItem={productName}

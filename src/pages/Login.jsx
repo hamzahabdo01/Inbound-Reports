@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { login, logout, fetchEnvironments } from '../api/auth'
+import LoginCanvasAnimation from '../components/LoginCanvasAnimation'
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('')
@@ -29,7 +30,6 @@ export default function Login({ onLogin }) {
         const list = res?.Data || (Array.isArray(res) ? res : [])
         const all = [...list, { Environment: 'Others', EnvironmentCode: '' }]
         setEnvironments(all)
-        setSelectedEnv(all[all.length - 1])
       })
       .catch(() => {})
   }, [])
@@ -83,7 +83,6 @@ export default function Login({ onLogin }) {
     <div className="min-h-screen flex">
       {/* Brand Panel */}
       <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] relative flex-col bg-[#00373B] p-12 overflow-hidden">
-
         <div className="relative z-10 -ml-12">
           <img src="/epss-logo.png" alt="EPSS" className="h-28 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
         </div>
@@ -111,8 +110,6 @@ export default function Login({ onLogin }) {
             ))}
           </div>
         </div>
-        <img src="/gemini-svg.svg" alt="" className="absolute -top-12 -right-40 w-[800px] pointer-events-none select-none brightness-0 invert" style={{ opacity: 0.5 }} />
-
         <div className="relative z-10 mt-auto pt-12 space-y-3">
           <div className="flex items-center gap-4 text-[#86BFC5]/40 text-[11px] font-medium">
             <span>HIPAA Compliant</span>
@@ -126,8 +123,9 @@ export default function Login({ onLogin }) {
       </div>
 
       {/* Form Panel */}
-      <div className="flex-1 flex items-center justify-center bg-white px-6">
-        <div className="w-full max-w-[420px] animate-slide-up">
+      <div className="flex-1 relative overflow-hidden flex items-center justify-center px-6">
+        <LoginCanvasAnimation />
+        <div className="w-full max-w-[420px] animate-slide-up relative z-10">
           {/* Mobile logo */}
           <div className="lg:hidden mb-10">
             <img src="/epss-logo.png" alt="EPSS" className="h-10 w-auto" />
@@ -138,11 +136,11 @@ export default function Login({ onLogin }) {
             <p className="mt-1.5 text-body-md text-[#6B7280]">Sign in to access the dashboard</p>
           </div>
 
-          <div className="bg-white border border-[#E5E7EB] rounded-xl p-8">
+          <div className="bg-white border border-[#CFD8DC] rounded-xl p-8">
             <div className="space-y-5">
               <div>
                 <label htmlFor="username" className="block text-label-sm text-on-surface mb-1.5">Username</label>
-                <div className={`relative rounded-lg border transition-all duration-200 ${error && !username.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'username' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#E5E7EB] hover:border-[#1a4a47]/40'}`}>
+                <div className={`relative rounded-lg border transition-all duration-200 ${error && !username.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'username' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                     <i className={`fa-solid fa-user text-sm ${focusedField === 'username' ? 'text-[#1a4a47]' : 'text-[#9CA3AF]'}`} />
                   </div>
@@ -162,7 +160,7 @@ export default function Login({ onLogin }) {
 
               <div>
                 <label htmlFor="password" className="block text-label-sm text-on-surface mb-1.5">Password</label>
-                <div className={`relative rounded-lg border transition-all duration-200 ${error && !password.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'password' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#E5E7EB] hover:border-[#1a4a47]/40'}`}>
+                <div className={`relative rounded-lg border transition-all duration-200 ${error && !password.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'password' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                     <i className={`fa-solid fa-lock text-sm ${focusedField === 'password' ? 'text-[#1a4a47]' : 'text-[#9CA3AF]'}`} />
                   </div>
@@ -214,7 +212,7 @@ export default function Login({ onLogin }) {
                 <button
                   type="button"
                   onClick={() => setShowEnvPanel(true)}
-                  className={`w-full h-12 flex items-center gap-3 px-3.5 rounded-lg border transition-all duration-200 text-left ${selectedEnv ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#E5E7EB] hover:border-[#1a4a47]/40'}`}
+                  className={`w-full h-12 flex items-center gap-3 px-3.5 rounded-lg border transition-all duration-200 text-left ${selectedEnv ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}
                 >
                   <i className="fa-solid fa-location-dot text-sm text-[#1a4a47]" />
                   <span className="flex-1 text-body-md text-on-surface font-medium">{selectedEnv?.Environment || 'Select site'}</span>
@@ -227,7 +225,7 @@ export default function Login({ onLogin }) {
                   type="checkbox"
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
-                  className="w-4 h-4 rounded border-[#E5E7EB] text-[#1a4a47] focus:ring-[#1a4a47]/30 focus:ring-offset-0 cursor-pointer"
+                  className="w-4 h-4 rounded border-[#CFD8DC] text-[#1a4a47] focus:ring-[#1a4a47]/30 focus:ring-offset-0 cursor-pointer"
                 />
                 <span className="text-body-sm text-on-surface-variant">Remember me</span>
               </label>
@@ -295,6 +293,7 @@ export default function Login({ onLogin }) {
           </div>
         </div>
       )}
+
     </div>
     </>
   )

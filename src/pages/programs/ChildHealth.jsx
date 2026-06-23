@@ -3,7 +3,7 @@ import KPICard from '../../components/KPICard';
 import ProgramFilters from '../../components/program/ProgramFilters';
 import ProgramPanel from '../../components/program/ProgramPanel';
 import ProgramChartRow from '../../components/program/ProgramChartRow';
-import ProgramSectionNav from '../../components/program/ProgramSectionNav';
+import SectionNavigator from '../../components/SectionNavigator';
 import NationalStockTable from '../../components/program/NationalStockTable';
 import HubHeatmap from '../../components/program/HubHeatmap';
 import ProgramBarChart from '../../components/program/ProgramBarChart';
@@ -194,7 +194,7 @@ function ChildHealth() {
 
   const kpis = useMemo(() => ({
     totalSoh:      stockRows.reduce((s, r) => s + r.SOH, 0),
-    atRisk:        stockRows.filter((r) => r.SS === 'Below EOP' || r.SS === 'Stocked Out').length,
+    atRisk:        stockRows.filter((r) => r.SS === 'Below EOP' || r.SS === 'Stocked Out' || r.SS === 'Excess').length,
     git:           stockRows.reduce((s, r) => s + r.GIT, 0),
     poQuantity:    purchaseOrders.reduce((s, r) => s + r.NextDeliveryQuantity, 0),
     receivedValue: recentReceives.reduce((s, r) => s + r.AmountReceivedBirr, 0),
@@ -327,13 +327,13 @@ function ChildHealth() {
   return (
     <div className="space-y-5">
 
-      <ProgramSectionNav sections={CH_SECTIONS} />
+      <SectionNavigator sections={CH_SECTIONS} />
 
       {/* ── Overview: KPI cards + filters ────────────────────────────────── */}
       <section id="ch-kpis" className="space-y-5">
         <div className="grid grid-cols-6 gap-3">
           <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-success/10" iconColor="text-success" label="SOH"       value={formatCompact(kpis.totalSoh)}  subtitle={`${stockRows.length} SKUs`} />
-          <KPICard variant="detailed" icon="fa-truck-ramp-box"     iconBg="bg-[#3B82F6]/10" iconColor="text-[#3B82F6]" label="Issued"    value={formatCompact(recentReceives.reduce((s, r) => s + r.QuantityReceived, 0))} subtitle="recent receives" />
+          <KPICard variant="detailed" icon="fa-truck-ramp-box"     iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Issued"    value={formatCompact(recentReceives.reduce((s, r) => s + r.QuantityReceived, 0))} subtitle="recent receives" />
           <KPICard variant="detailed" icon="fa-layer-group"        iconBg="bg-surface-container" iconColor="text-primary" label="Planned"   value={formatCompact(kpis.poQuantity)} subtitle={`${purchaseOrders.length} PO lines`} />
           <KPICard variant="detailed" icon="fa-route"              iconBg="bg-success/10" iconColor="text-success" label="GIT"       value={formatCompact(kpis.git)}        subtitle="in transit" />
           <KPICard variant="detailed" icon="fa-circle-exclamation" iconBg={kpis.atRisk ? 'bg-error/10' : 'bg-success/10'} iconColor={kpis.atRisk ? 'text-error' : 'text-success'} label="Expired"   value={kpis.atRisk}                   subtitle="risk items" />
@@ -485,7 +485,7 @@ function ChildHealth() {
       <section id="ch-mos">
         <ProgramPanel title="National MOS" subtitle="Months of stock by product">
           <div className="grid grid-cols-3 gap-3 px-5 pt-4 pb-2">
-            <KPICard variant="detailed" icon="fa-chart-simple"   iconBg="bg-[#3B82F6]/10" iconColor="text-[#3B82F6]" label="Actual"          value={mosStats.actual.toFixed(1)} subtitle="avg MOS" />
+            <KPICard variant="detailed" icon="fa-chart-simple"   iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Actual"          value={mosStats.actual.toFixed(1)} subtitle="avg MOS" />
             <KPICard variant="detailed" icon="fa-bullseye"       iconBg="bg-success/10" iconColor="text-success" label="Ideal"           value={String(mosStats.ideal)}    subtitle="target months" />
             <KPICard variant="detailed" icon="fa-scale-balanced" iconBg={mosStats.gap <= 0 ? 'bg-success/10' : 'bg-warning/10'} iconColor={mosStats.gap <= 0 ? 'text-success' : 'text-warning'} label="Actual vs Ideal" value={`${mosStats.gap > 0 ? '+' : ''}${mosStats.gap.toFixed(1)}`} subtitle={`months ${mosStats.gap <= 0 ? 'below' : 'above'} target`} />
           </div>

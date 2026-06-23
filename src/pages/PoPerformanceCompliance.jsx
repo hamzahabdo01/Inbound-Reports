@@ -4,6 +4,7 @@ import KPICard from '../components/KPICard';
 import PieChart from '../components/PieChart';
 import SunburstChart from '../components/SunburstChart';
 import SimplePagination from '../components/SimplePagination';
+import SectionNavigator from '../components/SectionNavigator';
 import generateAllData from '../data/poPerformanceData';
 
 const formatAmount = (v) => {
@@ -86,7 +87,7 @@ function Td({ children, className = '' }) {
 
 function StatusBadge({ status }) {
   const map = {
-    Open: 'bg-[#3B82F6]/10 text-[#3B82F6]',
+    Open: 'bg-[#4A8EA5]/10 text-[#4A8EA5]',
     Overdue: 'bg-error/10 text-error',
     Completed: 'bg-success/10 text-success',
     Active: 'bg-success/10 text-success',
@@ -96,7 +97,7 @@ function StatusBadge({ status }) {
     'Received at Warehouse': 'bg-success/10 text-success',
     'Contract Signed': 'bg-primary/10 text-primary',
     'PO Issued': 'bg-primary/10 text-primary',
-    'LC Opened': 'bg-[#3B82F6]/10 text-[#3B82F6]',
+    'LC Opened': 'bg-[#4A8EA5]/10 text-[#4A8EA5]',
     'Port Arrival': 'bg-warning/10 text-warning',
     Cleared: 'bg-success/10 text-success',
     Received: 'bg-success/10 text-success',
@@ -142,6 +143,28 @@ export default function PoPerformanceCompliance() {
     return tab ? tab.sections : [];
   }, [activeTab]);
 
+  const SECTION_LABELS = {
+    'ppc-overview': 'Overview',
+    'ppc-open-pos': 'Open POs',
+    'ppc-trend': 'Trend',
+    'ppc-commodity': 'Commodity',
+    'ppc-supplier-share': 'Supplier Share',
+    'ppc-funding': 'Funding',
+    'ppc-local-intl': 'Local vs Intl',
+    'ppc-contract-vs-po': 'Contract vs PO',
+    'ppc-lc-cad': 'LC/CAD',
+    'ppc-pipeline': 'Pipeline',
+    'ppc-moh-wbs': 'MOH WBS',
+    'ppc-bond': 'Bond',
+    'ppc-leadtime': 'Leadtime',
+    'ppc-status': 'Status',
+    'ppc-supplier-perf': 'Supplier Perf',
+  };
+
+  const navigatorSections = useMemo(() => {
+    return activeSections.map(id => ({ id, label: SECTION_LABELS[id] || id }));
+  }, [activeSections]);
+
   // Reset pagination when switching tabs
   const prevTab = useRef(activeTab);
   if (prevTab.current !== activeTab) {
@@ -181,6 +204,7 @@ export default function PoPerformanceCompliance() {
 
   return (
     <div className="space-y-5">
+      <SectionNavigator sections={navigatorSections} />
       {/* Tab bar */}
       <div className="sticky top-0 z-10 -mx-lg px-lg py-3 bg-surface/95 backdrop-blur border-b border-outline-variant flex items-center justify-between gap-md">
         <div className="flex items-center gap-1">
@@ -229,7 +253,7 @@ export default function PoPerformanceCompliance() {
               <section id="ppc-overview">
                 <div className="grid grid-cols-4 gap-4">
                   <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-primary/10" iconColor="text-primary" label="Total POs" value={data.kpis.totalPO.toLocaleString()} subtitle={`Value: $${formatAmount(data.kpis.totalPOAmount)}`} />
-                  <KPICard variant="detailed" icon="fa-file-signature" iconBg="bg-[#3B82F6]/10" iconColor="text-[#3B82F6]" label="Total Contracts" value={data.kpis.totalContracts.toLocaleString()} subtitle={`Value: $${formatAmount(data.kpis.totalContractAmount)}`} />
+                  <KPICard variant="detailed" icon="fa-file-signature" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total Contracts" value={data.kpis.totalContracts.toLocaleString()} subtitle={`Value: $${formatAmount(data.kpis.totalContractAmount)}`} />
                   <KPICard variant="detailed" icon="fa-clock" iconBg="bg-warning/10" iconColor="text-warning" label="Open POs" value={openPOs.length.toLocaleString()} subtitle={`Value: $${formatAmount(openPOsValue)}`} />
                   <KPICard variant="detailed" icon="fa-exclamation-triangle" iconBg="bg-error/10" iconColor="text-error" label="Overdue POs" value={overduePOs.length.toLocaleString()} subtitle={`Value: $${formatAmount(overduePOsValue)}`} />
                 </div>
@@ -728,7 +752,7 @@ export default function PoPerformanceCompliance() {
               const avgPct = totalPO ? Math.round((totalConsumption / totalPO) * 100) : 0;
               return (
                 <>
-                  <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#3B82F6]/10" iconColor="text-[#3B82F6]" label="Total PO Amount" value={formatAmount(totalPO)} subtitle="all contracts" />
+                  <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total PO Amount" value={formatAmount(totalPO)} subtitle="all contracts" />
                   <KPICard variant="detailed" icon="fa-cart-shopping" iconBg="bg-success/10" iconColor="text-success" label="Total Consumption" value={formatAmount(totalConsumption)} subtitle={`${avgPct}% consumed`} />
                   <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-warning/10" iconColor="text-warning" label="Total Remaining" value={formatAmount(totalRemaining)} subtitle="yet to consume" />
                   <KPICard variant="detailed" icon="fa-percent" iconBg="bg-primary/10" iconColor="text-primary" label="Avg Consumption Rate" value={`${avgPct}%`} subtitle="across all contracts" />
@@ -815,7 +839,7 @@ export default function PoPerformanceCompliance() {
             return (
               <>
                 <div className="grid grid-cols-3 gap-4 mb-6">
-                  <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#3B82F6]/10" iconColor="text-[#3B82F6]" label="Total PO Value" value={formatAmount(totalPO)} subtitle="ordered" />
+                  <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total PO Value" value={formatAmount(totalPO)} subtitle="ordered" />
                   <KPICard variant="detailed" icon="fa-truck-loading" iconBg="bg-warning/10" iconColor="text-warning" label="Inbound Delivery" value={formatAmount(totalInbound)} subtitle={`${totalPO ? Math.round((totalInbound / totalPO) * 100) : 0}% of PO`} />
                   <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-success/10" iconColor="text-success" label="Received" value={formatAmount(totalReceived)} subtitle={`${totalInbound ? Math.round((totalReceived / totalInbound) * 100) : 0}% of inbound`} />
                 </div>
@@ -898,7 +922,7 @@ export default function PoPerformanceCompliance() {
               return acc;
             }, {});
             const statusColors = {
-              'Received': '#3B82F6', 'Verified': '#10B981', 'Expired': '#BA1A1A',
+              'Received': '#4A8EA5', 'Verified': '#10B981', 'Expired': '#BA1A1A',
               'Confiscated': '#DC2626', 'Extended': '#D97706',
             };
             const statusOrder = ['Received', 'Verified', 'Expired', 'Confiscated', 'Extended'];
@@ -949,7 +973,7 @@ export default function PoPerformanceCompliance() {
           {/* Summary cards */}
           <div className="grid grid-cols-5 gap-4 mb-6">
             <KPICard variant="detailed" icon="fa-file-signature" iconBg="bg-primary/10" iconColor="text-primary" label="Contract → PO" value={`${data.leadtime.summary.contractToPO}d`} subtitle="Tender process" />
-            <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#3B82F6]/10" iconColor="text-[#3B82F6]" label="PO → LC Opening" value={`${data.leadtime.summary.poToLCOpening}d`} subtitle="Contract management" />
+            <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="PO → LC Opening" value={`${data.leadtime.summary.poToLCOpening}d`} subtitle="Contract management" />
             <KPICard variant="detailed" icon="fa-ship" iconBg="bg-warning/10" iconColor="text-warning" label="LC → Port Arrival" value={`${data.leadtime.summary.lcToPortArrival}d`} subtitle="Supplier lead" />
             <KPICard variant="detailed" icon="fa-check-circle" iconBg="bg-success/10" iconColor="text-success" label="Port → Cleared" value={`${data.leadtime.summary.portToCleared}d`} subtitle="Customs & clearance" />
             <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-success/10" iconColor="text-success" label="Cleared → Received" value={`${data.leadtime.summary.clearedToReceive}d`} subtitle="Inbound delivery" />

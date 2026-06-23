@@ -149,7 +149,7 @@
     animation: fadeOut 0.25s ease-out;
   }
 
-  /* Section highlight flash — triggered by ProgramSectionNav on scroll-to */
+  /* Section highlight flash — triggered by SectionNavigator on scroll-to */
   @keyframes sectionHighlight {
     0%   { background-color: #ffffff; }
     20%  { background-color: rgba(11, 79, 84, 0.09); }

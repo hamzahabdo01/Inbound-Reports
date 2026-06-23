@@ -4,7 +4,7 @@ function ProgramCard({ icon, label, value, helper, tone = 'neutral' }) {
     success: 'bg-success/10 text-success',
     warning: 'bg-warning/10 text-warning',
     error: 'bg-error/10 text-error',
-    info: 'bg-[#3B82F6]/10 text-[#3B82F6]',
+    info: 'bg-[#4A8EA5]/10 text-[#4A8EA5]',
   };
 
   return (

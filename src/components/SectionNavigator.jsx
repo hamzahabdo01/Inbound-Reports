@@ -1,13 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-/**
- * ProgramSectionNav — vertical dot sidebar, right edge of viewport.
- *
- * At rest : slim primary-bg strip of dots.
- * On hover: expands left to reveal full section labels.
- * Active dot = current section in view (IntersectionObserver).
- */
-function ProgramSectionNav({ sections, scrollOffset = 120 }) {
+function SectionNavigator({ sections, scrollOffset = 120 }) {
   const [active, setActive] = useState(sections[0]?.id ?? '');
   const [expanded, setExpanded] = useState(false);
 
@@ -46,7 +39,6 @@ function ProgramSectionNav({ sections, scrollOffset = 120 }) {
       scrollContainer.scrollTo({ top, behavior: 'smooth' });
     }
     setActive(id);
-    // Highlight the panel card inside the section after scroll settles
     setTimeout(() => {
       const target = el.querySelector('.bg-white, [class*="bg-white"]') ?? el;
       target.classList.add('section-highlight');
@@ -60,7 +52,6 @@ function ProgramSectionNav({ sections, scrollOffset = 120 }) {
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
     >
-      {/* Label panel — slides in from the right on hover */}
       <div
         className={`flex flex-col gap-0.5 py-3 bg-[#0B4F54] border border-[#00373B] rounded-l-xl shadow-[0px_12px_32px_rgba(10,50,53,0.18)] transition-all duration-200 overflow-hidden ${
           expanded ? 'opacity-100 w-48 px-3' : 'opacity-0 w-0 px-0'
@@ -93,7 +84,6 @@ function ProgramSectionNav({ sections, scrollOffset = 120 }) {
         })}
       </div>
 
-      {/* Dot strip — always visible */}
       <div className="flex flex-col gap-2 py-3 px-2 bg-[#0B4F54] border border-[#00373B] rounded-l-xl shadow-[0px_4px_20px_rgba(10,50,53,0.12)]">
         {sections.map(({ id, label }) => {
           const isActive = active === id;
@@ -121,4 +111,4 @@ function ProgramSectionNav({ sections, scrollOffset = 120 }) {
   );
 }
 
-export default ProgramSectionNav;
+export default SectionNavigator;
