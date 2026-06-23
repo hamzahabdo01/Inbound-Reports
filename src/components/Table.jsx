@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import TableInfoButton from './TableInfoButton';
 import { getDwellingTimeClasses, getRiskLevel, getStatusDotColor } from '../utils/colorCoding';
 
 // Column configuration with display names
@@ -178,8 +179,11 @@ const Table = ({ data, currentPage, rowsPerPage, visibleColumns, density = 'norm
   const rowHeightClass = getRowHeight();
 
   return (
-    <div className="bg-white">
+    <div className="bg-white space-y-3">
       <div className="max-w-container mx-auto px-margin-side">
+        <div className="flex justify-end mb-2">
+          <TableInfoButton tableId="shipment-dwelling-time" />
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

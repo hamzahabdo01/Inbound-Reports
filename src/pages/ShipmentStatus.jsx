@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import StickyHeader from '../components/StickyHeader';
+import TableInfoButton from '../components/TableInfoButton';
+
 import { shipmentStatusHPRData, shipmentStatusRDFData } from '../data/shipmentStatusData';
 import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../data/purchaseOrderDetailData';
 import StatCard from '../components/StatCard';
@@ -630,11 +632,13 @@ function ShipmentStatus() {
                 </h2>
                 <p className="text-xs text-[#707979] mt-0.5 ml-3.5">{activeOrg} — Purchase order shipment tracking with GRNF/GRV completion</p>
               </div>
-              {/* Export placeholder */}
-              <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#CFD8DC] text-xs font-semibold text-[#404849] hover:bg-[#F0F4F6] transition-colors">
-                <i className="fa-solid fa-download text-[10px]" />
-                Export
-              </button>
+              <div className="flex items-center gap-2">
+                <TableInfoButton tableId="shipment-status-epss" />
+                <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#CFD8DC] text-xs font-semibold text-[#404849] hover:bg-[#F0F4F6] transition-colors">
+                  <i className="fa-solid fa-download text-[10px]" />
+                  Export
+                </button>
+              </div>
             </div>
             <div className="p-6">
               <ShipmentTable rows={shipmentRows} />
@@ -652,6 +656,7 @@ function ShipmentStatus() {
                 <p className="text-xs text-[#707979] mt-0.5 ml-3.5">Detailed line-item view of purchase orders including supplier, funding, and pricing</p>
               </div>
               <div className="flex items-center gap-2">
+                <TableInfoButton tableId="po-detail-report" />
                 <span className="text-xs font-medium text-[#707979] bg-[#F0F4F6] px-2.5 py-1 rounded-full">
                   {poRows.length} records
                 </span>

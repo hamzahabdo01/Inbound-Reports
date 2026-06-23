@@ -13,6 +13,7 @@ import IssuedItemsTable from '../../components/program/IssuedItemsTable';
 import PurchaseOrderTable from '../../components/program/PurchaseOrderTable';
 import RecentReceivesTable from '../../components/program/RecentReceivesTable';
 import PieChart from '../../components/PieChart';
+import TableInfoButton from '../../components/TableInfoButton';
 import ProgramItemDetail from '../../components/program/ProgramItemDetail';
 import { parseCSV, parseQuantity } from '../../utils/csvParser';
 import stockStatusCsv from '../../data/Stock Status_ National.csv?raw';
@@ -353,6 +354,7 @@ function ChildHealth() {
         <ProgramPanel
           title="Stock Status National"
           subtitle={`${filteredStock.length} of ${stockRows.length} products`}
+          action={<TableInfoButton tableId="program-national-stock" />}
         >
           <NationalStockTable rows={filteredStock} onSelectItem={setSelectedProduct} />
         </ProgramPanel>
@@ -369,6 +371,7 @@ function ChildHealth() {
           }
           action={(
             <div className="flex items-center gap-2">
+              <TableInfoButton tableId="program-hub-heatmap" />
               <div className="relative">
                 <select
                   value={siteFilter}
@@ -415,6 +418,7 @@ function ChildHealth() {
         <ProgramPanel
           title="Purchase Order — Incoming Shipments ERP"
           subtitle={`${filteredPOs.length} open delivery records`}
+          action={<TableInfoButton tableId="program-purchase-order" />}
         >
           <PurchaseOrderTable rows={filteredPOs.slice(0, 12)} />
         </ProgramPanel>
@@ -425,6 +429,7 @@ function ChildHealth() {
         <ProgramPanel
           title="Recent Receives"
           subtitle={`${filteredReceives.length} receipt records · ${formatNumber(kpis.receivedValue)} ETB`}
+          action={<TableInfoButton tableId="program-recent-receives" />}
         >
           <RecentReceivesTable rows={filteredReceives.slice(0, 10)} />
         </ProgramPanel>
@@ -444,7 +449,7 @@ function ChildHealth() {
 
       {/* ── Issued Items ─────────────────────────────────────────────────── */}
       <section id="ch-issued">
-        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month">
+        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month" action={<TableInfoButton tableId="program-issued-items" />}>
           <IssuedItemsTable rows={CHILD_ISSUED_ROWS} />
         </ProgramPanel>
       </section>
@@ -495,7 +500,7 @@ function ChildHealth() {
 
       {/* ── Manufacturers ─────────────────────────────────────────────────── */}
       <section id="ch-manufacturers">
-        <ProgramPanel title="Manufacturers" subtitle="Recent received value by manufacturer">
+        <ProgramPanel title="Manufacturers" subtitle="Recent received value by manufacturer" action={<TableInfoButton tableId="program-mini-table" />}>
           <ProgramMiniTable
             columns={[
               { key: 'label', label: 'Manufacturer' },
@@ -509,7 +514,7 @@ function ChildHealth() {
 
       {/* ── Countries ─────────────────────────────────────────────────────── */}
       <section id="ch-countries">
-        <ProgramPanel title="Countries" subtitle="Recent received value by country">
+        <ProgramPanel title="Countries" subtitle="Recent received value by country" action={<TableInfoButton tableId="program-mini-table" />}>
           <ProgramMiniTable
             columns={[
               { key: 'label', label: 'Country' },

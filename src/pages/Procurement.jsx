@@ -10,6 +10,8 @@ import EmptyState from '../components/EmptyState';
 import SelectFilter from '../components/SelectFilter';
 import KPICard from '../components/KPICard';
 import StickyHeader from '../components/StickyHeader';
+import TableInfoButton from '../components/TableInfoButton';
+
 
 const TENDER_STAGES = [
   { id: 1, name: 'Preparation & Budget Analysis' },
@@ -275,27 +277,32 @@ function Procurement() {
     <div className="space-y-lg animate-fade-in">
       {/* Top Tabs / Nav */}
       <StickyHeader className="border-b border-outline-variant">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setActiveTab('tender')}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
-              activeTab === 'tender'
-                ? 'bg-sidebar-active text-white shadow-sm'
-                : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
-            }`}
-          >
-            Tender Process
-          </button>
-          <button
-            onClick={() => setActiveTab('contract')}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
-              activeTab === 'contract'
-                ? 'bg-sidebar-active text-white shadow-sm'
-                : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
-            }`}
-          >
-            Contract Process
-          </button>
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('tender')}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                activeTab === 'tender'
+                  ? 'bg-sidebar-active text-white shadow-sm'
+                  : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
+              }`}
+            >
+              Tender Process
+            </button>
+            <button
+              onClick={() => setActiveTab('contract')}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                activeTab === 'contract'
+                  ? 'bg-sidebar-active text-white shadow-sm'
+                  : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
+              }`}
+            >
+              Contract Process
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <TableInfoButton tableId={activeTab === 'tender' ? 'procurement-tender-process' : 'procurement-contract-process'} />
+          </div>
         </div>
       </StickyHeader>
 

@@ -6,6 +6,8 @@ import SunburstChart from '../components/SunburstChart';
 import SimplePagination from '../components/SimplePagination';
 import SectionNavigator from '../components/SectionNavigator';
 import generateAllData from '../data/poPerformanceData';
+import TableInfoButton from '../components/TableInfoButton';
+
 
 const formatAmount = (v) => {
   if (v >= 1000000000) return `${(v / 1000000000).toFixed(1)}B`;
@@ -46,7 +48,7 @@ function Table({ headers, rows, renderRow, className = '', page, setPage, rowsPe
   const displayRows = page ? rows.slice((page - 1) * rowsPerPage, page * rowsPerPage) : rows;
 
   return (
-    <>
+    <div>
       <div className={`overflow-x-auto ${className}`}>
         <table className="w-full border-collapse">
           <thead>
@@ -77,7 +79,7 @@ function Table({ headers, rows, renderRow, className = '', page, setPage, rowsPe
           label="records"
         />
       )}
-    </>
+    </div>
   );
 }
 
@@ -268,6 +270,7 @@ export default function PoPerformanceCompliance() {
                   subtitle={`${filteredOpenOverduePOs.length} records requiring attention`}
                   action={
                     <div className="flex items-center gap-3">
+                      <TableInfoButton tableId="po-overdue" />
                       <div className="relative">
                         <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
                         <input
@@ -742,7 +745,7 @@ export default function PoPerformanceCompliance() {
       {/* ── Contract vs PO Consumption ───────────────────────────── */}
       {activeSections.includes('ppc-contract-vs-po') && (
       <section id="ppc-contract-vs-po">
-        <SectionPanel title="Contract vs PO - Consumption & Remaining" subtitle="Per contract with summary">
+        <SectionPanel title="Contract vs PO - Consumption & Remaining" subtitle="Per contract with summary" action={<TableInfoButton tableId="po-contract-vs-po" />}>
           {/* Summary */}
           <div className="grid grid-cols-4 gap-4 mb-5">
             {(() => {
@@ -800,7 +803,7 @@ export default function PoPerformanceCompliance() {
       {/* ── LC/CAD Expiry ────────────────────────────────────────── */}
       {activeSections.includes('ppc-lc-cad') && (
       <section id="ppc-lc-cad">
-        <SectionPanel title="LC / CAD Expiry Report" subtitle="Letter of Credit expiry tracking">
+        <SectionPanel title="LC / CAD Expiry Report" subtitle="Letter of Credit expiry tracking" action={<TableInfoButton tableId="po-lc-cad" />}>
           <Table page={tp('lc-cad')} setPage={sp('lc-cad')}
             headers={[
               { key: 'lcNo', label: 'LC No' },
@@ -831,7 +834,7 @@ export default function PoPerformanceCompliance() {
       {/* ── Contract vs PO vs Inbound vs Receive ────────────────── */}
       {activeSections.includes('ppc-pipeline') && (
       <section id="ppc-pipeline">
-        <SectionPanel title="Contract vs PO vs Inbound Delivery vs Received" subtitle="Full procurement pipeline per contract">
+        <SectionPanel title="Contract vs PO vs Inbound Delivery vs Received" subtitle="Full procurement pipeline per contract" action={<TableInfoButton tableId="po-pipeline" />}>
           {(() => {
             const totalPO = data.contractPipeline.reduce((s, c) => s + c.poAmount, 0);
             const totalInbound = data.contractPipeline.reduce((s, c) => s + c.inboundDelivery, 0);
@@ -886,7 +889,7 @@ export default function PoPerformanceCompliance() {
       {/* ── MOH WBS ──────────────────────────────────────────────── */}
       {activeSections.includes('ppc-moh-wbs') && (
       <section id="ppc-moh-wbs">
-        <SectionPanel title="Procurement by MOH WBS" subtitle="Work Breakdown Structure">
+        <SectionPanel title="Procurement by MOH WBS" subtitle="Work Breakdown Structure" action={<TableInfoButton tableId="po-moh-wbs" />}>
           <Table page={tp('moh-wbs')} setPage={sp('moh-wbs')}
             headers={[
               { key: 'wbs', label: 'WBS Code' },
@@ -911,7 +914,7 @@ export default function PoPerformanceCompliance() {
       {/* ── Performance Bond ─────────────────────────────────────── */}
       {activeSections.includes('ppc-bond') && (
       <section id="ppc-bond">
-        <SectionPanel title="Performance Bond Report" subtitle="Received, Verified, Expiry, Confiscated, Extended">
+        <SectionPanel title="Performance Bond Report" subtitle="Received, Verified, Expiry, Confiscated, Extended" action={<TableInfoButton tableId="po-bond" />}>
           {(() => {
             const bonds = data.performanceBonds;
             const totalAmount = bonds.reduce((s, b) => s + b.amount, 0);
@@ -969,7 +972,7 @@ export default function PoPerformanceCompliance() {
       {/* ── Leadtime ─────────────────────────────────────────────── */}
       {activeSections.includes('ppc-leadtime') && (
       <section id="ppc-leadtime">
-        <SectionPanel title="Leadtime Analysis" subtitle="Average processing times across procurement stages">
+        <SectionPanel title="Leadtime Analysis" subtitle="Average processing times across procurement stages" action={<TableInfoButton tableId="po-leadtime" />}>
           {/* Summary cards */}
           <div className="grid grid-cols-5 gap-4 mb-6">
             <KPICard variant="detailed" icon="fa-file-signature" iconBg="bg-primary/10" iconColor="text-primary" label="Contract → PO" value={`${data.leadtime.summary.contractToPO}d`} subtitle="Tender process" />
@@ -1013,7 +1016,7 @@ export default function PoPerformanceCompliance() {
       {/* ── Procurement Status ───────────────────────────────────── */}
       {activeSections.includes('ppc-status') && (
       <section id="ppc-status">
-        <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received">
+        <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received" action={<TableInfoButton tableId="po-proc-status" />}>
           <div className="grid grid-cols-2 gap-6">
             <div>
               <PieChart data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} totalLabel="Procurement stages" />
@@ -1058,7 +1061,7 @@ export default function PoPerformanceCompliance() {
       {/* ── Supplier Performance ─────────────────────────────────── */}
       {activeSections.includes('ppc-supplier-perf') && (
       <section id="ppc-supplier-perf">
-        <SectionPanel title="Supplier Performance Tracking" subtitle="Average lead time and on-time delivery percentage">
+        <SectionPanel title="Supplier Performance Tracking" subtitle="Average lead time and on-time delivery percentage" action={<TableInfoButton tableId="po-supplier-perf" />}>
           <Table page={tp('supplier-perf')} setPage={sp('supplier-perf')}
             headers={[
               { key: 'supplier', label: 'Supplier' },

@@ -7,6 +7,8 @@ import ProgramBarChart from '../../components/program/ProgramBarChart';
 import ProgramMiniTable from '../../components/program/ProgramMiniTable';
 import IssuedItemsTable from '../../components/program/IssuedItemsTable';
 import PieChart from '../../components/PieChart';
+import TableInfoButton from '../../components/TableInfoButton';
+
 
 const formatNumber = (value) => new Intl.NumberFormat('en').format(value || 0);
 const formatCompact = (v) =>
@@ -130,7 +132,7 @@ function LlinProgram() {
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3">
-          <ProgramPanel title="Account Breakdown" action={<i className="fa-solid fa-circle-info text-primary/70" />}>
+          <ProgramPanel title="Account Breakdown" action={<TableInfoButton tableId="program-mini-table" />}>
             <ProgramMiniTable
               columns={[
                 { key: 'label', label: 'Account' },
@@ -140,7 +142,7 @@ function LlinProgram() {
               rows={accountData}
             />
           </ProgramPanel>
-          <ProgramPanel title="Activity SOH" action={<i className="fa-solid fa-circle-info text-primary/70" />}>
+          <ProgramPanel title="Activity SOH" action={<TableInfoButton tableId="program-mini-table" />}>
             <ProgramMiniTable
               columns={[
                 { key: 'label', label: 'Activity' },
@@ -149,7 +151,7 @@ function LlinProgram() {
               rows={activityData}
             />
           </ProgramPanel>
-          <ProgramPanel title="Unit SOH" action={<i className="fa-solid fa-circle-info text-primary/70" />}>
+          <ProgramPanel title="Unit SOH" action={<TableInfoButton tableId="program-mini-table" />}>
             <ProgramMiniTable
               columns={[
                 { key: 'label', label: 'Unit' },
@@ -158,7 +160,7 @@ function LlinProgram() {
               rows={unitData}
             />
           </ProgramPanel>
-          <ProgramPanel title="Manufacturer Summary" action={<i className="fa-solid fa-circle-info text-primary/70" />}>
+          <ProgramPanel title="Manufacturer Summary" action={<TableInfoButton tableId="program-mini-table" />}>
             <ProgramMiniTable
               columns={[
                 { key: 'label', label: 'Manufacturer' },
@@ -173,7 +175,7 @@ function LlinProgram() {
 
       {/* ── Stock Status ────────────────────────────────────────────────── */}
       <section id="llin-stock">
-        <ProgramPanel title="Stock Status" subtitle="LLIN national stock levels">
+        <ProgramPanel title="Stock Status" subtitle="LLIN national stock levels" action={<TableInfoButton tableId="program-mini-table" />}>
           <ProgramMiniTable
             columns={[
               { key: 'item', label: 'Item' },
@@ -218,6 +220,7 @@ function LlinProgram() {
         <ProgramPanel
           title="Purchase Orders"
           subtitle={`${purchaseOrderRows.length} PO records`}
+          action={<TableInfoButton tableId="program-mini-table" />}
         >
           <ProgramMiniTable
             columns={[
@@ -264,7 +267,7 @@ function LlinProgram() {
 
       {/* ── Issued ──────────────────────────────────────────────────────── */}
       <section id="llin-issued">
-        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month">
+        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month" action={<TableInfoButton tableId="program-issued-items" />}>
           <IssuedItemsTable rows={[]} />
         </ProgramPanel>
       </section>

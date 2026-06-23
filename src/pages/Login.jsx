@@ -86,7 +86,7 @@ export default function Login({ onLogin }) {
         <div className="relative z-10 -ml-12">
           <img src="/epss-logo.png" alt="EPSS" className="h-28 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
         </div>
-
+        <img src="/gemini-svg.svg" alt="" className="absolute -top-12 -right-40 w-[800px] pointer-events-none select-none brightness-0 invert" />
         <div className="relative z-10 mt-8">
           <h1 className="text-[40px] leading-[48px] font-bold text-white tracking-tight">
             Fanos Dashboard

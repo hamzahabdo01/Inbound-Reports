@@ -9,6 +9,8 @@ import EmptyState from '../components/EmptyState';
 import SelectFilter from '../components/SelectFilter';
 import ExportButton from '../components/ExportButton';
 import StickyHeader from '../components/StickyHeader';
+import TableInfoButton from '../components/TableInfoButton';
+
 
 // Status styling & logic helper
 const getStockStatus = (mos) => {
@@ -296,7 +298,10 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
           </button>
         </div>
         
-        <ExportButton onClick={handleExportCSV} label="Export Excel Data" icon="fa-file-excel" className="border-outline bg-white hover:bg-surface-low font-semibold text-body-sm shadow-sm" />
+        <div className="flex items-center gap-2">
+          <TableInfoButton tableId={activeTab === 'stock-report' ? 'main-stock-report' : 'national-amc-report'} />
+          <ExportButton onClick={handleExportCSV} label="Export Excel Data" icon="fa-file-excel" className="border-outline bg-white hover:bg-surface-low font-semibold text-body-sm shadow-sm" />
+        </div>
       </StickyHeader>
 
       {activeTab === 'stock-report' && <>

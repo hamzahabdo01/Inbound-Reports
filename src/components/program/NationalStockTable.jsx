@@ -5,7 +5,7 @@ const compactNumber = (value) => new Intl.NumberFormat('en', { notation: 'compac
 function NationalStockTable({ rows, onSelectItem }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[900px]">
+        <table className="w-full min-w-[900px]">
         <thead className="bg-[#CFD8DC]">
           <tr>
             {['Item', 'Status', 'SOH', 'AMC', 'MOS', 'Planned', 'GIT', 'Min', 'Max'].map((header) => (
@@ -56,7 +56,7 @@ function NationalStockTable({ rows, onSelectItem }) {
           ))}
         </tbody>
       </table>
-    </div>
+      </div>
   );
 }
 

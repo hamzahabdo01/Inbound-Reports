@@ -12,6 +12,8 @@ import LoadingState from '../components/LoadingState';
 import SelectFilter from '../components/SelectFilter';
 import ExportButton from '../components/ExportButton';
 import StickyHeader from '../components/StickyHeader';
+import TableInfoButton from '../components/TableInfoButton';
+
 
 const ALL_COLUMNS = [
   'PurchaseOrderNumber',
@@ -287,6 +289,9 @@ function InboundReports() {
           onChange={setActiveTab}
         />
         <div className="flex items-center gap-2">
+          {activeTab === 'shipment' && (
+            <TableInfoButton tableId="shipment-dwelling-time" />
+          )}
           <ExportButton onClick={handleExport} label="Export Report" />
         </div>
       </StickyHeader>

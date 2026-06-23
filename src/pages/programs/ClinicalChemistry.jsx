@@ -7,6 +7,7 @@ import ProgramMiniTable from '../../components/program/ProgramMiniTable';
 import NationalStockTable from '../../components/program/NationalStockTable';
 import IssuedItemsTable from '../../components/program/IssuedItemsTable';
 import PieChart from '../../components/PieChart';
+import TableInfoButton from '../../components/TableInfoButton';
 import {
   ccStockRows,
   ccProcurementByAgent,
@@ -129,21 +130,21 @@ function ClinicalChemistry({ programType = 'HPR' }) {
 
       {/* ── Stock Status ─────────────────────────────────────────────────── */}
       <section id="cc-stock">
-        <ProgramPanel title="Stock Status" subtitle={`${ccStockRows.length} Clinical Chemistry products`}>
+        <ProgramPanel title="Stock Status" subtitle={`${ccStockRows.length} Clinical Chemistry products`} action={<TableInfoButton tableId="program-national-stock" />}>
           <NationalStockTable rows={ccStockRows} />
         </ProgramPanel>
       </section>
 
       {/* ── Issued Items ─────────────────────────────────────────────────── */}
       <section id="cc-issued">
-        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month">
+        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month" action={<TableInfoButton tableId="program-issued-items" />}>
           <IssuedItemsTable rows={ccIssuedRows} />
         </ProgramPanel>
       </section>
 
       {/* ── Manufacturer ─────────────────────────────────────────────────── */}
       <section id="cc-manufacturer">
-        <ProgramPanel title="Manufacturer" subtitle="Received value by manufacturer">
+        <ProgramPanel title="Manufacturer" subtitle="Received value by manufacturer" action={<TableInfoButton tableId="program-mini-table" />}>
           <ProgramMiniTable
             columns={[
               { key: 'label', label: 'Manufacturer' },
@@ -158,7 +159,7 @@ function ClinicalChemistry({ programType = 'HPR' }) {
 
       {/* ── Supplier ─────────────────────────────────────────────────────── */}
       <section id="cc-supplier">
-        <ProgramPanel title="Supplier" subtitle="Received value by supplier">
+        <ProgramPanel title="Supplier" subtitle="Received value by supplier" action={<TableInfoButton tableId="program-mini-table" />}>
           <ProgramMiniTable
             columns={[
               { key: 'label', label: 'Supplier' },
@@ -173,7 +174,7 @@ function ClinicalChemistry({ programType = 'HPR' }) {
 
       {/* ── Country ──────────────────────────────────────────────────────── */}
       <section id="cc-country">
-        <ProgramPanel title="Country" subtitle="Received value by source country">
+        <ProgramPanel title="Country" subtitle="Received value by source country" action={<TableInfoButton tableId="program-mini-table" />}>
           <ProgramMiniTable
             columns={[
               { key: 'label', label: 'Country' },

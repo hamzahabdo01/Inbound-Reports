@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 const formatNumber = (value) => new Intl.NumberFormat('en').format(value || 0);
 
+
 const statuses = [
   { label: 'Excess', color: '#0B4F54' },
   { label: 'Normal', color: '#059669' },

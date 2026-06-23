@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 
+
 const FLOW_TYPES = ['Center to Hub', 'Hub to Facility'];
 
 const MONTHS = [
@@ -76,20 +77,22 @@ function IssuedItemsTable({ rows = [] }) {
           ))}
         </div>
 
-        {/* Month filter */}
-        <div className="relative">
-          <select
-            value={monthFilter}
-            onChange={(e) => handleMonthChange(e.target.value)}
-            className="appearance-none h-9 min-w-[130px] rounded-lg border border-outline-variant bg-white px-3 pr-8 text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all cursor-pointer"
-            aria-label="Filter by month"
-          >
-            <option value="">All months</option>
-            {MONTHS.map((m, idx) => (
-              <option key={m} value={idx}>{m}</option>
-            ))}
-          </select>
-          <i className="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-primary pointer-events-none" />
+        {/* Month filter & info button */}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <select
+              value={monthFilter}
+              onChange={(e) => handleMonthChange(e.target.value)}
+              className="appearance-none h-9 min-w-[130px] rounded-lg border border-outline-variant bg-white px-3 pr-8 text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all cursor-pointer"
+              aria-label="Filter by month"
+            >
+              <option value="">All months</option>
+              {MONTHS.map((m, idx) => (
+                <option key={m} value={idx}>{m}</option>
+              ))}
+            </select>
+            <i className="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-primary pointer-events-none" />
+          </div>
         </div>
       </div>
 
