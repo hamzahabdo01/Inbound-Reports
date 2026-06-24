@@ -23,6 +23,8 @@ export async function login(username, password, environmentCode) {
 export function logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('user');
 }
 
 export function getToken() {

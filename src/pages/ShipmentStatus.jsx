@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import StickyHeader from '../components/StickyHeader';
-import TableInfoButton from '../components/TableInfoButton';
+import InfoButton from '../components/InfoButton';
+import ExpandButton from '../components/ExpandButton';
 
 import { shipmentStatusHPRData, shipmentStatusRDFData } from '../data/shipmentStatusData';
 import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../data/purchaseOrderDetailData';
@@ -603,9 +604,15 @@ function ShipmentStatus() {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             {/* Donut — GRNF Distribution */}
             <div className="lg:col-span-2 bg-white rounded-xl border border-[#CFD8DC] shadow-[0px_4px_20px_rgba(10,50,53,0.06)] p-6">
-              <div className="mb-4">
-                <h3 className="text-sm font-bold text-[#181C1E]">GRNF Status Distribution</h3>
-                <p className="text-xs text-[#707979] mt-0.5">{activeOrg} — breakdown of receipt completion levels</p>
+              <div className="mb-4 flex items-start justify-between gap-2">
+                <div>
+                  <h3 className="text-sm font-bold text-[#181C1E]">GRNF Status Distribution</h3>
+                  <p className="text-xs text-[#707979] mt-0.5">{activeOrg} — breakdown of receipt completion levels</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <ExpandButton data={donutData} title="GRNF Status Distribution" />
+                  <InfoButton contentId="shipment-grnf-distribution" />
+                </div>
               </div>
               <PieChart data={donutData} />
             </div>
@@ -633,7 +640,7 @@ function ShipmentStatus() {
                 <p className="text-xs text-[#707979] mt-0.5 ml-3.5">{activeOrg} — Purchase order shipment tracking with GRNF/GRV completion</p>
               </div>
               <div className="flex items-center gap-2">
-                <TableInfoButton tableId="shipment-status-epss" />
+                <InfoButton contentId="shipment-status-epss" />
                 <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#CFD8DC] text-xs font-semibold text-[#404849] hover:bg-[#F0F4F6] transition-colors">
                   <i className="fa-solid fa-download text-[10px]" />
                   Export
@@ -656,7 +663,7 @@ function ShipmentStatus() {
                 <p className="text-xs text-[#707979] mt-0.5 ml-3.5">Detailed line-item view of purchase orders including supplier, funding, and pricing</p>
               </div>
               <div className="flex items-center gap-2">
-                <TableInfoButton tableId="po-detail-report" />
+                <InfoButton contentId="po-detail-report" />
                 <span className="text-xs font-medium text-[#707979] bg-[#F0F4F6] px-2.5 py-1 rounded-full">
                   {poRows.length} records
                 </span>

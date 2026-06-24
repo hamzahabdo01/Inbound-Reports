@@ -7,7 +7,8 @@ import ProgramBarChart from '../../components/program/ProgramBarChart';
 import ProgramMiniTable from '../../components/program/ProgramMiniTable';
 import IssuedItemsTable from '../../components/program/IssuedItemsTable';
 import PieChart from '../../components/PieChart';
-import TableInfoButton from '../../components/TableInfoButton';
+import InfoButton from '../../components/InfoButton';
+import ExpandButton from '../../components/ExpandButton';
 
 
 const formatNumber = (value) => new Intl.NumberFormat('en').format(value || 0);
@@ -132,7 +133,7 @@ function LlinProgram() {
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3">
-          <ProgramPanel title="Account Breakdown" action={<TableInfoButton tableId="program-mini-table" />}>
+          <ProgramPanel title="Account Breakdown" action={<InfoButton contentId="program-mini-table" />}>
             <ProgramMiniTable
               columns={[
                 { key: 'label', label: 'Account' },
@@ -142,7 +143,7 @@ function LlinProgram() {
               rows={accountData}
             />
           </ProgramPanel>
-          <ProgramPanel title="Activity SOH" action={<TableInfoButton tableId="program-mini-table" />}>
+          <ProgramPanel title="Activity SOH" action={<InfoButton contentId="program-mini-table" />}>
             <ProgramMiniTable
               columns={[
                 { key: 'label', label: 'Activity' },
@@ -151,7 +152,7 @@ function LlinProgram() {
               rows={activityData}
             />
           </ProgramPanel>
-          <ProgramPanel title="Unit SOH" action={<TableInfoButton tableId="program-mini-table" />}>
+          <ProgramPanel title="Unit SOH" action={<InfoButton contentId="program-mini-table" />}>
             <ProgramMiniTable
               columns={[
                 { key: 'label', label: 'Unit' },
@@ -160,7 +161,7 @@ function LlinProgram() {
               rows={unitData}
             />
           </ProgramPanel>
-          <ProgramPanel title="Manufacturer Summary" action={<TableInfoButton tableId="program-mini-table" />}>
+          <ProgramPanel title="Manufacturer Summary" action={<InfoButton contentId="program-mini-table" />}>
             <ProgramMiniTable
               columns={[
                 { key: 'label', label: 'Manufacturer' },
@@ -175,7 +176,7 @@ function LlinProgram() {
 
       {/* ── Stock Status ────────────────────────────────────────────────── */}
       <section id="llin-stock">
-        <ProgramPanel title="Stock Status" subtitle="LLIN national stock levels" action={<TableInfoButton tableId="program-mini-table" />}>
+        <ProgramPanel title="Stock Status" subtitle="LLIN national stock levels" action={<InfoButton contentId="program-mini-table" />}>
           <ProgramMiniTable
             columns={[
               { key: 'item', label: 'Item' },
@@ -198,14 +199,14 @@ function LlinProgram() {
       {/* ── Procurement ─────────────────────────────────────────────────── */}
       <section id="llin-procurement">
         <div className="grid grid-cols-2 gap-5">
-          <ProgramPanel title="Funding Source" subtitle="Procurement funding share">
+          <ProgramPanel title="Funding Source" subtitle="Procurement funding share" action={<div className="flex items-center gap-1"><ExpandButton data={fundingSourceChart} title="Funding Source" /><InfoButton contentId="program-funding-source" /></div>}>
             <div className="flex h-64 items-center justify-center">
               <div className="w-[320px]">
                 <PieChart data={fundingSourceChart} totalLabel="Funding source" />
               </div>
             </div>
           </ProgramPanel>
-          <ProgramPanel title="Distribution by Facility Type" subtitle="Receipt facility share">
+          <ProgramPanel title="Distribution by Facility Type" subtitle="Receipt facility share" action={<div className="flex items-center gap-1"><ExpandButton data={facilityTypeChart} title="Distribution by Facility Type" /><InfoButton contentId="program-facility-distribution" /></div>}>
             <div className="flex h-64 items-center justify-center">
               <div className="w-[320px]">
                 <PieChart data={facilityTypeChart} totalLabel="Facility distribution" />
@@ -220,7 +221,7 @@ function LlinProgram() {
         <ProgramPanel
           title="Purchase Orders"
           subtitle={`${purchaseOrderRows.length} PO records`}
-          action={<TableInfoButton tableId="program-mini-table" />}
+          action={<InfoButton contentId="program-mini-table" />}
         >
           <ProgramMiniTable
             columns={[
@@ -267,7 +268,7 @@ function LlinProgram() {
 
       {/* ── Issued ──────────────────────────────────────────────────────── */}
       <section id="llin-issued">
-        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month" action={<TableInfoButton tableId="program-issued-items" />}>
+        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month" action={<InfoButton contentId="program-issued-items" />}>
           <IssuedItemsTable rows={[]} />
         </ProgramPanel>
       </section>
@@ -284,7 +285,7 @@ function LlinProgram() {
               valueFormatter={(v) => formatNumber(v)}
             />
           </ProgramPanel>
-          <ProgramPanel title="Account Distribution" subtitle="Quantity by funding account">
+          <ProgramPanel title="Account Distribution" subtitle="Quantity by funding account" action={<div className="flex items-center gap-1"><ExpandButton data={accountData.map((a, i) => ({ ...a, color: ['#0B4F54', '#86BFC5'][i] }))} title="Account Distribution" /><InfoButton contentId="program-account-distribution" /></div>}>
             <div className="flex items-center justify-center py-4">
               <div className="w-[280px]">
                 <PieChart

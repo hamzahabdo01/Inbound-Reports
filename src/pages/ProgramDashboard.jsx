@@ -3,6 +3,7 @@ import ProgramChips from '../components/program/ProgramChips';
 import ChildHealth from './programs/ChildHealth';
 import ClinicalChemistry from './programs/ClinicalChemistry';
 import LlinProgram from './programs/LLIN';
+import DroughtImpact from './programs/DroughtImpact';
 
 function OrgToggle({ value, onChange }) {
   const isHPR = value === 'HPR';
@@ -57,6 +58,8 @@ function ProgramDashboard() {
         return <ClinicalChemistry programType={programType} />;
       case 'LLIN':
         return <LlinProgram />;
+      case 'Drought Impact':
+        return <DroughtImpact />;
       default:
         return (
           <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">

@@ -1,0 +1,67 @@
+{
+  "success": true,
+  "message": "Purchase orders by type retrieved successfully.",
+  "data": [
+    {
+      "purchaseOrderType": "By Health Program",
+      "purchaseOrderCount": 1059,
+      "purchaseOrderLineCount": 2844,
+      "supplierCount": 205,
+      "materialCount": 1403,
+      "totalAmount": 82799133738.0,
+      "amountSharePercent": 60.61,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "purchaseOrderType": "RDF International",
+      "purchaseOrderCount": 1051,
+      "purchaseOrderLineCount": 3022,
+      "supplierCount": 161,
+      "materialCount": 1184,
+      "totalAmount": 26995928311.97,
+      "amountSharePercent": 19.76,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "purchaseOrderType": "RDF  local",
+      "purchaseOrderCount": 232,
+      "purchaseOrderLineCount": 564,
+      "supplierCount": 35,
+      "materialCount": 178,
+      "totalAmount": 26813556073.66,
+      "amountSharePercent": 19.63,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "purchaseOrderType": "Framework Order",
+      "purchaseOrderCount": 3,
+      "purchaseOrderLineCount": 5,
+      "supplierCount": 3,
+      "materialCount": 5,
+      "totalAmount": 11234976.05,
+      "amountSharePercent": 0.01,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    }
+  ],
+  "meta": {
+    "report": "purchase-orders-by-type",
+    "recordCount": 4,
+    "currency": "ETB",
+    "totals": {
+      "purchaseOrderCount": 2345,
+      "purchaseOrderLineCount": 6435,
+      "totalAmount": 136619853099.68,
+      "amountSharePercent": 100.01,
+      "unconvertedPurchaseOrderCount": 0
+    },
+    "notes": [
+      "Supplier and material counts are distinct within each purchase order type and must not be summed across types.",
+      "Amount shares may total slightly above or below 100 percent because row values are independently rounded."
+    ]
+  },
+  "errors": []
+}

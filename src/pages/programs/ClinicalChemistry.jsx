@@ -7,7 +7,8 @@ import ProgramMiniTable from '../../components/program/ProgramMiniTable';
 import NationalStockTable from '../../components/program/NationalStockTable';
 import IssuedItemsTable from '../../components/program/IssuedItemsTable';
 import PieChart from '../../components/PieChart';
-import TableInfoButton from '../../components/TableInfoButton';
+import InfoButton from '../../components/InfoButton';
+import ExpandButton from '../../components/ExpandButton';
 import {
   ccStockRows,
   ccProcurementByAgent,
@@ -116,12 +117,12 @@ function ClinicalChemistry({ programType = 'HPR' }) {
 
       {/* ── Procurement Agents + Funding Source ──────────────────────────── */}
       <section id="cc-agents" className="grid grid-cols-2 gap-5">
-        <ProgramPanel title="Procurement Agents" subtitle="PO line count by product and funding source">
+        <ProgramPanel title="Procurement Agents" subtitle="PO line count by product and funding source" action={<div className="flex items-center gap-1"><ExpandButton data={ccDonorChart} title="Procurement Agents" /><InfoButton contentId="program-procurement-agents" /></div>}>
           <div className="-mt-3 px-5 pb-5">
             <PieChart data={ccDonorChart} />
           </div>
         </ProgramPanel>
-        <ProgramPanel title="Funding Source" subtitle="Incoming shipment funder share">
+        <ProgramPanel title="Funding Source" subtitle="Incoming shipment funder share" action={<div className="flex items-center gap-1"><ExpandButton data={ccFundingChart} title="Funding Source" /><InfoButton contentId="program-funding-source" /></div>}>
           <div className="-mt-3 px-5 pb-5">
             <PieChart data={ccFundingChart} />
           </div>
@@ -130,21 +131,21 @@ function ClinicalChemistry({ programType = 'HPR' }) {
 
       {/* ── Stock Status ─────────────────────────────────────────────────── */}
       <section id="cc-stock">
-        <ProgramPanel title="Stock Status" subtitle={`${ccStockRows.length} Clinical Chemistry products`} action={<TableInfoButton tableId="program-national-stock" />}>
+        <ProgramPanel title="Stock Status" subtitle={`${ccStockRows.length} Clinical Chemistry products`} action={<InfoButton contentId="program-national-stock" />}>
           <NationalStockTable rows={ccStockRows} />
         </ProgramPanel>
       </section>
 
       {/* ── Issued Items ─────────────────────────────────────────────────── */}
       <section id="cc-issued">
-        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month" action={<TableInfoButton tableId="program-issued-items" />}>
+        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month" action={<InfoButton contentId="program-issued-items" />}>
           <IssuedItemsTable rows={ccIssuedRows} />
         </ProgramPanel>
       </section>
 
       {/* ── Manufacturer ─────────────────────────────────────────────────── */}
       <section id="cc-manufacturer">
-        <ProgramPanel title="Manufacturer" subtitle="Received value by manufacturer" action={<TableInfoButton tableId="program-mini-table" />}>
+        <ProgramPanel title="Manufacturer" subtitle="Received value by manufacturer" action={<InfoButton contentId="program-mini-table" />}>
           <ProgramMiniTable
             columns={[
               { key: 'label', label: 'Manufacturer' },
@@ -159,7 +160,7 @@ function ClinicalChemistry({ programType = 'HPR' }) {
 
       {/* ── Supplier ─────────────────────────────────────────────────────── */}
       <section id="cc-supplier">
-        <ProgramPanel title="Supplier" subtitle="Received value by supplier" action={<TableInfoButton tableId="program-mini-table" />}>
+        <ProgramPanel title="Supplier" subtitle="Received value by supplier" action={<InfoButton contentId="program-mini-table" />}>
           <ProgramMiniTable
             columns={[
               { key: 'label', label: 'Supplier' },
@@ -174,7 +175,7 @@ function ClinicalChemistry({ programType = 'HPR' }) {
 
       {/* ── Country ──────────────────────────────────────────────────────── */}
       <section id="cc-country">
-        <ProgramPanel title="Country" subtitle="Received value by source country" action={<TableInfoButton tableId="program-mini-table" />}>
+        <ProgramPanel title="Country" subtitle="Received value by source country" action={<InfoButton contentId="program-mini-table" />}>
           <ProgramMiniTable
             columns={[
               { key: 'label', label: 'Country' },

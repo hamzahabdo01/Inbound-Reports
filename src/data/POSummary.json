@@ -1,0 +1,28 @@
+{
+  "success": true,
+  "message": "Purchase order summary retrieved successfully.",
+  "data": {
+    "purchaseOrderCount": 2345,
+    "purchaseOrderLineCount": 6435,
+    "supplierCount": 292,
+    "materialCount": 2460,
+    "totalAmount": 136619853099.68,
+    "averagePurchaseOrderAmount": 58260065.29,
+    "minimumPurchaseOrderAmount": 0.0,
+    "maximumPurchaseOrderAmount": 4573043201.0,
+    "earliestPurchaseOrderDate": "2024-06-04",
+    "latestPurchaseOrderDate": "2026-06-18",
+    "convertedLineCount": 6435,
+    "unconvertedLineCount": 0,
+    "convertedPurchaseOrderCount": 2345,
+    "unconvertedPurchaseOrderCount": 0,
+    "lineCurrencyConversionCoveragePercent": 100.0,
+    "purchaseOrderCurrencyConversionCoveragePercent": 100.0,
+    "currency": "ETB"
+  },
+  "meta": {
+    "report": "purchase-order-summary",
+    "recordCount": 1
+  },
+  "errors": []
+}

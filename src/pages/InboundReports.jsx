@@ -12,7 +12,7 @@ import LoadingState from '../components/LoadingState';
 import SelectFilter from '../components/SelectFilter';
 import ExportButton from '../components/ExportButton';
 import StickyHeader from '../components/StickyHeader';
-import TableInfoButton from '../components/TableInfoButton';
+import InfoButton from '../components/InfoButton';
 
 
 const ALL_COLUMNS = [
@@ -290,7 +290,7 @@ function InboundReports() {
         />
         <div className="flex items-center gap-2">
           {activeTab === 'shipment' && (
-            <TableInfoButton tableId="shipment-dwelling-time" />
+            <InfoButton contentId="shipment-dwelling-time" />
           )}
           <ExportButton onClick={handleExport} label="Export Report" />
         </div>

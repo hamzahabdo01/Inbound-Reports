@@ -1,0 +1,72 @@
+{
+  "success": true,
+  "message": "Purchase orders by material type retrieved successfully.",
+  "data": [
+    {
+      "materialTypeCode": "ZME",
+      "materialTypeName": "Medicine",
+      "purchaseOrderCount": 1133,
+      "purchaseOrderLineCount": 1683,
+      "materialCount": 582,
+      "supplierCount": 110,
+      "totalAmount": 74095351720.94,
+      "amountSharePercent": 54.23,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "materialTypeCode": "ZMD",
+      "materialTypeName": "Medical Device",
+      "purchaseOrderCount": 625,
+      "purchaseOrderLineCount": 1606,
+      "materialCount": 823,
+      "supplierCount": 96,
+      "totalAmount": 31352053834.28,
+      "amountSharePercent": 22.95,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "materialTypeCode": "ZLC",
+      "materialTypeName": "Laboratory commodity",
+      "purchaseOrderCount": 386,
+      "purchaseOrderLineCount": 2589,
+      "materialCount": 856,
+      "supplierCount": 72,
+      "totalAmount": 18208446557.86,
+      "amountSharePercent": 13.33,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "materialTypeCode": "ZMS",
+      "materialTypeName": "Medical Supply",
+      "purchaseOrderCount": 272,
+      "purchaseOrderLineCount": 557,
+      "materialCount": 199,
+      "supplierCount": 69,
+      "totalAmount": 12964000986.6,
+      "amountSharePercent": 9.49,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    }
+  ],
+  "meta": {
+    "report": "purchase-orders-by-material-type",
+    "recordCount": 4,
+    "currency": "ETB",
+    "totals": {
+      "purchaseOrderLineCount": 6435,
+      "materialCount": 2460,
+      "totalAmount": 136619853099.68,
+      "amountSharePercent": 100.0,
+      "unconvertedPurchaseOrderCount": 0
+    },
+    "notes": [
+      "Purchase order counts are distinct within each material type and must not be summed because one purchase order may contain multiple material types.",
+      "Supplier counts are distinct within each material type and must not be summed across material types.",
+      "Purchase order line counts and material counts are additive because each line and material belongs to one material type in this report."
+    ]
+  },
+  "errors": []
+}

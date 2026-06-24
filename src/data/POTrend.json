@@ -1,0 +1,302 @@
+{
+  "success": true,
+  "message": "Purchase order trend retrieved successfully.",
+  "data": [
+    {
+      "periodStartDate": "2024-06-01",
+      "purchaseOrderCount": 260,
+      "purchaseOrderLineCount": 627,
+      "supplierCount": 107,
+      "materialCount": 446,
+      "totalAmount": 13705313077.9,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2024-07-01",
+      "purchaseOrderCount": 193,
+      "purchaseOrderLineCount": 537,
+      "supplierCount": 99,
+      "materialCount": 427,
+      "totalAmount": 4679005025.26,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2024-08-01",
+      "purchaseOrderCount": 45,
+      "purchaseOrderLineCount": 69,
+      "supplierCount": 31,
+      "materialCount": 63,
+      "totalAmount": 1456777688.36,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2024-09-01",
+      "purchaseOrderCount": 99,
+      "purchaseOrderLineCount": 191,
+      "supplierCount": 68,
+      "materialCount": 175,
+      "totalAmount": 5115470495.88,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2024-10-01",
+      "purchaseOrderCount": 98,
+      "purchaseOrderLineCount": 504,
+      "supplierCount": 56,
+      "materialCount": 486,
+      "totalAmount": 5717846879.74,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2024-11-01",
+      "purchaseOrderCount": 77,
+      "purchaseOrderLineCount": 232,
+      "supplierCount": 44,
+      "materialCount": 204,
+      "totalAmount": 3614892088.59,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2024-12-01",
+      "purchaseOrderCount": 58,
+      "purchaseOrderLineCount": 270,
+      "supplierCount": 32,
+      "materialCount": 248,
+      "totalAmount": 2805445263.57,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2025-01-01",
+      "purchaseOrderCount": 62,
+      "purchaseOrderLineCount": 112,
+      "supplierCount": 37,
+      "materialCount": 97,
+      "totalAmount": 5105769999.02,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2025-02-01",
+      "purchaseOrderCount": 72,
+      "purchaseOrderLineCount": 277,
+      "supplierCount": 38,
+      "materialCount": 260,
+      "totalAmount": 3587495978.43,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2025-03-01",
+      "purchaseOrderCount": 53,
+      "purchaseOrderLineCount": 136,
+      "supplierCount": 30,
+      "materialCount": 90,
+      "totalAmount": 5868146917.16,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2025-04-01",
+      "purchaseOrderCount": 106,
+      "purchaseOrderLineCount": 603,
+      "supplierCount": 57,
+      "materialCount": 436,
+      "totalAmount": 7786306384.43,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2025-05-01",
+      "purchaseOrderCount": 157,
+      "purchaseOrderLineCount": 430,
+      "supplierCount": 64,
+      "materialCount": 240,
+      "totalAmount": 10464058479.1,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2025-06-01",
+      "purchaseOrderCount": 61,
+      "purchaseOrderLineCount": 120,
+      "supplierCount": 33,
+      "materialCount": 96,
+      "totalAmount": 6038517911.79,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2025-07-01",
+      "purchaseOrderCount": 94,
+      "purchaseOrderLineCount": 138,
+      "supplierCount": 43,
+      "materialCount": 119,
+      "totalAmount": 3788799453.34,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2025-08-01",
+      "purchaseOrderCount": 89,
+      "purchaseOrderLineCount": 126,
+      "supplierCount": 50,
+      "materialCount": 108,
+      "totalAmount": 3521931909.5,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2025-09-01",
+      "purchaseOrderCount": 64,
+      "purchaseOrderLineCount": 482,
+      "supplierCount": 38,
+      "materialCount": 463,
+      "totalAmount": 5158258625.0,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2025-10-01",
+      "purchaseOrderCount": 82,
+      "purchaseOrderLineCount": 163,
+      "supplierCount": 47,
+      "materialCount": 131,
+      "totalAmount": 3647365362.15,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2025-11-01",
+      "purchaseOrderCount": 35,
+      "purchaseOrderLineCount": 50,
+      "supplierCount": 24,
+      "materialCount": 35,
+      "totalAmount": 1472131327.39,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2025-12-01",
+      "purchaseOrderCount": 114,
+      "purchaseOrderLineCount": 173,
+      "supplierCount": 49,
+      "materialCount": 123,
+      "totalAmount": 4921551481.57,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2026-01-01",
+      "purchaseOrderCount": 120,
+      "purchaseOrderLineCount": 207,
+      "supplierCount": 53,
+      "materialCount": 148,
+      "totalAmount": 6124587077.12,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2026-02-01",
+      "purchaseOrderCount": 46,
+      "purchaseOrderLineCount": 127,
+      "supplierCount": 28,
+      "materialCount": 81,
+      "totalAmount": 2842549165.14,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2026-03-01",
+      "purchaseOrderCount": 108,
+      "purchaseOrderLineCount": 180,
+      "supplierCount": 54,
+      "materialCount": 141,
+      "totalAmount": 4039831406.53,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2026-04-01",
+      "purchaseOrderCount": 73,
+      "purchaseOrderLineCount": 191,
+      "supplierCount": 41,
+      "materialCount": 155,
+      "totalAmount": 7403547022.13,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2026-05-01",
+      "purchaseOrderCount": 83,
+      "purchaseOrderLineCount": 303,
+      "supplierCount": 47,
+      "materialCount": 260,
+      "totalAmount": 9476986666.89,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "periodStartDate": "2026-06-01",
+      "purchaseOrderCount": 96,
+      "purchaseOrderLineCount": 187,
+      "supplierCount": 40,
+      "materialCount": 114,
+      "totalAmount": 8277267413.69,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    }
+  ],
+  "meta": {
+    "report": "purchase-order-trend",
+    "granularity": "month",
+    "recordCount": 25,
+    "period": {
+      "startDate": "2024-06-01",
+      "endDate": "2026-06-01"
+    },
+    "currency": "ETB",
+    "totals": {
+      "purchaseOrderCount": 2345,
+      "purchaseOrderLineCount": 6435,
+      "totalAmount": 136619853099.68,
+      "unconvertedPurchaseOrderCount": 0
+    },
+    "notes": [
+      "Supplier and material counts are distinct within each month and must not be summed across periods.",
+      "periodStartDate represents the first day of the reporting month."
+    ]
+  },
+  "errors": []
+}

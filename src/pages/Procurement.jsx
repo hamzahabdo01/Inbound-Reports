@@ -10,7 +10,8 @@ import EmptyState from '../components/EmptyState';
 import SelectFilter from '../components/SelectFilter';
 import KPICard from '../components/KPICard';
 import StickyHeader from '../components/StickyHeader';
-import TableInfoButton from '../components/TableInfoButton';
+import InfoButton from '../components/InfoButton';
+import ExpandButton from '../components/ExpandButton';
 
 
 const TENDER_STAGES = [
@@ -301,7 +302,7 @@ function Procurement() {
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <TableInfoButton tableId={activeTab === 'tender' ? 'procurement-tender-process' : 'procurement-contract-process'} />
+            <InfoButton contentId={activeTab === 'tender' ? 'procurement-tender-process' : 'procurement-contract-process'} />
           </div>
         </div>
       </StickyHeader>
@@ -361,7 +362,12 @@ function Procurement() {
         <div className="bg-white rounded-xl p-md shadow-level-2 border border-outline-variant flex flex-col self-start">
           <div className="flex items-center justify-between border-b border-outline-variant/30 pb-xs mb-sm relative z-20">
             <h3 className="text-header-sm font-bold text-on-surface">Stage Visualizer</h3>
-            <div className="flex items-center gap-1 bg-surface-container-low p-0.5 rounded-lg border border-outline-variant/30">
+            <div className="flex items-center gap-2">
+              {visMode === 'chart' && (
+                <ExpandButton data={pieData} title="Stage Visualizer" />
+              )}
+              <InfoButton contentId="procurement-stage-visualizer" />
+              <div className="flex items-center gap-1 bg-surface-container-low p-0.5 rounded-lg border border-outline-variant/30">
               <button
                 onClick={() => setVisMode('pipeline')}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
@@ -396,6 +402,7 @@ function Procurement() {
                 Delay Trend
               </button>
             </div>
+          </div>
           </div>
 
           <div className="h-[460px]">

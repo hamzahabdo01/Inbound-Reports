@@ -6,7 +6,6 @@ export default function Login({ onLogin }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [remember, setRemember] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [focusedField, setFocusedField] = useState(null)
@@ -39,6 +38,7 @@ export default function Login({ onLogin }) {
 
     if (!username.trim()) { setError('Username is required'); return }
     if (!password.trim()) { setError('Password is required'); return }
+    if (!selectedEnv) { setError('Please select a region/site.'); return }
 
     setLoading(true)
     try {
@@ -125,6 +125,7 @@ export default function Login({ onLogin }) {
       {/* Form Panel */}
       <div className="flex-1 relative overflow-hidden flex items-center justify-center px-6">
         <LoginCanvasAnimation />
+        
         <div className="w-full max-w-[420px] animate-slide-up relative z-10">
           {/* Mobile logo */}
           <div className="lg:hidden mb-10">
@@ -137,9 +138,9 @@ export default function Login({ onLogin }) {
           </div>
 
           <div className="bg-white border border-[#CFD8DC] rounded-xl p-8">
-            <div className="space-y-5">
+            <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
               <div>
-                <label htmlFor="username" className="block text-label-sm text-on-surface mb-1.5">Username</label>
+                <label htmlFor="username" className="block text-label-sm text-gray-900 mb-1.5">Username</label>
                 <div className={`relative rounded-lg border transition-all duration-200 ${error && !username.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'username' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                     <i className={`fa-solid fa-user text-sm ${focusedField === 'username' ? 'text-[#1a4a47]' : 'text-[#9CA3AF]'}`} />
@@ -148,7 +149,7 @@ export default function Login({ onLogin }) {
                     id="username"
                     type="text"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => { setUsername(e.target.value); setError(''); }}
                     onFocus={() => setFocusedField('username')}
                     onBlur={() => setFocusedField(null)}
                     placeholder="Enter your username"
@@ -159,7 +160,7 @@ export default function Login({ onLogin }) {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-label-sm text-on-surface mb-1.5">Password</label>
+                <label htmlFor="password" className="block text-label-sm text-gray-900 mb-1.5">Password</label>
                 <div className={`relative rounded-lg border transition-all duration-200 ${error && !password.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'password' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                     <i className={`fa-solid fa-lock text-sm ${focusedField === 'password' ? 'text-[#1a4a47]' : 'text-[#9CA3AF]'}`} />
@@ -168,7 +169,7 @@ export default function Login({ onLogin }) {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => { setPassword(e.target.value); setError(''); }}
                     onFocus={() => setFocusedField('password')}
                     onBlur={() => setFocusedField(null)}
                     placeholder="Enter your password"
@@ -188,7 +189,7 @@ export default function Login({ onLogin }) {
 
               <div>
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <label className="block text-label-sm text-on-surface">Region / Site</label>
+                  <label className="block text-label-sm text-gray-900">Region / Site</label>
                   <div className="relative">
                     <button
                       type="button"
@@ -220,16 +221,6 @@ export default function Login({ onLogin }) {
                 </button>
               </div>
 
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(e) => setRemember(e.target.checked)}
-                  className="w-4 h-4 rounded border-[#CFD8DC] text-[#1a4a47] focus:ring-[#1a4a47]/30 focus:ring-offset-0 cursor-pointer"
-                />
-                <span className="text-body-sm text-on-surface-variant">Remember me</span>
-              </label>
-
               {error && (
                 <div className="flex items-center gap-2 text-body-sm text-error bg-error/5 rounded-lg px-4 py-3 animate-fade-in">
                   <i className="fa-solid fa-circle-exclamation text-sm" />
@@ -238,9 +229,8 @@ export default function Login({ onLogin }) {
               )}
 
               <button
-                type="button"
+                type="submit"
                 disabled={loading}
-                onClick={handleLogin}
                 className="relative w-full h-12 rounded-lg bg-[#1a4a47] text-white text-label-sm hover:bg-[#1f5a56] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150 overflow-hidden"
               >
                 {loading ? (
@@ -252,13 +242,7 @@ export default function Login({ onLogin }) {
                   'Sign in'
                 )}
               </button>
-            </div>
-          </div>
-
-          <div className="mt-8 text-center">
-            <p className="text-body-sm text-on-surface-variant">
-              Protected by enterprise-grade security.{' '}
-            </p>
+            </form>
           </div>
 
         </div>

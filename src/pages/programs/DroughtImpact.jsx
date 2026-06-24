@@ -16,10 +16,10 @@ import PieChart from '../../components/PieChart';
 import InfoButton from '../../components/InfoButton';
 import ProgramItemDetail from '../../components/program/ProgramItemDetail';
 import { parseCSV, parseQuantity } from '../../utils/csvParser';
-import stockStatusCsv from '../../data/Stock Status_ National.csv?raw';
-import hubBreakdownCsv from '../../data/Stock on Hand_ Regional Hubs Breakdown.csv?raw';
-import purchaseOrdersCsv from '../../data/Purchase Order_Incoming Shipments ERP.csv?raw';
-import recentReceivesCsv from '../../data/Recent Receives.csv?raw';
+import stockStatusCsv from '../../data/drought/Stock Status_National.csv?raw';
+import zoneBreakdownCsv from '../../data/drought/Stock on Hand_Regional Zones.csv?raw';
+import purchaseOrdersCsv from '../../data/drought/Purchase Orders_Drought Relief.csv?raw';
+import recentReceivesCsv from '../../data/drought/Recent Receives.csv?raw';
 
 const formatCompact = (v) =>
   new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(v || 0);
@@ -61,8 +61,8 @@ function normalizeStockRows() {
   }));
 }
 
-function normalizeHubRows() {
-  const rows = parseCSV(hubBreakdownCsv);
+function normalizeZoneRows() {
+  const rows = parseCSV(zoneBreakdownCsv);
   const productKeys = Object.keys(rows[0] || {}).filter((k) => k && k !== 'Site');
   return {
     products: productKeys,
@@ -104,34 +104,34 @@ function includesQuery(row, query) {
   return Object.values(row).some((v) => String(v || '').toLowerCase().includes(lowered));
 }
 
-const CHILD_ISSUED_ROWS = [];
+const DI_ISSUED_ROWS = [];
 
-const CH_SECTIONS = [
-  { id: 'ch-kpis',         label: 'Overview' },
-  { id: 'ch-stock',        label: 'Stock Status' },
-  { id: 'ch-hubs',         label: 'Hub Breakdown' },
-  { id: 'ch-procurement',  label: 'Procurement' },
-  { id: 'ch-po',           label: 'Purchase Orders' },
-  { id: 'ch-receives',     label: 'Recent Receives' },
-  { id: 'ch-distribution', label: 'Distribution' },
-  { id: 'ch-issued',       label: 'Issued' },
-  { id: 'ch-pipeline',     label: 'Pipeline' },
-  { id: 'ch-utilization',  label: 'Stock Utilization' },
-  { id: 'ch-mos',          label: 'National MOS' },
-  { id: 'ch-manufacturers',label: 'Manufacturers' },
-  { id: 'ch-countries',    label: 'Countries' },
+const DI_SECTIONS = [
+  { id: 'di-kpis',         label: 'Overview' },
+  { id: 'di-stock',        label: 'Stock Status' },
+  { id: 'di-zones',        label: 'Zone Breakdown' },
+  { id: 'di-procurement',  label: 'Procurement' },
+  { id: 'di-po',           label: 'Purchase Orders' },
+  { id: 'di-receives',     label: 'Recent Receives' },
+  { id: 'di-distribution', label: 'Distribution' },
+  { id: 'di-issued',       label: 'Issued' },
+  { id: 'di-pipeline',     label: 'Pipeline' },
+  { id: 'di-utilization',  label: 'Stock Utilization' },
+  { id: 'di-mos',          label: 'National MOS' },
+  { id: 'di-manufacturers',label: 'Manufacturers' },
+  { id: 'di-countries',    label: 'Countries' },
 ];
 
-function ChildHealth() {
+function DroughtImpact() {
   const [query,         setQuery]         = useState('');
   const [statusFilter,  setStatusFilter]  = useState('');
   const [productFilter, setProductFilter] = useState('');
   const [siteFilter,    setSiteFilter]    = useState('All');
-  const [hubTypeFilter, setHubTypeFilter] = useState('All');
+  const [zoneTypeFilter, setZoneTypeFilter] = useState('All');
   const [selectedProduct, setSelectedProduct] = useState('');
 
   const stockRows      = useMemo(() => normalizeStockRows(), []);
-  const hubData        = useMemo(() => normalizeHubRows(), []);
+  const zoneData       = useMemo(() => normalizeZoneRows(), []);
   const purchaseOrders = useMemo(() => normalizePurchaseOrders(), []);
   const recentReceives = useMemo(() => normalizeReceives(), []);
 
@@ -159,15 +159,15 @@ function ChildHealth() {
     ))
   ), [recentReceives, query, productFilter]);
 
-  const focusedHubProducts = useMemo(() => {
-    if (productFilter && hubData.products.includes(productFilter)) return [productFilter];
-    return hubData.products;
-  }, [hubData.products, productFilter]);
+  const focusedZoneProducts = useMemo(() => {
+    if (productFilter && zoneData.products.includes(productFilter)) return [productFilter];
+    return zoneData.products;
+  }, [zoneData.products, productFilter]);
 
-  const hubSites = useMemo(() => {
-    const s = new Set(hubData.rows.map((r) => r.Site?.trim()).filter(Boolean));
+  const zoneSites = useMemo(() => {
+    const s = new Set(zoneData.rows.map((r) => r.Site?.trim()).filter(Boolean));
     return ['All', ...Array.from(s).sort()];
-  }, [hubData.rows]);
+  }, [zoneData.rows]);
 
   const productThresholds = useMemo(() => {
     const map = {};
@@ -181,17 +181,17 @@ function ChildHealth() {
     return map;
   }, [stockRows]);
 
-  const filteredHubRows = useMemo(() => {
-    let result = hubData.rows;
+  const filteredZoneRows = useMemo(() => {
+    let result = zoneData.rows;
     if (siteFilter !== 'All')    result = result.filter((r) => r.Site?.trim() === siteFilter);
-    if (hubTypeFilter !== 'All') result = result.filter((r) => {
+    if (zoneTypeFilter !== 'All') result = result.filter((r) => {
       const site = r.Site?.trim() || '';
-      if (hubTypeFilter === 'Hub')    return  site.includes('Hub');
-      if (hubTypeFilter === 'Center') return !site.includes('Hub');
+      if (zoneTypeFilter === 'Zone')    return site.includes('Zone');
+      if (zoneTypeFilter === 'Region')  return !site.includes('Zone');
       return true;
     });
     return result;
-  }, [hubData.rows, siteFilter, hubTypeFilter]);
+  }, [zoneData.rows, siteFilter, zoneTypeFilter]);
 
   const kpis = useMemo(() => ({
     totalSoh:      stockRows.reduce((s, r) => s + r.SOH, 0),
@@ -312,13 +312,13 @@ function ChildHealth() {
   if (selectedProduct && selectedStockRow) {
     return (
       <ProgramItemDetail
-        programName="Child Health"
+        programName="Drought Impact"
         productName={selectedProduct}
         itemOptions={stockRows.map((row) => ({ label: row.ProductCN, status: row.SS }))}
         stockRow={selectedStockRow}
         purchaseOrders={purchaseOrders}
         recentReceives={recentReceives}
-        hubRows={hubData.rows}
+        hubRows={zoneData.rows}
         onBack={() => setSelectedProduct('')}
         onSelectItem={setSelectedProduct}
       />
@@ -328,10 +328,10 @@ function ChildHealth() {
   return (
     <div className="space-y-5">
 
-      <SectionNavigator sections={CH_SECTIONS} />
+      <SectionNavigator sections={DI_SECTIONS} />
 
       {/* ── Overview: KPI cards + filters ────────────────────────────────── */}
-      <section id="ch-kpis" className="space-y-5">
+      <section id="di-kpis" className="space-y-5">
         <div className="grid grid-cols-6 gap-3">
           <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-success/10" iconColor="text-success" label="SOH"       value={formatCompact(kpis.totalSoh)}  subtitle={`${stockRows.length} SKUs`} />
           <KPICard variant="detailed" icon="fa-truck-ramp-box"     iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Issued"    value={formatCompact(recentReceives.reduce((s, r) => s + r.QuantityReceived, 0))} subtitle="recent receives" />
@@ -350,9 +350,9 @@ function ChildHealth() {
       </section>
 
       {/* ── Stock Status National ─────────────────────────────────────────── */}
-      <section id="ch-stock">
+      <section id="di-stock">
         <ProgramPanel
-          title="Stock Status National"
+          title="Stock Status National — Drought Relief"
           subtitle={`${filteredStock.length} of ${stockRows.length} products`}
           action={<InfoButton contentId="program-national-stock" />}
         >
@@ -360,14 +360,14 @@ function ChildHealth() {
         </ProgramPanel>
       </section>
 
-      {/* ── Hub Breakdown ────────────────────────────────────────────────── */}
-      <section id="ch-hubs">
+      {/* ── Zone Breakdown ─────────────────────────────────────────────── */}
+      <section id="di-zones">
         <ProgramPanel
-          title="Stock on Hand — Regional Hubs Breakdown"
+          title="Stock on Hand — Drought-Affected Zones"
           subtitle={
             productFilter
-              ? `${productFilter} across ${filteredHubRows.length} locations`
-              : `${focusedHubProducts.length} products × ${filteredHubRows.length} locations`
+              ? `${productFilter} across ${filteredZoneRows.length} locations`
+              : `${focusedZoneProducts.length} products × ${filteredZoneRows.length} locations`
           }
           action={(
             <div className="flex items-center gap-2">
@@ -378,31 +378,31 @@ function ChildHealth() {
                   onChange={(e) => setSiteFilter(e.target.value)}
                   className="appearance-none h-9 min-w-[120px] rounded-lg border border-outline-variant bg-white px-3 pr-8 text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer"
                 >
-                  {hubSites.map((s) => <option key={s} value={s}>{s}</option>)}
+                  {zoneSites.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
                 <i className="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-primary pointer-events-none" />
               </div>
               <div className="relative">
                 <select
-                  value={hubTypeFilter}
-                  onChange={(e) => setHubTypeFilter(e.target.value)}
+                  value={zoneTypeFilter}
+                  onChange={(e) => setZoneTypeFilter(e.target.value)}
                   className="appearance-none h-9 min-w-[110px] rounded-lg border border-outline-variant bg-white px-3 pr-8 text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer"
                 >
                   <option value="All">All Types</option>
-                  <option value="Hub">Hub</option>
-                  <option value="Center">Center</option>
+                  <option value="Zone">Zone</option>
+                  <option value="Region">Region</option>
                 </select>
                 <i className="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-primary pointer-events-none" />
               </div>
             </div>
           )}
         >
-          <HubHeatmap rows={filteredHubRows} products={focusedHubProducts} thresholds={productThresholds} />
+          <HubHeatmap rows={filteredZoneRows} products={focusedZoneProducts} thresholds={productThresholds} />
         </ProgramPanel>
       </section>
 
       {/* ── Item Procurement By Agent + Procurement Agents pie ───────────── */}
-      <section id="ch-procurement">
+      <section id="di-procurement">
         <ProgramChartRow
           leftTitle="Item Procurement By Agent"
           leftSubtitle="PO line count by funding source per product"
@@ -415,9 +415,9 @@ function ChildHealth() {
       </section>
 
       {/* ── Purchase Order table ─────────────────────────────────────────── */}
-      <section id="ch-po">
+      <section id="di-po">
         <ProgramPanel
-          title="Purchase Order — Incoming Shipments ERP"
+          title="Purchase Order — Drought Relief Supplies"
           subtitle={`${filteredPOs.length} open delivery records`}
           action={<InfoButton contentId="program-purchase-order" />}
         >
@@ -426,7 +426,7 @@ function ChildHealth() {
       </section>
 
       {/* ── Recent Receives ──────────────────────────────────────────────── */}
-      <section id="ch-receives">
+      <section id="di-receives">
         <ProgramPanel
           title="Recent Receives"
           subtitle={`${filteredReceives.length} receipt records · ${formatNumber(kpis.receivedValue)} ETB`}
@@ -437,12 +437,12 @@ function ChildHealth() {
       </section>
 
       {/* ── Item Distribution + Facility Type pie ────────────────────────── */}
-      <section id="ch-distribution">
+      <section id="di-distribution">
         <ProgramChartRow
-          leftTitle="Item Distribution by Facility Type"
+          leftTitle="Item Distribution by Source Country"
           leftSubtitle="Recent receives by product and source country"
           leftChart={<ProgramStackedBarChart data={itemDistribution} />}
-          rightTitle="Distribution by Facility Type"
+          rightTitle="Distribution by Source Country"
           rightSubtitle="Receipt country share"
           rightData={groupBy(filteredReceives, 'Country')}
           rightAction={<InfoButton contentId="program-facility-distribution" />}
@@ -450,14 +450,14 @@ function ChildHealth() {
       </section>
 
       {/* ── Issued Items ─────────────────────────────────────────────────── */}
-      <section id="ch-issued">
-        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month" action={<InfoButton contentId="program-issued-items" />}>
-          <IssuedItemsTable rows={CHILD_ISSUED_ROWS} />
+      <section id="di-issued">
+        <ProgramPanel title="Issued — Center to Zone" subtitle="Issued items by flow type and month" action={<InfoButton contentId="program-issued-items" />}>
+          <IssuedItemsTable rows={DI_ISSUED_ROWS} />
         </ProgramPanel>
       </section>
 
       {/* ── Pipeline: Incoming Shipment + Ownership + Quantity + Funding ─── */}
-      <section id="ch-pipeline" className="space-y-5">
+      <section id="di-pipeline" className="space-y-5">
         <ProgramChartRow
           leftTitle="Pipeline Incoming Shipment"
           leftSubtitle="Purchase order volume by product and funder"
@@ -484,14 +484,14 @@ function ChildHealth() {
       </section>
 
       {/* ── Stock Utilization ─────────────────────────────────────────────── */}
-      <section id="ch-utilization">
+      <section id="di-utilization">
         <ProgramPanel title="Stock Utilization National" subtitle="SOH vs gap to maximum threshold">
           <ProgramStackedBarChart data={stockUtilization} height={260} />
         </ProgramPanel>
       </section>
 
       {/* ── National MOS ─────────────────────────────────────────────────── */}
-      <section id="ch-mos">
+      <section id="di-mos">
         <ProgramPanel title="National MOS" subtitle="Months of stock by product">
           <div className="grid grid-cols-3 gap-3 px-5 pt-4 pb-2">
             <KPICard variant="detailed" icon="fa-chart-simple"   iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Actual"          value={mosStats.actual.toFixed(1)} subtitle="avg MOS" />
@@ -503,7 +503,7 @@ function ChildHealth() {
       </section>
 
       {/* ── Manufacturers ─────────────────────────────────────────────────── */}
-      <section id="ch-manufacturers">
+      <section id="di-manufacturers">
         <ProgramPanel title="Manufacturers" subtitle="Recent received value by manufacturer" action={<InfoButton contentId="program-mini-table" />}>
           <ProgramMiniTable
             columns={[
@@ -517,7 +517,7 @@ function ChildHealth() {
       </section>
 
       {/* ── Countries ─────────────────────────────────────────────────────── */}
-      <section id="ch-countries">
+      <section id="di-countries">
         <ProgramPanel title="Countries" subtitle="Recent received value by country" action={<InfoButton contentId="program-mini-table" />}>
           <ProgramMiniTable
             columns={[
@@ -534,4 +534,4 @@ function ChildHealth() {
   );
 }
 
-export default ChildHealth;
+export default DroughtImpact;

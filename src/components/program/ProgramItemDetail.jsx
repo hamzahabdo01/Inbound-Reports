@@ -8,6 +8,7 @@ import PurchaseOrderTable from './PurchaseOrderTable';
 import RecentReceivesTable from './RecentReceivesTable';
 import PieChart from '../PieChart';
 import KPICard from '../KPICard';
+import ExpandButton from '../ExpandButton';
 
 const formatNumber = (value) => new Intl.NumberFormat('en').format(value || 0);
 const compactNumber = (value) =>
@@ -463,7 +464,7 @@ function ProgramItemDetail({
           </div>
         </DetailChartPanel>
 
-        <DetailChartPanel title="Funding Source" action={<TinySelect />}>
+        <DetailChartPanel title="Funding Source" action={<div className="flex items-center gap-1"><ExpandButton data={FUNDING_SOURCE_DATA} title="Funding Source" /><TinySelect /></div>}>
           <div className="flex h-64 items-center">
             <PieChart data={FUNDING_SOURCE_DATA} totalLabel="Funding source" />
           </div>
@@ -473,7 +474,7 @@ function ProgramItemDetail({
           <ProgramStackedBarChart data={STOCK_UTILIZATION_DATA} normalized yLabel="%" height={220} />
         </DetailChartPanel>
 
-        <DetailChartPanel title="Procurement Agents" action={<TinySelect />}>
+        <DetailChartPanel title="Procurement Agents" action={<div className="flex items-center gap-1"><ExpandButton data={[{ label: 'EPSS', value: 65, color: '#0B4F54' }, { label: 'WHO', value: 35, color: '#86BFC5' }]} title="Procurement Agents" /><TinySelect /></div>}>
           <div className="flex items-center justify-center py-6">
             <div className="w-[380px]">
               <PieChart data={[
@@ -488,7 +489,7 @@ function ProgramItemDetail({
           <ProgramStackedBarChart data={pipelineHubData} normalized yLabel="%" height={220} yTicks={[0, 10, 20, 30, 40, 50, 60, 70, 80]} />
         </DetailChartPanel>
 
-        <DetailChartPanel title="Distribution by Facility Type" action={<TinySelect />}>
+        <DetailChartPanel title="Distribution by Facility Type" action={<div className="flex items-center gap-1"><ExpandButton data={hubStockRows.slice(0, 4)} title="Distribution by Facility Type" /><TinySelect /></div>}>
           <div className="flex items-center justify-center py-4">
             <div className="w-[380px]">
               <PieChart data={hubStockRows.slice(0, 4)} totalLabel="Facility distribution" />
@@ -500,7 +501,7 @@ function ProgramItemDetail({
           <ProgramStackedBarChart data={expiryChart} height={240} />
         </DetailChartPanel>
 
-        <DetailChartPanel title="Distribution by Ownership Type" action={<TinySelect />}>
+        <DetailChartPanel title="Distribution by Ownership Type" action={<div className="flex items-center gap-1"><ExpandButton data={[{ label: 'Public', value: 68, color: '#0B4F54' }, { label: 'Private', value: 22, color: '#86BFC5' }, { label: 'Others', value: 10, color: '#D97706' }]} title="Distribution by Ownership Type" /><TinySelect /></div>}>
           <div className="flex items-center justify-center py-4">
             <div className="w-[380px]">
               <PieChart
@@ -530,7 +531,7 @@ function ProgramItemDetail({
           ]} valueFormatter={(value) => `${value.toFixed(0)}%`} />
         </DetailChartPanel>
 
-        <DetailChartPanel title="Distribution by Region" action={<TinySelect />}>
+        <DetailChartPanel title="Distribution by Region" action={<div className="flex items-center gap-1"><ExpandButton data={hubStockRows.slice(0, 8)} title="Distribution by Region" /><TinySelect /></div>}>
           <PieChart data={hubStockRows.slice(0, 8)} totalLabel="Region distribution" />
         </DetailChartPanel>
       </div>
