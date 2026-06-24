@@ -29,7 +29,7 @@ function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, b
       <svg width="100%" viewBox={`0 0 ${svgW} ${chartH + 24}`} role="img">
         {types.map((t, i) => {
           const y = i * (barH + gap) + 8;
-          const barW = (t[amountKey] / maxAmount) * barAreaW;
+          const barW = Math.max(10, (t[amountKey] / maxAmount) * barAreaW);
           const amountStr = formatAmount(t[amountKey]);
           const label = labelMap[t[labelKey]] || t[labelKey];
           return (
