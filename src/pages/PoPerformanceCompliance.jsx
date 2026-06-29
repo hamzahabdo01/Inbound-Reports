@@ -13,18 +13,18 @@ import ContractManagementTab from './po/ContractManagementTab';
 import PerformanceComplianceTab from './po/PerformanceComplianceTab';
 
 const TABS = [
-  { key: 'overview',     label: 'Overview',              icon: 'fa-gauge-high',        sections: ['ppc-overview', 'ppc-open-pos', 'ppc-trend'] },
+  { key: 'overview',     label: 'Overview',              icon: 'fa-gauge-high',        sections: ['ppc-overview', 'ppc-open-pos', 'ppc-status', 'ppc-trend'] },
   { key: 'procurement',  label: 'Procurement Breakdown',  icon: 'fa-cart-shopping',     sections: ['ppc-commodity', 'ppc-po-type', 'ppc-supplier-share', 'ppc-funding', 'ppc-local-intl'] },
-  { key: 'contracts',    label: 'Contract Management',    icon: 'fa-file-signature',    sections: ['ppc-contract-vs-po', 'ppc-lc-cad', 'ppc-pipeline', 'ppc-moh-wbs'] },
-  { key: 'compliance',   label: 'Performance & Compliance', icon: 'fa-shield-halved',   sections: ['ppc-bond', 'ppc-leadtime', 'ppc-status', 'ppc-supplier-perf'] },
+  { key: 'contracts',    label: 'Contract Management',    icon: 'fa-file-signature',    sections: ['ppc-pipeline', 'ppc-contract-vs-po', 'ppc-lc-cad'] },
+  { key: 'compliance',   label: 'Performance & Compliance', icon: 'fa-shield-halved',   sections: ['ppc-leadtime', 'ppc-supplier-perf', 'ppc-supplier-risk', 'ppc-bond'] },
 ];
 
 const SECTION_LABELS = {
-  'ppc-overview': 'Overview', 'ppc-open-pos': 'Open POs', 'ppc-trend': 'Trend',
+  'ppc-overview': 'Overview', 'ppc-open-pos': 'Open POs', 'ppc-status': 'Status', 'ppc-trend': 'Trend',
   'ppc-commodity': 'Material', 'ppc-po-type': 'PO Type', 'ppc-supplier-share': 'Supplier Share',
   'ppc-funding': 'Funding', 'ppc-local-intl': 'Local vs Intl',
-  'ppc-contract-vs-po': 'Contract vs PO', 'ppc-lc-cad': 'LC/CAD', 'ppc-pipeline': 'Pipeline', 'ppc-moh-wbs': 'MOH WBS',
-  'ppc-bond': 'Bond', 'ppc-leadtime': 'Leadtime', 'ppc-status': 'Status', 'ppc-supplier-perf': 'Supplier Perf',
+  'ppc-pipeline': 'Pipeline', 'ppc-contract-vs-po': 'Contract vs PO', 'ppc-lc-cad': 'LC/CAD',
+  'ppc-leadtime': 'Leadtime', 'ppc-supplier-perf': 'Supplier Perf', 'ppc-supplier-risk': 'Supplier Risk', 'ppc-bond': 'Bond', 'ppc-status': 'Status',
 };
 
 export default function PoPerformanceCompliance() {
@@ -77,19 +77,26 @@ export default function PoPerformanceCompliance() {
     setTablePages({});
   }
 
-  const kpiCards = useMemo(() => [
-    { icon: 'fa-file-invoice',         iconBg: 'bg-primary/10',     iconColor: 'text-primary',       label: 'Total POs',          value: data.poSummary.purchaseOrderCount.toLocaleString(),               subtitle: `${data.poSummary.convertedPurchaseOrderCount} converted` },
-    { icon: 'fa-coins',                iconBg: 'bg-warning/10',    iconColor: 'text-warning',        label: 'Total Amount',       value: formatAmount(data.poSummary.totalAmount),                          subtitle: `Avg ${formatAmount(data.poSummary.averagePurchaseOrderAmount)} ETB` },
-    { icon: 'fa-list',                 iconBg: 'bg-[#4A8EA5]/10',  iconColor: 'text-[#4A8EA5]',     label: 'PO Lines',           value: data.poSummary.purchaseOrderLineCount.toLocaleString(),           subtitle: `${data.poSummary.lineCurrencyConversionCoveragePercent}% conversion` },
-    { icon: 'fa-building',             iconBg: 'bg-surface-container', iconColor: 'text-primary',    label: 'Suppliers',          value: data.poSummary.supplierCount.toLocaleString(),                    subtitle: 'active vendors' },
-    { icon: 'fa-cubes',                iconBg: 'bg-surface-container', iconColor: 'text-primary',    label: 'Materials',          value: data.poSummary.materialCount.toLocaleString(),                     subtitle: 'unique items' },
-    { icon: 'fa-arrow-up',             iconBg: 'bg-success/10',    iconColor: 'text-success',        label: 'Max PO Amount',      value: formatAmount(data.poSummary.maximumPurchaseOrderAmount),           subtitle: 'largest single PO' },
-    { icon: 'fa-percent',              iconBg: 'bg-primary/10',     iconColor: 'text-primary',       label: 'Conversion',         value: `${data.poSummary.purchaseOrderCurrencyConversionCoveragePercent}%`, subtitle: 'currency coverage' },
-    { icon: 'fa-flag',                 iconBg: 'bg-success/10',    iconColor: 'text-success',        label: 'Unconverted',        value: data.poSummary.unconvertedPurchaseOrderCount.toLocaleString(),     subtitle: 'POs not converted' },
-    { icon: 'fa-calendar-check',       iconBg: 'bg-success/10',    iconColor: 'text-success',        label: 'Latest PO',          value: data.poSummary.latestPurchaseOrderDate,                            subtitle: 'most recent PO date' },
-    { icon: 'fa-calendar-plus',        iconBg: 'bg-[#4A8EA5]/10',  iconColor: 'text-[#4A8EA5]',     label: 'Earliest PO',        value: data.poSummary.earliestPurchaseOrderDate,                          subtitle: 'first PO date' },
-    { icon: 'fa-arrow-down',           iconBg: 'bg-error/10',      iconColor: 'text-error',          label: 'Min PO Amount',      value: formatAmount(data.poSummary.minimumPurchaseOrderAmount),           subtitle: 'smallest single PO' },
-  ], [data.poSummary]);
+  const kpiCards = useMemo(() => {
+    const totalPO = data.contractVsPO.reduce((s, c) => s + c.poAmount, 0);
+    const totalConsumption = data.contractVsPO.reduce((s, c) => s + c.consumption, 0);
+    const avgPct = totalPO ? Math.round((totalConsumption / totalPO) * 100) : 0;
+    const poIssued = data.procurementStatus.stages.find((s) => s.stage === 'PO Issued')?.count || 0;
+    const received = data.procurementStatus.stages.find((s) => s.stage === 'Received at Warehouse')?.count || 0;
+    const poToReceivePct = poIssued ? Math.round((received / poIssued) * 100) : 0;
+    return [
+      { icon: 'fa-coins',                iconBg: 'bg-warning/10',    iconColor: 'text-warning',        label: 'Total Contract',     value: formatAmount(data.kpis.totalContractAmount),                          subtitle: `${data.kpis.totalContracts} contracts` },
+      { icon: 'fa-file-invoice',         iconBg: 'bg-primary/10',     iconColor: 'text-primary',       label: 'Total PO Amount',          value: data.poSummary.purchaseOrderCount.toLocaleString(),               subtitle: `${data.poSummary.convertedPurchaseOrderCount} converted` },
+      { icon: 'fa-list',                 iconBg: 'bg-[#4A8EA5]/10',  iconColor: 'text-[#4A8EA5]',     label: 'Num of Procured Items',           value: data.poSummary.purchaseOrderLineCount.toLocaleString(),           subtitle: `${data.poSummary.lineCurrencyConversionCoveragePercent}% conversion` },
+      { icon: 'fa-building',             iconBg: 'bg-surface-container', iconColor: 'text-primary',    label: 'Suppliers',          value: data.poSummary.supplierCount.toLocaleString(),                    subtitle: 'active vendors' },
+      { icon: 'fa-percent',              iconBg: 'bg-primary/10',     iconColor: 'text-primary',       label: 'Conversion',         value: `${data.poSummary.purchaseOrderCurrencyConversionCoveragePercent}%`, subtitle: 'currency coverage' },
+      { icon: 'fa-flag',                 iconBg: 'bg-success/10',    iconColor: 'text-success',        label: 'Unconverted',        value: data.poSummary.unconvertedPurchaseOrderCount.toLocaleString(),     subtitle: 'POs not converted' },
+      { icon: 'fa-calendar-check',       iconBg: 'bg-success/10',    iconColor: 'text-success',        label: 'Latest PO',          value: data.poSummary.latestPurchaseOrderDate,                            subtitle: 'most recent PO date' },
+      { icon: 'fa-calendar-plus',        iconBg: 'bg-[#4A8EA5]/10',  iconColor: 'text-[#4A8EA5]',     label: 'Earliest PO',        value: data.poSummary.earliestPurchaseOrderDate,                          subtitle: 'first PO date' },
+      { icon: 'fa-percent',              iconBg: 'bg-primary/10',     iconColor: 'text-primary',       label: 'Avg Consumption Rate', value: `${avgPct}%`,                                                        subtitle: 'across all contracts' },
+      { icon: 'fa-warehouse',            iconBg: 'bg-success/10',    iconColor: 'text-success',        label: 'PO to Receive Conversion', value: `${poToReceivePct}%`,                                           subtitle: `${received} of ${poIssued} PO received` },
+    ];
+  }, [data.poSummary, data.contractVsPO, data.procurementStatus, data.kpis]);
 
   const kpiTotalPages = Math.ceil(kpiCards.length / 4);
   const visibleKpiCards = kpiCards.slice(kpiPage * 4, kpiPage * 4 + 4);
@@ -145,6 +152,9 @@ export default function PoPerformanceCompliance() {
           trendWithDates={trendWithDates} trendYears={trendYears}
           trendYear={trendYear} setTrendYear={setTrendYear}
           filteredTrend={filteredTrend} trendHover={trendHover} setTrendHover={setTrendHover}
+          procurementStatusFilter={procurementStatusFilter}
+          setProcurementStatusFilter={setProcurementStatusFilter}
+          filteredStatusDetails={filteredStatusDetails}
           tp={tp} sp={sp}
         />
       )}
@@ -167,9 +177,6 @@ export default function PoPerformanceCompliance() {
       {activeTab === 'compliance' && (
         <PerformanceComplianceTab
           data={data} activeSections={activeSections} tp={tp} sp={sp}
-          procurementStatusFilter={procurementStatusFilter}
-          setProcurementStatusFilter={setProcurementStatusFilter}
-          filteredStatusDetails={filteredStatusDetails}
         />
       )}
     </div>

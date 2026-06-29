@@ -180,6 +180,7 @@ function generateContractPipeline(contracts, pos) {
     return {
       contractNo: c.contractNo,
       supplier: c.supplier,
+      contractAmount: c.amount,
       poAmount,
       inboundDelivery: inbound,
       received,

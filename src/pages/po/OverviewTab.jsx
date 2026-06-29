@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
 import KPICard from '../../components/KPICard';
+import PieChart from '../../components/PieChart';
 import InfoButton from '../../components/InfoButton';
+import ExpandButton from '../../components/ExpandButton';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 
-export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage, visibleKpiCards, kpiTotalPages, filteredOpenOverduePOs, overviewSearch, setOverviewSearch, overviewStatus, setOverviewStatus, trendWithDates, trendYears, trendYear, setTrendYear, filteredTrend, trendHover, setTrendHover, tp, sp }) {
+export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage, visibleKpiCards, kpiTotalPages, filteredOpenOverduePOs, overviewSearch, setOverviewSearch, overviewStatus, setOverviewStatus, trendWithDates, trendYears, trendYear, setTrendYear, filteredTrend, trendHover, setTrendHover, procurementStatusFilter, setProcurementStatusFilter, filteredStatusDetails, tp, sp }) {
   const formatMonth = (d) => {
     const dt = new Date(d.date);
     return dt.toLocaleDateString('en', { month: 'short' });
@@ -61,31 +62,90 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
               </div>
             }
           >
-            <Table page={tp('open-pos')} setPage={sp('open-pos')}
-              headers={[
-                { key: 'poNo', label: 'PO No' },
-                { key: 'supplier', label: 'Supplier' },
-                { key: 'program', label: 'Program' },
-                { key: 'amount', label: 'Amount', className: 'text-right' },
-                { key: 'issueDate', label: 'Issue Date' },
-                { key: 'dueDate', label: 'Due Date' },
-                { key: 'status', label: 'Status' },
-                { key: 'overdue', label: 'Days Overdue', className: 'text-right' },
-              ]}
-              rows={filteredOpenOverduePOs}
-              renderRow={(row) => (
+            {(() => {
+              const openCount = filteredOpenOverduePOs.filter((p) => p.status === 'Open').length;
+              const overdueCount = filteredOpenOverduePOs.filter((p) => p.status === 'Overdue').length;
+              const totalAmt = filteredOpenOverduePOs.reduce((s, p) => s + p.amount, 0);
+              const overduePOs = filteredOpenOverduePOs.filter((p) => p.status === 'Overdue' && p.daysOverdue);
+              const avgDays = overduePOs.length ? Math.round(overduePOs.reduce((s, p) => s + p.daysOverdue, 0) / overduePOs.length) : 0;
+              return (
                 <>
-                  <Td className="font-mono font-semibold">{row.poNo}</Td>
-                  <Td>{row.supplier}</Td>
-                  <Td>{row.program}</Td>
-                  <Td className="text-right font-mono font-medium">${row.amount.toLocaleString()}</Td>
-                  <Td>{row.issueDate}</Td>
-                  <Td>{row.dueDate}</Td>
-                  <Td><StatusBadge status={row.status} /></Td>
-                  <Td className="text-right font-bold text-error">{row.status === 'Overdue' ? `${row.daysOverdue}d` : '—'}</Td>
+                  <div className="grid grid-cols-4 gap-3 mb-5">
+                    <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-primary/10" iconColor="text-primary" label="Total Open POs" value={openCount.toLocaleString()} subtitle="awaiting action" />
+                    <KPICard variant="detailed" icon="fa-exclamation-triangle" iconBg="bg-error/10" iconColor="text-error" label="Total Overdue POs" value={overdueCount.toLocaleString()} subtitle="past due date" />
+                    <KPICard variant="detailed" icon="fa-dollar-sign" iconBg="bg-warning/10" iconColor="text-warning" label="Total Amount" value={`$${totalAmt >= 1e9 ? (totalAmt / 1e9).toFixed(1) + 'B' : totalAmt >= 1e6 ? (totalAmt / 1e6).toFixed(1) + 'M' : totalAmt >= 1e3 ? (totalAmt / 1e3).toFixed(1) + 'K' : totalAmt.toLocaleString()}`} subtitle="combined value" />
+                    <KPICard variant="detailed" icon="fa-clock" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Avg Days Overdue" value={`${avgDays}d`} subtitle="overdue POs only" />
+                  </div>
+                  <Table page={tp('open-pos')} setPage={sp('open-pos')}
+                    headers={[
+                      { key: 'poNo', label: 'PO No' },
+                      { key: 'supplier', label: 'Supplier' },
+                      { key: 'program', label: 'Program' },
+                      { key: 'amount', label: 'Amount', className: 'text-right' },
+                      { key: 'issueDate', label: 'Issue Date' },
+                      { key: 'dueDate', label: 'Due Date' },
+                      { key: 'status', label: 'Status' },
+                      { key: 'overdue', label: 'Days Overdue', className: 'text-right' },
+                    ]}
+                    rows={filteredOpenOverduePOs}
+                    renderRow={(row) => (
+                      <>
+                        <Td className="font-mono font-semibold">{row.poNo}</Td>
+                        <Td>{row.supplier}</Td>
+                        <Td>{row.program}</Td>
+                        <Td className="text-right font-mono font-medium">${row.amount.toLocaleString()}</Td>
+                        <Td>{row.issueDate}</Td>
+                        <Td>{row.dueDate}</Td>
+                        <Td><StatusBadge status={row.status} /></Td>
+                        <Td className="text-right font-bold text-error">{row.status === 'Overdue' ? `${row.daysOverdue}d` : '—'}</Td>
+                      </>
+                    )}
+                  />
                 </>
-              )}
-            />
+              );
+            })()}
+          </SectionPanel>
+        </section>
+      )}
+
+      {activeSections.includes('ppc-status') && (
+        <section id="ppc-status">
+          <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received" action={<div className="flex items-center gap-1"><ExpandButton data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} title="Procurement Status" /><InfoButton contentId="po-proc-status" /></div>}>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <PieChart data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} totalLabel="Procurement stages" />
+              </div>
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-sm font-bold text-on-surface">Filter by stage:</span>
+                  <select value={procurementStatusFilter} onChange={(e) => setProcurementStatusFilter(e.target.value)}
+                    className="h-8 rounded-md border border-outline-variant bg-white px-2 text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  >
+                    <option value="All">All Stages</option>
+                    {data.procurementStatus.stages.map((s) => (
+                      <option key={s.stage} value={s.stage}>{s.stage} ({s.count})</option>
+                    ))}
+                  </select>
+                </div>
+                <Table page={tp('proc-status')} setPage={sp('proc-status')} rowsPerPage={5}
+                  headers={[
+                    { key: 'ref', label: 'Reference' },
+                    { key: 'supplier', label: 'Supplier' },
+                    { key: 'stage', label: 'Stage' },
+                    { key: 'date', label: 'Status Date' },
+                  ]}
+                  rows={filteredStatusDetails}
+                  renderRow={(row) => (
+                    <>
+                      <Td className="font-mono">{row.refNo}</Td>
+                      <Td>{row.supplier}</Td>
+                      <Td><StatusBadge status={row.stage} /></Td>
+                      <Td>{row.statusDate}</Td>
+                    </>
+                  )}
+                />
+              </div>
+            </div>
           </SectionPanel>
         </section>
       )}
