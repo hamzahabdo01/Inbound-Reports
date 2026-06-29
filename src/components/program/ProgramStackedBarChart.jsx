@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 const palette = ['#4A9598', '#216E6A', '#86BFC5', '#D97706', '#515F74', '#0B4F54', '#059669', '#00373B'];
 
@@ -9,8 +9,8 @@ const CHART_LEFT_OFFSET = 44;
 function ProgramStackedBarChart({ data = [], height = 220, normalized = false, yLabel, yTicks }) {
   const ticks = yTicks || Y_TICKS;
   const [hoveredBar, setHoveredBar] = useState(null);
-  const [hoveredSeg, setHoveredSeg] = useState(null);
   const [tooltip, setTooltip] = useState(null);
+  const rootRef = useRef(null);
 
   if (!data.length) {
     return (
@@ -26,33 +26,34 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
   const totals = data.map((item) => item.segments.reduce((sum, s) => sum + s.value, 0));
   const absMax = Math.max(...totals, 1);
 
-  const handleMouseEnter = (barLabel, segLabel, value, total, e) => {
-    setHoveredBar(barLabel);
-    setHoveredSeg(segLabel);
-    const rect = e.currentTarget.closest('[data-chart-root]').getBoundingClientRect();
-    const segRect = e.currentTarget.getBoundingClientRect();
-    setTooltip({
-      x: segRect.left - rect.left + segRect.width / 2,
-      y: segRect.top - rect.top,
-      barLabel,
-      segLabel,
-      value,
-      pct: total > 0 ? ((value / total) * 100).toFixed(1) : '0',
-    });
+  const handleBarEnter = (item, e) => {
+    const total = item.segments.reduce((sum, s) => sum + s.value, 0);
+    setHoveredBar(item.label);
+    const rect = rootRef.current?.getBoundingClientRect();
+    const barRect = e.currentTarget.getBoundingClientRect();
+    if (rect) {
+      setTooltip({
+        x: barRect.left - rect.left + barRect.width / 2,
+        y: barRect.top - rect.top,
+        barLabel: item.label,
+        segments: item.segments.map((s) => ({
+          ...s,
+          pct: total > 0 ? ((s.value / total) * 100).toFixed(1) : '0',
+        })),
+      });
+    }
   };
 
-  const handleMouseLeave = () => {
+  const handleBarLeave = () => {
     setHoveredBar(null);
-    setHoveredSeg(null);
     setTooltip(null);
   };
 
   return (
     <div className="px-4 pt-3 pb-2 select-none">
-      <div className="flex gap-0" data-chart-root style={{ position: 'relative' }}>
+      <div className="flex gap-0" data-chart-root ref={rootRef} style={{ position: 'relative' }}>
         {/* Y-axis */}
         <div className="flex flex-col justify-between shrink-0 pr-2 pb-6" style={{ width: CHART_LEFT_OFFSET }}>
-          {/* optional rotated label */}
           {yLabel && (
             <div
               className="absolute text-[10px] font-bold text-on-surface-variant"
@@ -101,7 +102,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
                   style={{ height: '100%' }}
                 >
                   {/* Bar stack */}
-                  <div className="w-full flex flex-col justify-end" style={{ height: '100%' }}>
+                  <div className="w-full flex flex-col justify-end relative" style={{ height: '100%' }}>
                     <div
                       className="w-full flex flex-col-reverse overflow-hidden rounded-sm transition-all duration-300"
                       style={{
@@ -111,7 +112,6 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
                     >
                       {item.segments.map((seg, idx) => {
                         const segPct = total > 0 ? (seg.value / total) * 100 : 0;
-                        const isSegHovered = isHovered && hoveredSeg === seg.label;
                         return (
                           <div
                             key={seg.label}
@@ -119,16 +119,18 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
                               height: `${segPct}%`,
                               backgroundColor: palette[labels.indexOf(seg.label) % palette.length],
                               minHeight: segPct > 0 ? 2 : 0,
-                              filter: isSegHovered ? 'brightness(1.15)' : undefined,
-                              cursor: 'default',
                             }}
-                            title={`${item.label} / ${seg.label}: ${seg.value}`}
-                            onMouseEnter={(e) => handleMouseEnter(item.label, seg.label, seg.value, total, e)}
-                            onMouseLeave={handleMouseLeave}
                           />
                         );
                       })}
                     </div>
+                    {/* Full-bar invisible hover zone */}
+                    <div
+                      className="absolute inset-0 cursor-pointer"
+                      style={{ bottom: 0 }}
+                      onMouseEnter={(e) => handleBarEnter(item, e)}
+                      onMouseLeave={handleBarLeave}
+                    />
                   </div>
                 </div>
               );
@@ -156,23 +158,25 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
           {/* Tooltip */}
           {tooltip && (
             <div
-              className="absolute z-50 pointer-events-none bg-[#00373B] text-white rounded-lg shadow-lg px-3 py-2 text-xs whitespace-nowrap"
+              className="absolute z-50 pointer-events-none bg-[#00373B] text-white rounded-lg shadow-lg px-3 py-2 text-xs"
               style={{
-                left: Math.min(Math.max(tooltip.x - 60, 0), 9999),
-                top: Math.max(tooltip.y - 72, 0),
-                minWidth: 140,
+                left: Math.min(Math.max(tooltip.x - 80, 0), 9999),
+                top: Math.max(tooltip.y - 80, 0),
+                minWidth: 180,
               }}
             >
-              <div className="font-bold text-[#86BFC5] mb-1 truncate max-w-[180px]">{tooltip.barLabel}</div>
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="w-2 h-2 rounded-sm shrink-0"
-                  style={{ backgroundColor: palette[labels.indexOf(tooltip.segLabel) % palette.length] }}
-                />
-                <span className="font-semibold">{tooltip.segLabel}:</span>
-                <span>{tooltip.value.toLocaleString()}</span>
-                <span className="text-white/60">({tooltip.pct}%)</span>
-              </div>
+              <div className="font-bold text-[#86BFC5] mb-1.5 truncate max-w-[200px]">{tooltip.barLabel}</div>
+              {tooltip.segments.map((seg) => {
+                const color = palette[labels.indexOf(seg.label) % palette.length];
+                return (
+                  <div key={seg.label} className="flex items-center gap-1.5 mt-1 first:mt-0">
+                    <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: color }} />
+                    <span className="font-semibold">{seg.label}:</span>
+                    <span>{seg.value.toLocaleString()}</span>
+                    <span className="text-white/60">({seg.pct}%)</span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

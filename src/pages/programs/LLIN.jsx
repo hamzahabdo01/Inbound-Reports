@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import KPICard from '../../components/KPICard';
 import ProgramPanel from '../../components/program/ProgramPanel';
 import SectionNavigator from '../../components/SectionNavigator';
@@ -9,6 +9,7 @@ import IssuedItemsTable from '../../components/program/IssuedItemsTable';
 import PieChart from '../../components/PieChart';
 import InfoButton from '../../components/InfoButton';
 import ExpandButton from '../../components/ExpandButton';
+import { MainDashboard_WebApi } from '../../api/fanos.ts';
 
 
 const formatNumber = (value) => new Intl.NumberFormat('en').format(value || 0);
@@ -89,13 +90,114 @@ const LLIN_SECTIONS = [
 ];
 
 function LlinProgram() {
-  const totalSoh = stockStatusRows.reduce((s, r) => s + r.soh, 0);
-  const totalOrdered = purchaseOrderRows.reduce((s, r) => s + r.ordered, 0);
-  const totalShipped = purchaseOrderRows.reduce((s, r) => s + r.shipped, 0);
-  const totalReceived = purchaseOrderRows.reduce((s, r) => s + r.received, 0);
-  const totalPending = purchaseOrderRows.reduce((s, r) => s + r.pending, 0);
+  // ── API state ──────────────────────────────────────────────────────────
+  const [apiStockRows, setApiStockRows] = useState([]);
+  const [apiDonors, setApiDonors] = useState([]);
+  const [apiProcurers, setApiProcurers] = useState([]);
+  const [apiManufacturers, setApiManufacturers] = useState([]);
+  const [apiOrders, setApiOrders] = useState([]);
+  const [apiSOH, setApiSOH] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const fundingSourceChart = [
+  const PROGRAM_CODE = 'LLIN';
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const results = await Promise.allSettled([
+        MainDashboard_WebApi.getDonor(PROGRAM_CODE).catch(() => ({ data: { Data: [] } })),
+        MainDashboard_WebApi.getProcurer(PROGRAM_CODE).catch(() => ({ data: { Data: [] } })),
+        MainDashboard_WebApi.getManufacturerList(PROGRAM_CODE).catch(() => ({ data: { Data: [] } })),
+        MainDashboard_WebApi.getOrder(PROGRAM_CODE).catch(() => ({ data: { Data: [] } })),
+        MainDashboard_WebApi.getSOH(PROGRAM_CODE).catch(() => ({ data: { Data: [] } })),
+        postApiStockStatusGetStockStatus({ commodityType: 'LLIN' }).catch(() => ({ data: { model: [] } })),
+      ]);
+
+      const getData = (result, fallback = []) =>
+        result.status === 'fulfilled' ? (result.value?.data?.Data || result.value?.data?.model || fallback) : fallback;
+
+      const rawStock = getData(results[5]);
+      if (rawStock.length > 0) {
+        setApiStockRows(rawStock.map((r) => ({
+          ProductCN: r.item || '',
+          SS: r.status || 'Normal',
+          SOH: r.storeSoh || 0,
+          AMC: r.amc || 0,
+          MOS: r.mos || 0,
+          QuantityPurchaseOrder: r.receivedQuantity || 0,
+          GIT: 0,
+          Min: 0,
+          Max: 0,
+        })));
+      }
+
+      setApiDonors(getData(results[0]));
+      setApiProcurers(getData(results[1]));
+
+      const rawManufacturers = getData(results[2]);
+      if (rawManufacturers.length > 0) {
+        setApiManufacturers(rawManufacturers.map((r) => ({
+          label: r.Name || r.Manufacturer || '',
+          value: r.AmountReceivedBirr || r.AmountReceived || 0,
+          share: '',
+        })));
+      }
+
+      const rawOrders = getData(results[3]);
+      if (rawOrders.length > 0) {
+        setApiOrders(rawOrders.map((r) => ({
+          ProductCN: r.ProductCN || r.Item || '',
+          Donor: r.FundingSource || '',
+          Procurer: r.Procurer || '',
+          Supplier: r.Supplier || '',
+          OrderQuantity: r.AmountOrdered || 0,
+          DeliveredQuantity: r.AmountReceived || 0,
+          NextDeliveryQuantity: 0,
+          Pending: Math.max((r.AmountOrdered || 0) - (r.AmountReceived || 0), 0),
+          deliveryProgress: r.AmountOrdered > 0 ? ((r.AmountReceived / r.AmountOrdered) * 100) : 0,
+        })));
+      }
+
+      const sohData = getData(results[4]);
+      setApiSOH(sohData.reduce((s, r) => s + (r.SOHValue || r.AmountReceived || 0), 0));
+    } catch (err) {
+      setError(err.message || 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData() }, [fetchData]);
+
+  // ── Use API data (with inline hardcoded fallbacks) ─────────────────────
+  const stockRows = apiStockRows.length > 0 ? apiStockRows : stockStatusRows;
+  const purchaseOrders = apiOrders.length > 0 ? apiOrders : purchaseOrderRows;
+  const manufacturers = apiManufacturers.length > 0 ? apiManufacturers : manufacturerData;
+
+  const totalSoh = stockRows.reduce((s, r) => s + (r.SOH || r.soh || 0), 0);
+  const totalOrdered = purchaseOrders.reduce((s, r) => s + (r.OrderQuantity || r.ordered || 0), 0);
+  const totalShipped = purchaseOrders.reduce((s, r) => s + (r.DeliveredQuantity || r.shipped || 0), 0);
+  const totalReceived = purchaseOrders.reduce((s, r) => s + (r.AmountReceived || r.received || 0), 0);
+  const totalPending = purchaseOrders.reduce((s, r) => s + (r.Pending || r.pending || 0), 0);
+
+  // Derive chart data from API donors
+  const apiFundingChart = useMemo(() => {
+    if (apiDonors.length === 0) return [];
+    const grouped = apiDonors.reduce((acc, r) => {
+      const label = r.FundingSource || r.Donor || 'Other';
+      acc[label] = (acc[label] || 0) + (r.AmountReceived || 1);
+      return acc;
+    }, {});
+    return Object.entries(grouped).map(([label, value]) => ({
+      label,
+      value,
+      color: ['#0B4F54', '#86BFC5', '#216E6A', '#4A9598', '#515F74', '#D97706'][Object.keys(grouped).indexOf(label) % 6],
+    }));
+  }, [apiDonors]);
+
+  const fundingSourceChart = apiFundingChart.length > 0 ? apiFundingChart : [
     { label: 'Global Fund', value: 44.6, color: '#86BFC5' },
     { label: 'MOH', value: 55.4, color: '#0B4F54' },
   ];
@@ -116,6 +218,30 @@ function LlinProgram() {
       ],
     })),
   []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <p className="text-body-md text-on-surface-variant">Loading LLIN data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center">
+          <i className="fa-solid fa-circle-exclamation text-2xl text-error" />
+        </div>
+        <h2 className="text-headline-sm font-bold text-on-surface">Failed to Load Data</h2>
+        <p className="text-body-md text-on-surface-variant max-w-md">{error}</p>
+        <button onClick={fetchData} className="px-4 py-2 bg-primary text-white rounded-lg text-body-md hover:bg-primary-hover transition-colors">
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -166,9 +292,9 @@ function LlinProgram() {
               columns={[
                 { key: 'label', label: 'Manufacturer' },
                 { key: 'value', label: 'Quantity', render: (row) => formatNumber(row.value) },
-                { key: 'share', label: 'Share', render: (row) => `${((row.value / manufacturerData.reduce((s, r) => s + r.value, 0)) * 100).toFixed(1)}%` },
+                { key: 'share', label: 'Share', render: (row) => `${((row.value / manufacturers.reduce((s, r) => s + r.value, 0)) * 100).toFixed(1)}%` },
               ]}
-              rows={manufacturerData}
+              rows={manufacturers}
             />
           </ProgramPanel>
         </div>
@@ -181,17 +307,17 @@ function LlinProgram() {
             columns={[
               { key: 'item', label: 'Item' },
               { key: 'status', label: 'Status', render: (row) => (
-                <span className="inline-flex rounded bg-warning/15 px-2.5 py-1 text-[11px] font-bold text-warning">{row.status}</span>
+                <span className="inline-flex rounded bg-warning/15 px-2.5 py-1 text-[11px] font-bold text-warning">{row.SS || row.status}</span>
               )},
-              { key: 'soh', label: 'SOH', render: (row) => formatNumber(row.soh) },
-              { key: 'mos', label: 'MOS', render: (row) => row.mos.toFixed(1) },
-              { key: 'amc', label: 'AMC', render: (row) => formatNumber(row.amc) },
-              { key: 'min', label: 'Min', render: (row) => formatNumber(row.min) },
-              { key: 'max', label: 'Max', render: (row) => formatNumber(row.max) },
+              { key: 'soh', label: 'SOH', render: (row) => formatNumber(row.SOH || row.soh || 0) },
+              { key: 'mos', label: 'MOS', render: (row) => (row.MOS || row.mos || 0).toFixed(1) },
+              { key: 'amc', label: 'AMC', render: (row) => formatNumber(row.AMC || row.amc || 0) },
+              { key: 'min', label: 'Min', render: (row) => formatNumber(row.Min || row.min || 0) },
+              { key: 'max', label: 'Max', render: (row) => formatNumber(row.Max || row.max || 0) },
               { key: 'planned', label: 'Planned' },
               { key: 'git', label: 'GIT' },
             ]}
-            rows={stockStatusRows}
+            rows={stockRows}
           />
         </ProgramPanel>
       </section>
@@ -220,7 +346,7 @@ function LlinProgram() {
       <section id="llin-po">
         <ProgramPanel
           title="Purchase Orders"
-          subtitle={`${purchaseOrderRows.length} PO records`}
+          subtitle={`${purchaseOrders.length} PO records`}
           action={<InfoButton contentId="program-mini-table" />}
         >
           <ProgramMiniTable
@@ -230,15 +356,15 @@ function LlinProgram() {
               { key: 'procurer', label: 'Procurer' },
               { key: 'orderDate', label: 'Order Date' },
               { key: 'supplier', label: 'Supplier' },
-              { key: 'ordered', label: 'Ordered', render: (row) => formatNumber(row.ordered) },
-              { key: 'shipped', label: 'Shipped', render: (row) => formatNumber(row.shipped) },
-              { key: 'received', label: 'Received', render: (row) => formatNumber(row.received) },
-              { key: 'pending', label: 'Pending', render: (row) => formatNumber(row.pending) },
+              { key: 'ordered', label: 'Ordered', render: (row) => formatNumber(row.OrderQuantity || row.ordered || 0) },
+              { key: 'shipped', label: 'Shipped', render: (row) => formatNumber(row.DeliveredQuantity || row.shipped || 0) },
+              { key: 'received', label: 'Received', render: (row) => formatNumber(row.AmountReceived || row.received || 0) },
+              { key: 'pending', label: 'Pending', render: (row) => formatNumber(row.Pending || row.pending || 0) },
               { key: 'completed', label: 'Completed', render: (row) => (
-                <span className="inline-flex rounded bg-[#2563EB] px-2 py-1 text-[11px] font-bold text-white">{row.completed}</span>
+                <span className="inline-flex rounded bg-[#2563EB] px-2 py-1 text-[11px] font-bold text-white">{row.completed || 'N/A'}</span>
               )},
             ]}
-            rows={purchaseOrderRows}
+            rows={purchaseOrders}
           />
         </ProgramPanel>
       </section>
@@ -278,9 +404,9 @@ function LlinProgram() {
         <div className="grid grid-cols-[1fr_380px] gap-5">
           <ProgramPanel title="Manufacturer Quantity Breakdown" subtitle="Total quantity received by manufacturer">
             <ProgramBarChart
-              data={manufacturerData.map((m, i) => ({
+              data={manufacturers.map((m, i) => ({
                 ...m,
-                color: ['#0B4F54', '#216E6A', '#4A9598', '#86BFC5', '#515F74'][i],
+                color: ['#0B4F54', '#216E6A', '#4A9598', '#86BFC5', '#515F74'][i % 5],
               }))}
               valueFormatter={(v) => formatNumber(v)}
             />
