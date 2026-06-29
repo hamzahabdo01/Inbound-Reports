@@ -108,6 +108,99 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
         </section>
       )}
 
+      {activeSections.includes('ppc-open-po-items') && (
+        <section id="ppc-open-po-items">
+          <SectionPanel title="Open PO Item Details" subtitle={`${data.openPOItemDetail.data.length} open line items`} action={<InfoButton contentId="po-open-items" />}>
+            <Table page={tp('open-po-items')} setPage={sp('open-po-items')} rowsPerPage={10}
+              headers={[
+                { key: 'po', label: 'PO No' },
+                { key: 'item', label: 'Item', className: 'text-center' },
+                { key: 'supplier', label: 'Supplier' },
+                { key: 'material', label: 'Material' },
+                { key: 'ordered', label: 'Ordered', className: 'text-right' },
+                { key: 'received', label: 'Received', className: 'text-right' },
+                { key: 'open', label: 'Open Qty', className: 'text-right' },
+                { key: 'openAmt', label: 'Open Amount', className: 'text-right' },
+                { key: 'delivery', label: 'Planned Delivery' },
+              ]}
+              rows={data.openPOItemDetail.data}
+              renderRow={(row) => (
+                <>
+                  <Td className="font-mono">{row.purchaseOrderNumber}</Td>
+                  <Td className="text-center font-mono text-on-surface-variant">{row.purchaseOrderItemNumber}</Td>
+                  <Td className="max-w-[160px] truncate" title={row.supplierName}>{row.supplierName}</Td>
+                  <Td className="max-w-[200px] truncate" title={row.materialDescription}>{row.materialDescription}</Td>
+                  <Td className="text-right font-mono">{row.orderedQuantity?.toLocaleString()}</Td>
+                  <Td className="text-right font-mono">{row.receivedQuantity?.toLocaleString()}</Td>
+                  <Td className="text-right font-mono font-bold">{row.openQuantity?.toLocaleString()}</Td>
+                  <Td className="text-right font-mono">{row.openAmountReportingCurrency ? Math.round(row.openAmountReportingCurrency).toLocaleString() : '—'}</Td>
+                  <Td>{row.plannedDeliveryDate || '—'}</Td>
+                </>
+              )}
+            />
+          </SectionPanel>
+        </section>
+      )}
+
+      {activeSections.includes('ppc-overdue-pos') && (
+        <section id="ppc-overdue-pos">
+          <SectionPanel title="Overdue PO Schedule Lines" subtitle={`${data.overduePOScheduleLine.data.length} overdue schedule lines`} action={<InfoButton contentId="po-overdue-schedule" />}>
+            {(() => {
+              const s = data.overduePOSummary.data;
+              const fmtAmt = (v) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(1)}K` : v.toLocaleString();
+              return (
+                <div className="grid grid-cols-4 gap-3 mb-5">
+                  <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-error/10" iconColor="text-error" label="Overdue POs" value={s.overduePurchaseOrderCount.toLocaleString()} subtitle={`${s.supplierCount} suppliers`} />
+                  <KPICard variant="detailed" icon="fa-list" iconBg="bg-warning/10" iconColor="text-warning" label="Schedule Lines" value={s.overdueScheduleLineCount.toLocaleString()} subtitle="overdue items" />
+                  <KPICard variant="detailed" icon="fa-building" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Suppliers" value={s.supplierCount.toLocaleString()} subtitle="with overdue POs" />
+                  <KPICard variant="detailed" icon="fa-coins" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total Overdue Amount" value={`${fmtAmt(s.totalOverdueOpenAmount)} ETB`} subtitle="open balance" />
+                </div>
+              );
+            })()}
+            <Table page={tp('overdue-pos')} setPage={sp('overdue-pos')} rowsPerPage={10}
+              headers={[
+                { key: 'po', label: 'PO No' },
+                { key: 'item', label: 'Item', className: 'text-center' },
+                { key: 'supplier', label: 'Supplier' },
+                { key: 'material', label: 'Material' },
+                { key: 'poDate', label: 'PO Date' },
+                { key: 'dueDate', label: 'Due Date' },
+                { key: 'daysOverdue', label: 'Days Overdue', className: 'text-right' },
+                { key: 'bucket', label: 'Bucket' },
+                { key: 'openQty', label: 'Open Qty', className: 'text-right' },
+                { key: 'openAmt', label: 'Open Amt (ETB)', className: 'text-right' },
+              ]}
+              rows={data.overduePOScheduleLine.data}
+              renderRow={(row) => {
+                const days = row.daysOverdue;
+                const colorCls = days > 730 ? 'bg-error/15 text-error font-bold' :
+                  days > 365 ? 'bg-error/10 text-error font-bold' :
+                  days > 180 ? 'text-orange-600 font-bold' :
+                  days > 90 ? 'text-warning font-bold' :
+                  days > 60 ? 'text-warning font-semibold' :
+                  days > 30 ? 'text-yellow-600 font-semibold' :
+                  'text-success font-semibold';
+                const bucketLabel = row.overdueBucket.replace('OVERDUE_', '').replace(/_/g, '-').replace('-DAYS', 'd');
+                return (
+                  <>
+                    <Td className="font-mono">{row.purchaseOrderNumber}</Td>
+                    <Td className="text-center font-mono text-on-surface-variant">{row.purchaseOrderItemNumber}</Td>
+                    <Td className="max-w-[160px] truncate" title={row.supplierName}>{row.supplierName}</Td>
+                    <Td className="max-w-[200px] truncate" title={row.materialDescription}>{row.materialDescription}</Td>
+                    <Td>{row.purchaseOrderDate}</Td>
+                    <Td>{row.scheduledDeliveryDate}</Td>
+                    <Td className={`text-right font-mono ${colorCls}`}>{days}d</Td>
+                    <Td><span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md ${days > 90 ? 'bg-error/10 text-error' : days > 60 ? 'bg-warning/10 text-warning' : days > 30 ? 'bg-yellow-50 text-yellow-700' : 'bg-success/10 text-success'}`}>{bucketLabel}</span></Td>
+                    <Td className="text-right font-mono">{row.openQuantity?.toLocaleString()}</Td>
+                    <Td className="text-right font-mono">{row.openAmountReportingCurrency ? Math.round(row.openAmountReportingCurrency).toLocaleString() : '—'}</Td>
+                  </>
+                );
+              }}
+            />
+          </SectionPanel>
+        </section>
+      )}
+
       {activeSections.includes('ppc-status') && (
         <section id="ppc-status">
           <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received" action={<div className="flex items-center gap-1"><ExpandButton data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} title="Procurement Status" /><InfoButton contentId="po-proc-status" /></div>}>
@@ -193,7 +286,7 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                         const isHovered = trendHover === i;
                         return (
                           <g key={t.date}>
-                            <rect x={x} y={y} width={barWidth} height={h} rx="3" fill="#0B4F54"
+                             <rect x={x} y={y} width={barWidth} height={h} rx="3" fill="#0B4F54"
                               opacity={trendHover === null || isHovered ? 1 : 0.25}
                               onMouseEnter={() => setTrendHover(i)} onMouseLeave={() => setTrendHover(null)}
                               style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}

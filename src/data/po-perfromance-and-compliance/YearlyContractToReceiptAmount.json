@@ -1,0 +1,132 @@
+{
+  "success": true,
+  "message": "Yearly contract-to-receipt amounts retrieved successfully.",
+  "data": [
+    {
+      "year": 2024,
+      "contractCount": 0,
+      "purchaseOrderCount": 830,
+      "purchaseOrderLineCount": 2430,
+      "supplierCount": 208,
+      "materialCount": 1343,
+      "contractAmount": null,
+      "purchaseOrderAmount": 37094750519.3,
+      "inboundAmount": 23093292143.04,
+      "receivedAmount": 22548569709.36,
+      "purchaseOrderToContractPercent": null,
+      "inboundToPurchaseOrderPercent": 62.25,
+      "receivedToPurchaseOrderPercent": 60.79,
+      "receivedToInboundPercent": 97.64,
+      "purchaseOrderAmountNotInbound": 14001458376.26,
+      "inboundAmountNotReceived": 544722433.68,
+      "coverageDiagnostics": {
+        "sourceCount17": 0,
+        "sourceCount18": 0,
+        "sourceCount19": 0,
+        "sourceCount20": 0,
+        "sourceCount21": 0,
+        "sourceCount22": 0,
+        "sourceCount23": 1924,
+        "sourceCount24": 506,
+        "sourceCount25": 0,
+        "sourceCount26": 0,
+        "sourceCount27": 0
+      },
+      "currency": "ETB"
+    },
+    {
+      "year": 2025,
+      "contractCount": 109,
+      "purchaseOrderCount": 989,
+      "purchaseOrderLineCount": 2810,
+      "supplierCount": 196,
+      "materialCount": 1758,
+      "contractAmount": 15646559762.59,
+      "purchaseOrderAmount": 61360333828.88,
+      "inboundAmount": 34495724825.3,
+      "receivedAmount": 32705510530.38,
+      "purchaseOrderToContractPercent": 392.17,
+      "inboundToPurchaseOrderPercent": 56.22,
+      "receivedToPurchaseOrderPercent": 53.3,
+      "receivedToInboundPercent": 94.81,
+      "purchaseOrderAmountNotInbound": 26864609003.58,
+      "inboundAmountNotReceived": 1790214294.92,
+      "coverageDiagnostics": {
+        "sourceCount17": 73,
+        "sourceCount18": 36,
+        "sourceCount19": 0,
+        "sourceCount20": 36,
+        "sourceCount21": 0,
+        "sourceCount22": 0,
+        "sourceCount23": 1559,
+        "sourceCount24": 1251,
+        "sourceCount25": 0,
+        "sourceCount26": 0,
+        "sourceCount27": 0
+      },
+      "currency": "ETB"
+    },
+    {
+      "year": 2026,
+      "contractCount": 140,
+      "purchaseOrderCount": 526,
+      "purchaseOrderLineCount": 1195,
+      "supplierCount": 152,
+      "materialCount": 714,
+      "contractAmount": 15793449158.39,
+      "purchaseOrderAmount": 38164768751.5,
+      "inboundAmount": 766230861.68,
+      "receivedAmount": 657289743.76,
+      "purchaseOrderToContractPercent": 241.65,
+      "inboundToPurchaseOrderPercent": 2.01,
+      "receivedToPurchaseOrderPercent": 1.72,
+      "receivedToInboundPercent": 85.78,
+      "purchaseOrderAmountNotInbound": 37398537889.82,
+      "inboundAmountNotReceived": 108941117.92,
+      "coverageDiagnostics": {
+        "sourceCount17": 47,
+        "sourceCount18": 93,
+        "sourceCount19": 0,
+        "sourceCount20": 93,
+        "sourceCount21": 0,
+        "sourceCount22": 0,
+        "sourceCount23": 66,
+        "sourceCount24": 1129,
+        "sourceCount25": 0,
+        "sourceCount26": 0,
+        "sourceCount27": 0
+      },
+      "currency": "ETB"
+    }
+  ],
+  "meta": {
+    "report": "yearly-contract-to-receipt-amount",
+    "granularity": "year",
+    "recordCount": 3,
+    "period": {
+      "startYear": 2024,
+      "endYear": 2026
+    },
+    "currency": "ETB",
+    "totals": {
+      "contractCount": 249,
+      "purchaseOrderCount": 2345,
+      "purchaseOrderLineCount": 6435,
+      "contractAmount": 31440008920.98,
+      "purchaseOrderAmount": 136619853099.68,
+      "inboundAmount": 58355247830.02,
+      "receivedAmount": 55911369983.5,
+      "purchaseOrderAmountNotInbound": 78264605269.66,
+      "inboundAmountNotReceived": 2443877846.52
+    },
+    "notes": [
+      "The source CSV does not contain column headers.",
+      "Contract amount and purchaseOrderToContractPercent are null for 2024 because no contract value was available in the source row.",
+      "Supplier and material counts are distinct within each year and must not be summed across years.",
+      "The funnel percentages are year-specific and are not aggregated.",
+      "Columns 17 through 27 are preserved under coverageDiagnostics because their exact business definitions cannot be established reliably from values alone.",
+      "The 2026 reporting year is partial through the available extraction period."
+    ]
+  },
+  "errors": []
+}

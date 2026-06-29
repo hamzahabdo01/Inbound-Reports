@@ -72,6 +72,11 @@ export function StatusBadge({ status }) {
     Verified: 'bg-success/10 text-success',
     Confiscated: 'bg-error/10 text-error',
     Extended: 'bg-warning/10 text-warning',
+    EXPIRED: 'bg-surface-container text-on-surface-variant',
+    EXPIRES_TODAY: 'bg-error/10 text-error',
+    EXPIRES_WITHIN_7_DAYS: 'bg-error/10 text-error',
+    EXPIRES_WITHIN_30_DAYS: 'bg-warning/10 text-warning',
+    EXPIRES_WITHIN_60_DAYS: 'bg-success/10 text-success',
   };
   const cls = map[status] || 'bg-surface-container text-on-surface-variant';
   return <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md ${cls}`}>{status}</span>;

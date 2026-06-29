@@ -1,3 +1,15 @@
+import lcCadExpiryRaw from './po-perfromance-and-compliance/LCCADExpiryDetail.json';
+import lcCadExpirySummaryRaw from './po-perfromance-and-compliance/LCCADExpirySummary.json';
+import supplierRiskRankingRaw from './po-perfromance-and-compliance/SupplierRiskRanking.json';
+import supplierPerformanceLeaderboardRaw from './po-perfromance-and-compliance/SupplierPerformanceLeaderboard.json';
+import supplierPerformanceSummaryRaw from './po-perfromance-and-compliance/SupplierPerformanceSummary.json';
+import contractToReceiveTrackingRaw from './po-perfromance-and-compliance/ContractToReceiveStatusTrackingReport.json';
+import yearlyContractToReceiptRaw from './po-perfromance-and-compliance/YearlyContractToReceiptAmount.json';
+import openPOByMaterialTypeRaw from './po-perfromance-and-compliance/OpenPOByMaterialType.json';
+import openPOItemDetailRaw from './po-perfromance-and-compliance/OpenPOItemDetail.json';
+import overduePOScheduleLineRaw from './po-perfromance-and-compliance/OverduePOsScheduleLineDetail.json';
+import overduePOSummaryRaw from './po-perfromance-and-compliance/OverduePOsSummary.json';
+
 const PROGRAMS = ['HIV/AIDS', 'TB', 'Malaria', 'EPI', 'Reproductive Health', 'Child Health', 'Clinical Chemistry', 'Nutrition'];
 const COMMODITIES = ['ARVs', 'Antimalarials', 'Vaccines', 'Lab Reagents', 'Family Planning', 'Essential Medicines', 'Nutrition Supplies', 'Diagnostics'];
 const SUPPLIERS = ['EPSS', 'MOH', 'Global Fund', 'UNICEF', 'WHO', 'UNDP', 'UNFPA', 'Clinton Access Initiative'];
@@ -315,12 +327,36 @@ export default function generateAllData() {
     fundingSources: generateFundingSourceSunburst(),
     localVsIntl: generateLocalVsIntl(),
     mohWBS: generateMOHWBS(),
-    lcCadExpiry: generateLCCADExpiry(),
+    lcCadExpiry: lcCadExpiryRaw.data.map(d => ({
+      lcNo: d.lcCadReferenceNumber || d.purchaseOrderNumber,
+      supplier: d.supplierName,
+      amount: d.amount,
+      issueDate: d.purchaseOrderDate,
+      expiryDate: d.effectiveExpiryDate,
+      status: d.expiryStatus,
+      daysToExpiry: d.daysUntilExpiry,
+    })).sort((a, b) => {
+      const priority = { EXPIRES_TODAY: 0, EXPIRES_WITHIN_7_DAYS: 0, EXPIRES_WITHIN_30_DAYS: 0, EXPIRES_WITHIN_60_DAYS: 1, EXPIRED: 3 };
+      const pa = priority[a.status] ?? 2;
+      const pb = priority[b.status] ?? 2;
+      if (pa !== pb) return pa - pb;
+      return a.daysToExpiry - b.daysToExpiry;
+    }),
+    lcCadExpirySummary: lcCadExpirySummaryRaw.data,
     contractVsPO: generateContractVsPO(contracts, pos),
     contractPipeline: generateContractPipeline(contracts, pos),
     performanceBonds: generatePerformanceBonds(),
     leadtime,
     procurementStatus: generateProcurementStatus(),
     supplierPerformance: generateSupplierPerformance(pos),
+    supplierRiskRanking: supplierRiskRankingRaw.data,
+    supplierPerformanceLeaderboard: supplierPerformanceLeaderboardRaw.data,
+    supplierPerformanceSummary: supplierPerformanceSummaryRaw.data,
+    contractToReceiveTracking: contractToReceiveTrackingRaw.data,
+    yearlyContractToReceipt: yearlyContractToReceiptRaw,
+    openPOByType: openPOByMaterialTypeRaw,
+    openPOItemDetail: openPOItemDetailRaw,
+    overduePOScheduleLine: overduePOScheduleLineRaw,
+    overduePOSummary: overduePOSummaryRaw,
   };
 }

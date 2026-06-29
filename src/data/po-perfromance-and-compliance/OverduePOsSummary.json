@@ -1,0 +1,41 @@
+{
+  "success": true,
+  "message": "Overdue purchase order summary retrieved successfully.",
+  "data": {
+    "asOfDate": "2026-06-24",
+    "overduePurchaseOrderCount": 1062,
+    "overduePurchaseOrderItemCount": 2798,
+    "overdueScheduleLineCount": 2798,
+    "supplierCount": 228,
+    "materialCount": 1636,
+    "totalOverdueOpenAmount": 60986047058.34,
+    "averageDaysOverdue": 300.02,
+    "maximumDaysOverdue": 733,
+    "supplementalCounts": [
+      {
+        "sourceColumnPosition": 10,
+        "value": 2102
+      },
+      {
+        "sourceColumnPosition": 11,
+        "value": 1819
+      }
+    ],
+    "unconvertedPurchaseOrderCount": 0,
+    "currencyConversionCoveragePercent": 100.0,
+    "currency": "ETB"
+  },
+  "meta": {
+    "report": "overdue-purchase-order-summary",
+    "recordCount": 1,
+    "asOfDate": "2026-06-24",
+    "currency": "ETB",
+    "notes": [
+      "The source CSV does not contain column headers.",
+      "Columns 10 and 11 contain counts of 2102 and 1819, but their business definitions cannot be determined reliably from the values alone.",
+      "Those two fields are preserved as supplementalCounts using their original source-column positions.",
+      "Currency conversion coverage is 100 percent and no overdue purchase orders are unconverted."
+    ]
+  },
+  "errors": []
+}

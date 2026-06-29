@@ -46,7 +46,7 @@ function Placeholder({ title }) {
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(isAuthenticated());
-  const [activeSection, setActiveSection] = useState('Dashboard');
+  const [activeSection, setActiveSection] = useState('Program');
   const [sidebarVisible, setSidebarVisible] = useState(true);
 
   if (!loggedIn) {

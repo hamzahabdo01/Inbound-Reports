@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import PieChart from '../../components/PieChart';
 import SunburstChart from '../../components/SunburstChart';
@@ -5,10 +6,9 @@ import InfoButton from '../../components/InfoButton';
 import ExpandButton from '../../components/ExpandButton';
 import { SectionPanel, formatAmount } from './poShared';
 
-const MATERIAL_COLORS = ['#0B4F54', '#216E6A', '#4A9598', '#86BFC5'];
 const PO_TYPE_COLORS = ['#0B4F54', '#216E6A', '#4A9598', '#86BFC5'];
 
-function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, barAreaW = 400, onHover, hoverState, setHover }) {
+function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, barAreaW = 400, setHover, activeHover }) {
   const types = [...data].sort((a, b) => b[amountKey] - a[amountKey]);
   const barH = 28;
   const gap = 10;
@@ -33,18 +33,14 @@ function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, b
           const amountStr = formatAmount(t[amountKey]);
           const label = labelMap[t[labelKey]] || t[labelKey];
           return (
-            <g key={t[labelKey]}>
-              <text x={labelW - 8} y={y + barH / 2 + 4} textAnchor="end" fontSize="11" fontWeight="700" fill="#404849">{label}</text>
-              <rect x={labelW} y={y} width={barW} height={barH} rx="5" fill={colors[i % colors.length]} opacity="0.88"
-                onMouseEnter={(e) => setHover({ ...t, mx: e.clientX, my: e.clientY })}
-                onMouseMove={(e) => setHover(prev => prev ? { ...prev, mx: e.clientX, my: e.clientY } : prev)}
-                onMouseLeave={() => setHover(null)}
-                style={{ cursor: 'pointer', transition: 'opacity 0.15s' }}
+            <g key={t[labelKey]} className="cursor-pointer" 
+              onMouseEnter={(e) => setHover({ ...t, mx: e.clientX, my: e.clientY })}
+              onMouseMove={(e) => setHover(prev => prev ? { ...prev, mx: e.clientX, my: e.clientY } : prev)}
+              onMouseLeave={() => setHover(null)}>
+              <text x={labelW - 8} y={y + barH / 2 + 4} textAnchor="end" fontSize="11" fontWeight={activeHover && activeHover[labelKey] === t[labelKey] ? 800 : 700} fill={activeHover && activeHover[labelKey] === t[labelKey] ? "#0B4F54" : "#404849"}>{label}</text>
+              <rect x={labelW} y={y} width={barW} height={barH} rx="5" fill={colors[i % colors.length]} opacity={activeHover && activeHover[labelKey] === t[labelKey] ? 1 : 0.8}
+                style={{ transition: 'opacity 0.15s' }}
               />
-              <text x={labelW + barW + 6} y={y + barH / 2 + 4} fontSize="12" fontWeight="800" fill="#181C1E" fontFamily="monospace">{amountStr}</text>
-              <text x={labelW + barW + 6} y={y + barH / 2 + 16} fontSize="9" fontWeight="600" fill="#9AA3B0">
-                {t[shareKey]?.toFixed(1)}% · {t.purchaseOrderCount} POs
-              </text>
             </g>
           );
         })}
@@ -53,51 +49,13 @@ function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, b
   );
 }
 
-export default function ProcurementBreakdownTab({ data, activeSections, materialHover, setMaterialHover, poTypeHover, setPoTypeHover, supplierHover, setSupplierHover }) {
+export default function ProcurementBreakdownTab({ data, activeSections, supplierHover, setSupplierHover }) {
   return (
     <>
-      {(activeSections.includes('ppc-commodity') || activeSections.includes('ppc-po-type')) && (
-        <div className="grid grid-cols-2 gap-5">
-          {activeSections.includes('ppc-commodity') && (
-            <section id="ppc-commodity">
-              <SectionPanel title="Proc. Amount by Material Type" subtitle={`${data.poByMaterialType.length} types — ${formatAmount(data.poByMaterialType.reduce((s, t) => s + t.totalAmount, 0))} total`} action={<InfoButton contentId="po-commodity-type" />}>
-                <BarChart data={data.poByMaterialType} labelKey="materialTypeName" amountKey="totalAmount" shareKey="amountSharePercent" colors={MATERIAL_COLORS} setHover={setMaterialHover} />
-                {materialHover?.mx !== undefined && createPortal(
-                  <div className="fixed z-[9999] pointer-events-none" style={{ left: materialHover.mx + 16, top: materialHover.my - 8 }}>
-                    <div style={{ background: '#fff', border: '1px solid #CFD8DC', borderRadius: '10px', boxShadow: '0 12px 32px rgba(10,50,53,0.12)', padding: '10px 14px', minWidth: '180px', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#181C1E', marginBottom: 6 }}>{materialHover.materialTypeName}</div>
-                      <div style={{ fontSize: 11, color: '#707979', marginBottom: 2 }}>Amount: <span style={{ fontWeight: 800, color: '#0A3235' }}>ETB {materialHover.totalAmount.toLocaleString()}</span></div>
-                      <div style={{ fontSize: 11, color: '#707979', marginBottom: 2 }}>Share: <span style={{ fontWeight: 700 }}>{materialHover.amountSharePercent.toFixed(1)}%</span></div>
-                      <div style={{ fontSize: 11, color: '#707979', marginBottom: 2 }}>POs: <span style={{ fontWeight: 700 }}>{materialHover.purchaseOrderCount}</span> · Lines: <span style={{ fontWeight: 700 }}>{materialHover.purchaseOrderLineCount}</span></div>
-                      <div style={{ fontSize: 11, color: '#707979' }}>Materials: <span style={{ fontWeight: 700 }}>{materialHover.materialCount}</span> · Suppliers: <span style={{ fontWeight: 700 }}>{materialHover.supplierCount}</span></div>
-                    </div>
-                  </div>,
-                  document.body
-                )}
-              </SectionPanel>
-            </section>
-          )}
-          {activeSections.includes('ppc-po-type') && (
-            <section id="ppc-po-type">
-              <SectionPanel title="Proc. Amount by PO Type" subtitle={`${data.poByType.length} types — ${formatAmount(data.poByType.reduce((s, t) => s + t.totalAmount, 0))} total`} action={<InfoButton contentId="po-po-type" />}>
-                <BarChart data={data.poByType} labelKey="purchaseOrderType" amountKey="totalAmount" shareKey="amountSharePercent" colors={PO_TYPE_COLORS} setHover={setPoTypeHover} />
-                {poTypeHover?.mx !== undefined && createPortal(
-                  <div className="fixed z-[9999] pointer-events-none" style={{ left: poTypeHover.mx + 16, top: poTypeHover.my - 8 }}>
-                    <div style={{ background: '#fff', border: '1px solid #CFD8DC', borderRadius: '10px', boxShadow: '0 12px 32px rgba(10,50,53,0.12)', padding: '10px 14px', minWidth: '200px', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#181C1E', marginBottom: 6 }}>{poTypeHover.purchaseOrderType}</div>
-                      <div style={{ fontSize: 11, color: '#707979', marginBottom: 2 }}>Amount: <span style={{ fontWeight: 800, color: '#0A3235' }}>ETB {poTypeHover.totalAmount.toLocaleString()}</span></div>
-                      <div style={{ fontSize: 11, color: '#707979', marginBottom: 2 }}>Share: <span style={{ fontWeight: 700 }}>{poTypeHover.amountSharePercent.toFixed(1)}%</span></div>
-                      <div style={{ fontSize: 11, color: '#707979', marginBottom: 2 }}>POs: <span style={{ fontWeight: 700 }}>{poTypeHover.purchaseOrderCount}</span> · Lines: <span style={{ fontWeight: 700 }}>{poTypeHover.purchaseOrderLineCount}</span></div>
-                      <div style={{ fontSize: 11, color: '#707979' }}>Materials: <span style={{ fontWeight: 700 }}>{poTypeHover.materialCount}</span> · Suppliers: <span style={{ fontWeight: 700 }}>{poTypeHover.supplierCount}</span></div>
-                    </div>
-                  </div>,
-                  document.body
-                )}
-              </SectionPanel>
-            </section>
-          )}
-        </div>
+      {activeSections.includes('ppc-procurement-breakdown') && (
+        <MergedBreakdownSection data={data} />
       )}
+
 
       {activeSections.includes('ppc-supplier-share') && (
         <section id="ppc-supplier-share">
@@ -208,5 +166,74 @@ export default function ProcurementBreakdownTab({ data, activeSections, material
         </div>
       )}
     </>
+  );
+}
+
+const OPEN_TYPE_LABEL = { 'ZHP1': 'Health Program', 'ZRDL': 'RDF Local', 'ZRDI': 'RDF Intl.', 'FO': 'Framework Order' };
+
+function MergedBreakdownSection({ data }) {
+  const [view, setView] = useState('material');
+  const [hover, setHover] = useState(null);
+  const totalAllPO = data.poByType.reduce((s, t) => s + t.totalAmount, 0);
+  const totalOpen = data.openPOByType.data.reduce((s, d) => s + d.totalOpenAmount, 0);
+  const openMapped = data.openPOByType.data.map(d => ({ ...d, label: OPEN_TYPE_LABEL[d.sourceCategoryCode] || d.sourceCategoryCode }));
+  const totalMat = data.poByMaterialType.reduce((s, t) => s + t.totalAmount, 0);
+
+  const views = [
+    { key: 'material', label: 'By Material Type', subtitle: `${data.poByMaterialType.length} types — ${formatAmount(totalMat)} total`,
+      data: data.poByMaterialType, labelKey: 'materialTypeName', amountKey: 'totalAmount', shareKey: 'amountSharePercent',
+      tooltipKeys: { name: 'materialTypeName', amount: 'totalAmount', share: 'amountSharePercent', lines: 'purchaseOrderLineCount' } },
+    { key: 'po-type', label: 'By PO Type', subtitle: `${data.poByType.length} types — ${formatAmount(totalAllPO)} total`,
+      data: data.poByType, labelKey: 'purchaseOrderType', amountKey: 'totalAmount', shareKey: 'amountSharePercent',
+      tooltipKeys: { name: 'purchaseOrderType', amount: 'totalAmount', share: 'amountSharePercent', lines: 'purchaseOrderLineCount' } },
+    { key: 'open-po', label: 'Open by PO Type', subtitle: `${openMapped.length} types — ${formatAmount(totalOpen)} open`,
+      data: openMapped, labelKey: 'label', amountKey: 'totalOpenAmount', shareKey: 'openAmountSharePercent',
+      tooltipKeys: { name: 'label', amount: 'totalOpenAmount', share: 'openAmountSharePercent', lines: 'purchaseOrderItemCount' } },
+  ];
+
+  const active = views.find(v => v.key === view) || views[0];
+
+  return (
+    <section id="ppc-procurement-breakdown">
+      <SectionPanel title="Procurement Breakdown" subtitle={active.subtitle} action={<InfoButton contentId="po-procurement-breakdown" />}>
+        <div className="flex items-center gap-1 mb-5 bg-surface-container-low rounded-lg p-1 w-fit">
+          {views.map(v => (
+            <button key={v.key} onClick={() => { setView(v.key); setHover(null); }}
+              className={`px-3 py-1.5 text-[12px] font-bold rounded-md transition-all duration-150 ${
+                view === v.key ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >{v.label}</button>
+          ))}
+        </div>
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-7">
+            <BarChart data={active.data} labelKey={active.labelKey} amountKey={active.amountKey} shareKey={active.shareKey} colors={PO_TYPE_COLORS} setHover={setHover} activeHover={hover} />
+          </div>
+          <div className="col-span-5 bg-surface-container-low rounded-xl p-6 flex flex-col justify-center min-h-[200px]">
+            {hover ? (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-label-sm text-on-surface-variant uppercase tracking-wider">{active.label}</p>
+                  <p className="text-[20px] font-extrabold text-on-surface mt-1">{hover[active.tooltipKeys.name]}</p>
+                </div>
+                <div className="space-y-2 text-body-sm">
+                  <div className="flex justify-between"><span className="text-on-surface-variant">Amount</span><span className="font-bold text-on-surface">{formatAmount(hover[active.tooltipKeys.amount])} ETB</span></div>
+                  <div className="flex justify-between"><span className="text-on-surface-variant">Share</span><span className="font-bold text-on-surface">{hover[active.tooltipKeys.share].toFixed(1)}%</span></div>
+                  <div className="flex justify-between"><span className="text-on-surface-variant">POs</span><span className="font-bold text-on-surface">{hover.purchaseOrderCount}</span></div>
+                  <div className="flex justify-between"><span className="text-on-surface-variant">Lines</span><span className="font-bold text-on-surface">{hover[active.tooltipKeys.lines]}</span></div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center space-y-3">
+                <div className="w-12 h-12 rounded-xl bg-primary/5 mx-auto flex items-center justify-center">
+                  <i className="fa-solid fa-chart-bar text-xl text-primary/40" />
+                </div>
+                <p className="text-body-sm text-on-surface-variant leading-relaxed">Hover over a bar to view category-specific details.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </SectionPanel>
+    </section>
   );
 }

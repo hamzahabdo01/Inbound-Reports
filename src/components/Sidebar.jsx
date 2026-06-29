@@ -1,34 +1,38 @@
 import { useState } from 'react';
 
 const navItems = [
-  {
-    icon: 'fa-chart-pie',
-    label: 'Dashboard',
-  },
+  // HIDDEN: Dashboard
+  // {
+  //   icon: 'fa-chart-pie',
+  //   label: 'Dashboard',
+  // },
   {
     icon: 'fa-cubes',
     label: 'Program',
   },
-  {
-    icon: 'fa-location-dot',
-    label: 'Location',
-  },
-  {
-    icon: 'fa-coins',
-    label: 'Finance',
-    children: [
-      { label: 'Item Summary' },
-      { label: 'Item Price' },
-    ],
-  },
-  {
-    icon: 'fa-file-shield',
-    label: 'Regulatory',
-    children: [
-      { label: 'eRIS' },
-      { label: 'AEFI' },
-    ],
-  },
+  // HIDDEN: Location
+  // {
+  //   icon: 'fa-location-dot',
+  //   label: 'Location',
+  // },
+  // HIDDEN: Finance
+  // {
+  //   icon: 'fa-coins',
+  //   label: 'Finance',
+  //   children: [
+  //     { label: 'Item Summary' },
+  //     { label: 'Item Price' },
+  //   ],
+  // },
+  // HIDDEN: Regulatory
+  // {
+  //   icon: 'fa-file-shield',
+  //   label: 'Regulatory',
+  //   children: [
+  //     { label: 'eRIS' },
+  //     { label: 'AEFI' },
+  //   ],
+  // },
   {
     icon: 'fa-truck-fast',
     label: 'Inbound Reports',
@@ -40,28 +44,31 @@ const navItems = [
       { label: 'PO Performance and Compliance' },
     ],
   },
-  {
-    icon: 'fa-flag',
-    label: 'RDF',
-  },
-  {
-    icon: 'fa-hospital',
-    label: 'Facility',
-    children: [
-      { label: 'Facility Dashboard' },
-      { label: 'RRF' },
-    ],
-  },
-  {
-    icon: 'fa-file-lines',
-    label: 'Routine Report',
-    children: [
-      { label: 'Quarter Report' },
-      { label: 'Hub Vital Report' },
-      { label: 'Item Distribution' },
-      { label: 'Medical Equipment Distribution' },
-    ],
-  },
+  // HIDDEN: RDF
+  // {
+  //   icon: 'fa-flag',
+  //   label: 'RDF',
+  // },
+  // HIDDEN: Facility
+  // {
+  //   icon: 'fa-hospital',
+  //   label: 'Facility',
+  //   children: [
+  //     { label: 'Facility Dashboard' },
+  //     { label: 'RRF' },
+  //   ],
+  // },
+  // HIDDEN: Routine Report
+  // {
+  //   icon: 'fa-file-lines',
+  //   label: 'Routine Report',
+  //   children: [
+  //     { label: 'Quarter Report' },
+  //     { label: 'Hub Vital Report' },
+  //     { label: 'Item Distribution' },
+  //     { label: 'Medical Equipment Distribution' },
+  //   ],
+  // },
 ];
 
 function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLogout }) {

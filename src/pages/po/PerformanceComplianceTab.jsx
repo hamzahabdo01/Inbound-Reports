@@ -46,78 +46,99 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
 
       {activeSections.includes('ppc-supplier-perf') && (
         <section id="ppc-supplier-perf">
-          <SectionPanel title="Supplier Performance Tracking" subtitle="Average lead time and on-time delivery percentage" action={<InfoButton contentId="po-supplier-perf" />}>
-            <Table page={tp('supplier-perf')} setPage={sp('supplier-perf')}
-              headers={[
-                { key: 'supplier', label: 'Supplier' },
-                { key: 'totalPO', label: 'Total POs', className: 'text-right' },
-                { key: 'avgLeadtime', label: 'Avg Lead Time', className: 'text-right' },
-                { key: 'onTimePct', label: 'On-Time %', className: 'text-right' },
-                { key: 'totalAmount', label: 'Total Amount', className: 'text-right' },
-              ]}
-              rows={data.supplierPerformance}
-              renderRow={(row) => (
-                <>
-                  <Td className="font-bold">{row.supplier}</Td>
-                  <Td className="text-right">{row.totalPOs}</Td>
-                  <Td className="text-right">{row.avgLeadtime}d</Td>
-                  <Td className="text-right">
-                    <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md ${row.onTimePct >= 80 ? 'bg-success/10 text-success' : row.onTimePct >= 60 ? 'bg-warning/10 text-warning' : 'bg-error/10 text-error'}`}>
-                      {row.onTimePct}%
-                    </span>
-                  </Td>
-                  <Td className="text-right font-mono">{formatAmount(row.totalAmount)}</Td>
-                </>
-              )}
-            />
-          </SectionPanel>
+          {(() => {
+            const s = data.supplierPerformanceSummary;
+            return (
+              <SectionPanel title="Supplier Performance Tracking" subtitle="Delivery performance leaderboard based on evaluated delivery records" action={<InfoButton contentId="po-supplier-perf" />}>
+                {s && (
+                  <div className="grid grid-cols-4 gap-4 mb-6">
+                    <KPICard variant="detailed" icon="fa-building" iconBg="bg-primary/10" iconColor="text-primary" label="Suppliers" value={s.supplierCount.toLocaleString()} subtitle={`${s.purchaseOrderCount.toLocaleString()} POs`} />
+                    <KPICard variant="detailed" icon="fa-truck" iconBg="bg-success/10" iconColor="text-success" label="Favorable Rate" value={`${s.performanceRatesPercent.favorableRate}%`} subtitle={`${s.performanceMeasurementCounts.favorableRecordCount.toLocaleString()} of ${s.performanceMeasurementCounts.evaluatedRecordCount.toLocaleString()}`} />
+                    <KPICard variant="detailed" icon="fa-exclamation-circle" iconBg="bg-warning/10" iconColor="text-warning" label="Overdue Schedule" value={s.overdueScheduleLineCount.toLocaleString()} subtitle={`${s.overdueOpenAmountPercent}% overdue amount`} />
+                    <KPICard variant="detailed" icon="fa-clock" iconBg="bg-error/10" iconColor="text-error" label="Open Amount" value={formatAmount(s.totalOpenAmount)} subtitle={`${formatAmount(s.totalOverdueOpenAmount)} overdue`} />
+                  </div>
+                )}
+                <Table page={tp('supplier-perf')} setPage={sp('supplier-perf')}
+                  headers={[
+                    { key: 'rank', label: 'Rank', className: 'text-center w-12' },
+                    { key: 'supplier', label: 'Supplier' },
+                    { key: 'country', label: 'Country', className: 'text-center' },
+                    { key: 'pos', label: 'POs', className: 'text-right' },
+                    { key: 'items', label: 'Items', className: 'text-right' },
+                    { key: 'favorable', label: 'Delivery Rate', className: 'text-right' },
+                    { key: 'secondary', label: 'Perf. Rate', className: 'text-right' },
+                    { key: 'overdueLines', label: 'Overdue Lines', className: 'text-right' },
+                    { key: 'maxOverdue', label: 'Max Overdue', className: 'text-right' },
+                  ]}
+                  rows={data.supplierPerformanceLeaderboard}
+                  renderRow={(row) => {
+                    const pctColor = row.favorableDeliveryRatePercent != null
+                      ? row.favorableDeliveryRatePercent >= 80 ? 'text-success'
+                        : row.favorableDeliveryRatePercent >= 50 ? 'text-warning'
+                        : 'text-error'
+                      : 'text-on-surface-variant';
+                    return (
+                      <>
+                        <Td className="text-center font-bold text-on-surface-variant">#{row.rank}</Td>
+                        <Td className="font-bold max-w-[220px] truncate" title={row.supplierName}>{row.supplierName}</Td>
+                        <Td className="text-center">
+                          <span className="inline-block px-2 py-0.5 text-[10px] font-bold bg-surface-container rounded">{row.supplierCountryCode}</span>
+                        </Td>
+                        <Td className="text-right">{row.purchaseOrderCount.toLocaleString()}</Td>
+                        <Td className="text-right">{row.purchaseOrderItemCount.toLocaleString()}</Td>
+                        <Td className={`text-right font-bold ${pctColor}`}>{row.favorableDeliveryRatePercent != null ? `${row.favorableDeliveryRatePercent}%` : '—'}</Td>
+                        <Td className="text-right">{row.secondaryPerformanceRatePercent != null ? `${row.secondaryPerformanceRatePercent}%` : '—'}</Td>
+                        <Td className="text-right">{row.overdueScheduleLineCount.toLocaleString()}</Td>
+                        <Td className="text-right font-mono">{row.maximumDaysOverdue != null ? `${row.maximumDaysOverdue}d` : '—'}</Td>
+                      </>
+                    );
+                  }}
+                />
+              </SectionPanel>
+            );
+          })()}
         </section>
       )}
 
       {activeSections.includes('ppc-supplier-risk') && (
         <section id="ppc-supplier-risk">
           {(() => {
-            const ranked = data.supplierPerformance.map((s) => {
-              const leadtimeScore = Math.min((s.avgLeadtime / 180) * 40, 40);
-              const onTimeScore = (100 - s.onTimePct) * 0.6;
-              const riskScore = Math.round(Math.min(leadtimeScore + onTimeScore, 100));
-              const level = riskScore <= 30 ? 'Low' : riskScore <= 60 ? 'Medium' : riskScore <= 80 ? 'High' : 'Critical';
-              return { ...s, riskScore, level };
-            }).sort((a, b) => b.riskScore - a.riskScore).map((s, i) => ({ ...s, rank: i + 1 }));
-
+            const risk = data.supplierRiskRanking || [];
             return (
-              <SectionPanel title="Supplier Risk Ranking" subtitle="Risk assessment based on delivery performance and lead times" action={<InfoButton contentId="po-supplier-risk" />}>
+              <SectionPanel title="Supplier Risk Ranking" subtitle="Risk assessment based on overdue amounts, delivery rates, and max days overdue" action={<InfoButton contentId="po-supplier-risk" />}>
                 <Table page={tp('supplier-risk')} setPage={sp('supplier-risk')}
                   headers={[
                     { key: 'rank', label: 'Rank', className: 'text-center w-12' },
                     { key: 'supplier', label: 'Supplier' },
-                    { key: 'riskScore', label: 'Risk Score', className: 'text-right' },
-                    { key: 'level', label: 'Risk Level', className: 'text-center' },
-                    { key: 'onTimePct', label: 'On-Time %', className: 'text-right' },
-                    { key: 'avgLeadtime', label: 'Avg Lead Time', className: 'text-right' },
-                    { key: 'totalPOs', label: 'Total POs', className: 'text-right' },
+                    { key: 'country', label: 'Country', className: 'text-center' },
+                    { key: 'poItems', label: 'PO Items', className: 'text-right' },
+                    { key: 'favorableRate', label: 'Delivery Rate', className: 'text-right' },
+                    { key: 'overduePct', label: 'Overdue %', className: 'text-right' },
+                    { key: 'maxOverdue', label: 'Max Overdue', className: 'text-right' },
+                    { key: 'openAmount', label: 'Open Amount', className: 'text-right' },
+                    { key: 'riskLevel', label: 'Risk', className: 'text-center' },
                   ]}
-                  rows={ranked}
+                  rows={risk}
                   renderRow={(row) => {
-                    const levelColors = {
-                      Low: 'bg-success/10 text-success',
-                      Medium: 'bg-warning/10 text-warning',
-                      High: 'bg-orange-100 text-orange-700',
-                      Critical: 'bg-error/10 text-error',
-                    };
+                    const levelColors = { LOW: 'bg-success/10 text-success', MODERATE: 'bg-warning/10 text-warning', HIGH: 'bg-orange-100 text-orange-700', CRITICAL: 'bg-error/10 text-error' };
+                    const flag = row.supplierCountryCode;
                     return (
                       <>
                         <Td className="text-center font-bold text-on-surface-variant">#{row.rank}</Td>
-                        <Td className="font-bold">{row.supplier}</Td>
-                        <Td className="text-right font-mono font-bold">{row.riskScore}</Td>
+                        <Td className="font-bold max-w-[240px] truncate" title={row.supplierName}>{row.supplierName}</Td>
                         <Td className="text-center">
-                          <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md ${levelColors[row.level]}`}>
-                            {row.level}
+                          <span className="inline-block px-2 py-0.5 text-[10px] font-bold bg-surface-container rounded">{flag}</span>
+                        </Td>
+                        <Td className="text-right">{row.purchaseOrderItemCount.toLocaleString()}</Td>
+                        <Td className="text-right">{row.favorableDeliveryRatePercent != null ? `${row.favorableDeliveryRatePercent}%` : '—'}</Td>
+                        <Td className="text-right">{row.overdueOpenAmountPercent}%</Td>
+                        <Td className="text-right font-mono">{row.maximumDaysOverdue}d</Td>
+                        <Td className="text-right font-mono">{formatAmount(row.totalOpenAmount)}</Td>
+                        <Td className="text-center">
+                          <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md ${levelColors[row.riskLevel] || 'bg-surface-container text-on-surface-variant'}`}>
+                            {row.riskLevel}
                           </span>
                         </Td>
-                        <Td className="text-right">{row.onTimePct}%</Td>
-                        <Td className="text-right">{row.avgLeadtime}d</Td>
-                        <Td className="text-right">{row.totalPOs}</Td>
                       </>
                     );
                   }}

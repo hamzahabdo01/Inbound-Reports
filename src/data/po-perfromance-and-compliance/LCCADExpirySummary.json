@@ -1,0 +1,78 @@
+{
+  "success": true,
+  "message": "LC/CAD expiry summary retrieved successfully.",
+  "data": {
+    "asOfDate": "2026-06-24",
+    "purchaseOrderCount": 151,
+    "supplierCount": 74,
+    "totalAmount": 8828034135.44,
+    "expiryBreakdownMetrics": [
+      {
+        "sourceCountColumnPosition": 5,
+        "sourceAmountColumnPosition": 6,
+        "count": 115,
+        "amount": 6381528785.31
+      },
+      {
+        "sourceCountColumnPosition": 7,
+        "sourceAmountColumnPosition": 8,
+        "count": 4,
+        "amount": 193960244.63
+      },
+      {
+        "sourceCountColumnPosition": 9,
+        "sourceAmountColumnPosition": 10,
+        "count": 25,
+        "amount": 2096126803.99
+      },
+      {
+        "sourceCountColumnPosition": 11,
+        "sourceAmountColumnPosition": 12,
+        "count": 33,
+        "amount": 2363001471.37
+      },
+      {
+        "sourceCountColumnPosition": 13,
+        "sourceAmountColumnPosition": 14,
+        "count": 2,
+        "amount": 30464049.53
+      }
+    ],
+    "supplementalCounts": [
+      {
+        "sourceColumnPosition": 15,
+        "value": 1
+      },
+      {
+        "sourceColumnPosition": 16,
+        "value": 17
+      }
+    ],
+    "supplementalPercentages": [
+      {
+        "sourceColumnPosition": 17,
+        "value": 72.29
+      },
+      {
+        "sourceColumnPosition": 18,
+        "value": 96.03
+      }
+    ],
+    "unconvertedPurchaseOrderCount": 0,
+    "purchaseOrderLineCount": 673,
+    "currency": "ETB"
+  },
+  "meta": {
+    "report": "lc-cad-expiry-summary",
+    "recordCount": 1,
+    "asOfDate": "2026-06-24",
+    "currency": "ETB",
+    "notes": [
+      "The source CSV does not contain column headers.",
+      "The overall as-of date, purchase order count, supplier count, total amount, unconverted purchase order count, line count, and currency are identifiable from the report structure.",
+      "Intermediate LC/CAD expiry counts, amounts, and percentages are preserved with their original source-column positions because their exact business labels cannot be established reliably from values alone.",
+      "The source query or a header-bearing export is required to replace the positional metric names with definitive LC/CAD expiry categories."
+    ]
+  },
+  "errors": []
+}

@@ -1,0 +1,74 @@
+{
+  "success": true,
+  "message": "Open purchase orders by source category retrieved successfully.",
+  "data": [
+    {
+      "sourceCategoryCode": "ZHP1",
+      "purchaseOrderCount": 662,
+      "purchaseOrderItemCount": 1674,
+      "supplierCount": 165,
+      "materialCount": 937,
+      "totalOpenAmount": 49461786773.39,
+      "openAmountSharePercent": 65.81,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "sourceCategoryCode": "ZRDL",
+      "purchaseOrderCount": 137,
+      "purchaseOrderItemCount": 256,
+      "supplierCount": 29,
+      "materialCount": 131,
+      "totalOpenAmount": 15580913180.54,
+      "openAmountSharePercent": 20.73,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "sourceCategoryCode": "ZRDI",
+      "purchaseOrderCount": 428,
+      "purchaseOrderItemCount": 1228,
+      "supplierCount": 118,
+      "materialCount": 820,
+      "totalOpenAmount": 10114918943.36,
+      "openAmountSharePercent": 13.46,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "sourceCategoryCode": "FO",
+      "purchaseOrderCount": 2,
+      "purchaseOrderItemCount": 3,
+      "supplierCount": 2,
+      "materialCount": 3,
+      "totalOpenAmount": 5875179.41,
+      "openAmountSharePercent": 0.01,
+      "unconvertedPurchaseOrderCount": 0,
+      "currencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    }
+  ],
+  "meta": {
+    "report": "open-purchase-orders-by-source-category",
+    "sourceFileName": "OpenPOByMaterialType.csv",
+    "recordCount": 4,
+    "currency": "ETB",
+    "totals": {
+      "purchaseOrderCount": 1229,
+      "purchaseOrderItemCount": 3161,
+      "totalOpenAmount": 75163494076.7,
+      "openAmountSharePercent": 100.01,
+      "unconvertedPurchaseOrderCount": 0
+    },
+    "notes": [
+      "The source file is named OpenPOByMaterialType, but category codes ZHP1, ZRDL, ZRDI, and FO resemble purchase order type codes rather than material type codes.",
+      "sourceCategoryCode is used to avoid assigning an incorrect business meaning until the source query is confirmed.",
+      "Supplier and material counts are distinct within each category and must not be summed across categories.",
+      "Open amount shares total 100.01 percent because row values are independently rounded."
+    ]
+  },
+  "errors": []
+}

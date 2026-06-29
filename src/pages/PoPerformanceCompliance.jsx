@@ -13,18 +13,18 @@ import ContractManagementTab from './po/ContractManagementTab';
 import PerformanceComplianceTab from './po/PerformanceComplianceTab';
 
 const TABS = [
-  { key: 'overview',     label: 'Overview',              icon: 'fa-gauge-high',        sections: ['ppc-overview', 'ppc-open-pos', 'ppc-status', 'ppc-trend'] },
-  { key: 'procurement',  label: 'Procurement Breakdown',  icon: 'fa-cart-shopping',     sections: ['ppc-commodity', 'ppc-po-type', 'ppc-supplier-share', 'ppc-funding', 'ppc-local-intl'] },
-  { key: 'contracts',    label: 'Contract Management',    icon: 'fa-file-signature',    sections: ['ppc-pipeline', 'ppc-contract-vs-po', 'ppc-lc-cad'] },
+  { key: 'overview',     label: 'Overview',              icon: 'fa-gauge-high',        sections: ['ppc-overview', 'ppc-open-pos', 'ppc-open-po-items', 'ppc-overdue-pos', 'ppc-status', 'ppc-trend'] },
+  { key: 'procurement',  label: 'Procurement Breakdown',  icon: 'fa-cart-shopping',     sections: ['ppc-procurement-breakdown', 'ppc-supplier-share', 'ppc-funding', 'ppc-local-intl'] },
+    { key: 'contracts',    label: 'Contract Management',    icon: 'fa-file-signature',    sections: ['ppc-pipeline', 'ppc-contract-vs-po', 'ppc-lc-cad', 'ppc-contract-to-receive', 'ppc-yearly-contract-receipt'] },
   { key: 'compliance',   label: 'Performance & Compliance', icon: 'fa-shield-halved',   sections: ['ppc-leadtime', 'ppc-supplier-perf', 'ppc-supplier-risk', 'ppc-bond'] },
 ];
 
 const SECTION_LABELS = {
-  'ppc-overview': 'Overview', 'ppc-open-pos': 'Open POs', 'ppc-status': 'Status', 'ppc-trend': 'Trend',
-  'ppc-commodity': 'Material', 'ppc-po-type': 'PO Type', 'ppc-supplier-share': 'Supplier Share',
+  'ppc-overview': 'Overview', 'ppc-open-pos': 'Open POs', 'ppc-open-po-items': 'PO Items', 'ppc-status': 'Status', 'ppc-trend': 'Trend',
+  'ppc-procurement-breakdown': 'Proc. Breakdown', 'ppc-supplier-share': 'Supplier Share',
   'ppc-funding': 'Funding', 'ppc-local-intl': 'Local vs Intl',
-  'ppc-pipeline': 'Pipeline', 'ppc-contract-vs-po': 'Contract vs PO', 'ppc-lc-cad': 'LC/CAD',
-  'ppc-leadtime': 'Leadtime', 'ppc-supplier-perf': 'Supplier Perf', 'ppc-supplier-risk': 'Supplier Risk', 'ppc-bond': 'Bond', 'ppc-status': 'Status',
+  'ppc-pipeline': 'Pipeline', 'ppc-contract-vs-po': 'Contract vs PO', 'ppc-lc-cad': 'LC/CAD', 'ppc-contract-to-receive': 'Contract → Receive', 'ppc-yearly-contract-receipt': 'Yearly Funnel',
+  'ppc-leadtime': 'Leadtime', 'ppc-supplier-perf': 'Supplier Perf', 'ppc-supplier-risk': 'Supplier Risk', 'ppc-bond': 'Bond', 'ppc-status': 'Status', 'ppc-overdue-pos': 'Overdue PO',
 };
 
 export default function PoPerformanceCompliance() {
@@ -40,8 +40,6 @@ export default function PoPerformanceCompliance() {
   const [activeTab, setActiveTab] = useState('overview');
   const [tablePages, setTablePages] = useState({});
   const [trendHover, setTrendHover] = useState(null);
-  const [materialHover, setMaterialHover] = useState(null);
-  const [poTypeHover, setPoTypeHover] = useState(null);
   const [supplierHover, setSupplierHover] = useState(null);
   const [procurementStatusFilter, setProcurementStatusFilter] = useState('All');
   const [kpiPage, setKpiPage] = useState(0);
@@ -162,8 +160,6 @@ export default function PoPerformanceCompliance() {
       {activeTab === 'procurement' && (
         <ProcurementBreakdownTab
           data={data} activeSections={activeSections}
-          materialHover={materialHover} setMaterialHover={setMaterialHover}
-          poTypeHover={poTypeHover} setPoTypeHover={setPoTypeHover}
           supplierHover={supplierHover} setSupplierHover={setSupplierHover}
         />
       )}

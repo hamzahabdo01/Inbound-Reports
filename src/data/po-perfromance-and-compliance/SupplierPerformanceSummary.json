@@ -1,0 +1,45 @@
+{
+  "success": true,
+  "message": "Supplier performance summary retrieved successfully.",
+  "data": {
+    "supplierCount": 292,
+    "purchaseOrderCount": 2345,
+    "purchaseOrderItemCount": 6435,
+    "performanceMeasurementCounts": {
+      "evaluatedRecordCount": 2888,
+      "favorableRecordCount": 775,
+      "unfavorableRecordCount": 2113
+    },
+    "performanceRatesPercent": {
+      "favorableRate": 26.84,
+      "secondaryPerformanceRate": 55.15
+    },
+    "openScheduleLineCount": 2886,
+    "overdueScheduleLineCount": 2798,
+    "totalOpenAmount": 75163494076.7,
+    "totalOverdueOpenAmount": 60986047058.34,
+    "severelyOverdueOpenAmount": 34787719007.28,
+    "overdueOpenAmountPercent": 81.14,
+    "averageDaysOverdue": 154.98,
+    "unconvertedPurchaseOrderCount": 0,
+    "currency": "ETB"
+  },
+  "meta": {
+    "report": "supplier-performance-summary",
+    "recordCount": 1,
+    "currency": "ETB",
+    "validation": {
+      "performanceCountsReconcile": true,
+      "favorableRateRecalculatedPercent": 26.84,
+      "overdueOpenAmountPercentRecalculated": 81.14
+    },
+    "notes": [
+      "The source CSV does not contain column headers.",
+      "The favorable rate of 26.84 percent is mathematically consistent with 775 favorable records out of 2888 evaluated records.",
+      "The overdue open amount rate of 81.14 percent is mathematically consistent with overdue open amount divided by total open amount.",
+      "The exact business definitions of evaluatedRecordCount, favorableRecordCount, unfavorableRecordCount, secondaryPerformanceRate, and severelyOverdueOpenAmount should be confirmed against the source SQL.",
+      "The provisional labels preserve the apparent supplier-performance meaning without asserting unsupported SAP field definitions."
+    ]
+  },
+  "errors": []
+}
