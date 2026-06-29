@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import Sidebar from './components/Sidebar';
+import Login from './pages/Login';
+import { isAuthenticated, logout as authLogout } from './api/auth.ts';
 import InboundReports from './pages/InboundReports';
 import Procurement from './pages/Procurement';
 import MiscellaneousStockReport from './pages/MiscellaneousStockReport';
@@ -43,8 +45,13 @@ function Placeholder({ title }) {
 }
 
 function App() {
+  const [loggedIn, setLoggedIn] = useState(isAuthenticated());
   const [activeSection, setActiveSection] = useState('Dashboard');
   const [sidebarVisible, setSidebarVisible] = useState(true);
+
+  if (!loggedIn) {
+    return <Login onLogin={() => setLoggedIn(true)} />;
+  }
 
   const toggleSidebar = () => setSidebarVisible(v => !v);
 
@@ -69,7 +76,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-surface flex">
-      <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={() => setActiveSection('Dashboard')} />
+      <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={() => { authLogout(); setLoggedIn(false) }} />
       <main className="flex-1 max-h-screen overflow-auto">
         <div className="max-w-container mx-auto px-lg pb-lg">
           {renderPage({ sidebarVisible, toggleSidebar })}

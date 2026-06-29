@@ -11,7 +11,11 @@ const statuses = [
   { label: 'Stocked Out', color: '#BA1A1A' },
 ];
 
-const getCellStatus = (value, thresholds) => {
+const getCellStatus = (value, thresholds, ss) => {
+  if (ss) {
+    const found = statuses.find((s) => s.label.toLowerCase() === ss.toLowerCase());
+    if (found) return found;
+  }
   if (!value) return statuses[4];
 
   const { min, max, eop } = thresholds;
@@ -22,25 +26,25 @@ const getCellStatus = (value, thresholds) => {
   return statuses[0];
 };
 
-function HubHeatmap({ rows, products, thresholds }) {
+function HubHeatmap({ rows, products, thresholds, statusMap }) {
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
 
-  const getThresholds = (product) => thresholds[product] || { min: 0, max: Infinity, eop: Infinity };
+  const getThresholds = (product) => (thresholds || {})[product] || { min: 0, max: Infinity, eop: Infinity };
 
   const sortedRows = useMemo(() => {
     return [...rows].sort((a, b) => {
       let riskA = 0, riskB = 0;
       products.forEach(p => {
         const t = getThresholds(p);
-        const sA = getCellStatus(a[p] || 0, t);
-        const sB = getCellStatus(b[p] || 0, t);
+        const sA = getCellStatus(a[p] || 0, t, statusMap?.[a.Site]?.[p]);
+        const sB = getCellStatus(b[p] || 0, t, statusMap?.[b.Site]?.[p]);
         if (sA.label === 'Stocked Out' || sA.label === 'Below EOP' || sA.label === 'Excess') riskA++;
         if (sB.label === 'Stocked Out' || sB.label === 'Below EOP' || sB.label === 'Excess') riskB++;
       });
       return riskB - riskA;
     });
-  }, [rows, products, thresholds]);
+  }, [rows, products, thresholds, statusMap]);
 
   const totalPages = Math.max(Math.ceil(sortedRows.length / rowsPerPage), 1);
 
@@ -85,7 +89,7 @@ function HubHeatmap({ rows, products, thresholds }) {
               let riskCount = 0;
               products.forEach(p => {
                 const val = row[p] || 0;
-                const s = getCellStatus(val, getThresholds(p));
+                const s = getCellStatus(val, getThresholds(p), statusMap?.[row.Site]?.[p]);
                 if (s.label === 'Stocked Out' || s.label === 'Below EOP' || s.label === 'Excess') riskCount++;
               });
 
@@ -108,7 +112,7 @@ function HubHeatmap({ rows, products, thresholds }) {
                   </td>
                   {products.map((product) => {
                     const value = row[product] || 0;
-                    const status = getCellStatus(value, getThresholds(product));
+                    const status = getCellStatus(value, getThresholds(product), statusMap?.[row.Site]?.[product]);
                     const pillStyle = getPillStyle(status, value);
 
                     return (
@@ -117,16 +121,12 @@ function HubHeatmap({ rows, products, thresholds }) {
                         className="px-3 py-2 border-l border-surface-container-low bg-white text-center whitespace-nowrap"
                         title={`${row.Site} / ${product}: ${formatNumber(value)} (${status.label})`}
                       >
-                        {thresholds[product] ? (
-                          <span
-                            className="inline-flex items-center justify-center rounded-md px-2 py-1 text-[12px] min-w-[3rem] w-full"
-                            style={pillStyle}
-                          >
-                            {formatNumber(value)}
-                          </span>
-                        ) : (
-                          <span className="text-body-sm text-on-surface-variant">{formatNumber(value)}</span>
-                        )}
+                        <span
+                          className="inline-flex items-center justify-center rounded-md px-2 py-1 text-[12px] min-w-[3rem] w-full"
+                          style={pillStyle}
+                        >
+                          {formatNumber(value)}
+                        </span>
                       </td>
                     );
                   })}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { login, logout, fetchEnvironments } from '../api/auth'
+import { login, logout, fetchEnvironments } from '../api/auth.ts'
 import LoginCanvasAnimation from '../components/LoginCanvasAnimation'
 
 export default function Login({ onLogin }) {
@@ -27,8 +27,7 @@ export default function Login({ onLogin }) {
     fetchEnvironments()
       .then((res) => {
         const list = res?.Data || (Array.isArray(res) ? res : [])
-        const all = [...list, { Environment: 'Others', EnvironmentCode: '' }]
-        setEnvironments(all)
+        setEnvironments(list)
       })
       .catch(() => {})
   }, [])
@@ -138,7 +137,7 @@ export default function Login({ onLogin }) {
           </div>
 
           <div className="bg-white border border-[#CFD8DC] rounded-xl p-8">
-            <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+            <div className="space-y-5">
               <div>
                 <label htmlFor="username" className="block text-label-sm text-gray-900 mb-1.5">Username</label>
                 <div className={`relative rounded-lg border transition-all duration-200 ${error && !username.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'username' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
@@ -229,7 +228,9 @@ export default function Login({ onLogin }) {
               )}
 
               <button
-                type="submit"
+                type="button"
+                onClick={handleLogin}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
                 disabled={loading}
                 className="relative w-full h-12 rounded-lg bg-[#1a4a47] text-white text-label-sm hover:bg-[#1f5a56] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150 overflow-hidden"
               >
@@ -242,7 +243,7 @@ export default function Login({ onLogin }) {
                   'Sign in'
                 )}
               </button>
-            </form>
+            </div>
           </div>
 
         </div>
@@ -262,9 +263,9 @@ export default function Login({ onLogin }) {
             <div className="flex-1 overflow-y-auto py-2">
               {environments.length === 0 ? (
                 <div className="px-6 py-8 text-center text-white/50 text-body-sm">No sites available</div>
-              ) : environments.map((env) => (
+              ) : environments.map((env, i) => (
                 <button
-                  key={env.EnvironmentCode}
+                  key={env.EnvironmentCode || `env-${i}`}
                   onClick={() => { setSelectedEnv(env); closeEnvPanel() }}
                   className={`w-full flex items-center gap-3 px-6 py-3 text-left text-body-md transition-colors hover:bg-white/10 ${env.EnvironmentCode === selectedEnv?.EnvironmentCode ? 'bg-white/15 text-white font-semibold' : 'text-white/70'}`}
                 >
