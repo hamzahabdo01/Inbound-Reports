@@ -136,6 +136,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
                   <Table page={tp('pipeline')} setPage={sp('pipeline')}
                     expandedRow={pipelineExpanded} rowKey="contractNo"
                     onRowClick={(id) => setPipelineExpanded(pipelineExpanded === id ? null : id)}
+                    rowClassName="group hover:bg-primary" expandedRowClassName="bg-primary"
                     headers={[
                       { key: 'contract', label: 'Contract' },
                       { key: 'supplier', label: 'Supplier' },

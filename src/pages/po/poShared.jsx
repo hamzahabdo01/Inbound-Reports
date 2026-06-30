@@ -7,7 +7,7 @@ export const formatAmount = (v) => {
   return String(v);
 };
 
-export function Table({ headers, rows, renderRow, className = '', page, setPage, rowsPerPage = 15, expandedRow, onRowClick, rowKey, renderExpanded }) {
+export function Table({ headers, rows, renderRow, className = '', page, setPage, rowsPerPage = 15, expandedRow, onRowClick, rowKey, renderExpanded, rowClassName = '', expandedRowClassName = '' }) {
   if (!rows.length) {
     return <div className="p-6 text-center text-body-sm text-on-surface-variant">No records</div>;
   }
@@ -32,10 +32,10 @@ export function Table({ headers, rows, renderRow, className = '', page, setPage,
               const key = rowKey ? row[rowKey] : i;
               const isExpanded = expandedRow !== undefined && expandedRow === id;
               const rowEl = (
-                <tr key={key} className={`hover:bg-primary transition-colors ${onRowClick ? 'group cursor-pointer' : ''} ${isExpanded ? 'bg-primary' : ''}`}
+                <tr key={key} className={`transition-colors ${onRowClick ? 'cursor-pointer' : ''} ${isExpanded ? expandedRowClassName || 'bg-surface-low/30' : ''} ${rowClassName || 'hover:bg-surface-container-low'}`}
                   onClick={() => onRowClick && onRowClick(id)}>
                   {renderRow(row, i, isExpanded)}
-                </tr>
+                  </tr>
               );
               if (!isExpanded || !renderExpanded) return [rowEl];
               return [rowEl, (
