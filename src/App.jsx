@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
-import { isAuthenticated, logout as authLogout } from './api/auth.ts';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import InboundReports from './pages/InboundReports';
 import Procurement from './pages/Procurement';
 import MiscellaneousStockReport from './pages/MiscellaneousStockReport';
@@ -44,13 +44,24 @@ function Placeholder({ title }) {
   );
 }
 
-function App() {
-  const [loggedIn, setLoggedIn] = useState(isAuthenticated());
+function AppContent() {
+  const { loggedIn, validating, logout } = useAuth();
   const [activeSection, setActiveSection] = useState('Program');
   const [sidebarVisible, setSidebarVisible] = useState(true);
 
+  if (validating) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-body-sm text-on-surface-variant">Verifying session...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!loggedIn) {
-    return <Login onLogin={() => setLoggedIn(true)} />;
+    return <Login />;
   }
 
   const toggleSidebar = () => setSidebarVisible(v => !v);
@@ -76,7 +87,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-surface flex">
-      <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={() => { authLogout(); setLoggedIn(false) }} />
+      <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={logout} />
       <main className="flex-1 max-h-screen overflow-auto">
         <div className="max-w-container mx-auto px-lg pb-lg">
           {renderPage({ sidebarVisible, toggleSidebar })}
@@ -86,4 +97,10 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}

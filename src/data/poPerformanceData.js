@@ -268,7 +268,7 @@ function generateLeadtime(pos) {
 function generateProcurementStatus() {
   const stages = ['Contract Signed', 'PO Issued', 'LC Opened', 'Port Arrival', 'Cleared', 'Received at Warehouse'];
   const counts = [980, 850, 720, 580, 420, 350];
-  const colors = ['#00373B', '#0B4F54', '#216E6A', '#4A9598', '#86BFC5', '#515F74'];
+  const colors = ['#00373B', '#0B4F54', '#D97706', '#216E6A', '#4A9598', '#86BFC5'];
   const details = Array.from({ length: 50 }, (_, i) => {
     const stageIdx = rand(0, 5);
     return {

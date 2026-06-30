@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import KPICard from '../../components/KPICard';
 import PieChart from '../../components/PieChart';
 import InfoButton from '../../components/InfoButton';
@@ -9,28 +10,79 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
     const dt = new Date(d.date);
     return dt.toLocaleDateString('en', { month: 'short' });
   };
+  const fmtDuration = (days) => {
+    if (days == null || days < 0) return null;
+    if (days === 0) return '0d';
+    if (days >= 365) {
+      const y = Math.round(days / 365);
+      const rem = Math.round((days % 365) / 30);
+      return rem ? `${y}y ${rem}mo` : `${y}y`;
+    }
+    if (days >= 90) return `${Math.round(days / 30)}mo`;
+    if (days >= 30) {
+      const mo = Math.floor(days / 30);
+      const d = days % 30;
+      return d ? `${mo}mo ${d}d` : `${mo}mo`;
+    }
+    if (days >= 7) {
+      const w = Math.floor(days / 7);
+      const d = days % 7;
+      return d ? `${w}w ${d}d` : `${w}w`;
+    }
+    return `${days}d`;
+  };
+  const [itemSearch, setItemSearch] = useState('');
+  const filteredOpenItems = data.openPOItemDetail?.data?.filter((row) => {
+    if (!itemSearch) return true;
+    const q = itemSearch.toLowerCase();
+    return (row.purchaseOrderNumber?.toLowerCase().includes(q) ||
+      row.supplierName?.toLowerCase().includes(q) ||
+      row.materialDescription?.toLowerCase().includes(q) ||
+      String(row.purchaseOrderItemNumber).includes(q));
+  }) || [];
+  const [overdueSearch, setOverdueSearch] = useState('');
+  const filteredOverdueLines = data.overduePOScheduleLine?.data?.filter((row) => {
+    if (!overdueSearch) return true;
+    const q = overdueSearch.toLowerCase();
+    return (row.purchaseOrderNumber?.toLowerCase().includes(q) ||
+      row.supplierName?.toLowerCase().includes(q) ||
+      row.materialDescription?.toLowerCase().includes(q) ||
+      String(row.purchaseOrderItemNumber).includes(q) ||
+      row.overdueBucket?.toLowerCase().includes(q));
+  }) || [];
 
   return (
     <>
       {activeSections.includes('ppc-overview') && (
         <section id="ppc-overview">
           <div className="space-y-3">
-            <div className="grid grid-cols-4 gap-3">
-              {visibleKpiCards.map((c) => (
-                <KPICard key={c.label} variant="detailed" {...c} />
-              ))}
+            <div className="relative pl-12 pr-12">
+              <div key={kpiPage} className="grid grid-cols-4 gap-3 animate-fade-in">
+                {visibleKpiCards.map((c) => (
+                  <KPICard key={c.label} variant="detailed" {...c} />
+                ))}
+              </div>
+              {kpiTotalPages > 1 && (
+                <>
+                  <button type="button" onClick={() => setKpiPage((p) => Math.max(p - 1, 0))} disabled={kpiPage === 0}
+                    className="absolute left-0 top-4 bottom-4 w-6 flex items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:opacity-0 disabled:pointer-events-none transition-all duration-200 z-10"
+                    aria-label="Previous KPI page"
+                  ><i className="fa-solid fa-chevron-left text-[10px]"></i></button>
+                  <button type="button" onClick={() => setKpiPage((p) => Math.min(p + 1, kpiTotalPages - 1))} disabled={kpiPage === kpiTotalPages - 1}
+                    className="absolute right-0 top-4 bottom-4 w-6 flex items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:opacity-0 disabled:pointer-events-none transition-all duration-200 z-10"
+                    aria-label="Next KPI page"
+                  ><i className="fa-solid fa-chevron-right text-[10px]"></i></button>
+                </>
+              )}
             </div>
             {kpiTotalPages > 1 && (
-              <div className="flex items-center justify-center gap-3">
-                <button type="button" onClick={() => setKpiPage((p) => Math.max(p - 1, 0))} disabled={kpiPage === 0}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container disabled:opacity-30 disabled:hover:bg-transparent transition-all"
-                  aria-label="Previous KPI page"
-                ><i className="fa-solid fa-chevron-left text-xs"></i></button>
-                <span className="text-xs font-semibold text-on-surface-variant">{kpiPage + 1}/{kpiTotalPages}</span>
-                <button type="button" onClick={() => setKpiPage((p) => Math.min(p + 1, kpiTotalPages - 1))} disabled={kpiPage === kpiTotalPages - 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container disabled:opacity-30 disabled:hover:bg-transparent transition-all"
-                  aria-label="Next KPI page"
-                ><i className="fa-solid fa-chevron-right text-xs"></i></button>
+              <div className="flex items-center justify-center gap-1.5">
+                {Array.from({ length: kpiTotalPages }, (_, i) => (
+                  <button key={i} type="button" onClick={() => setKpiPage(i)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${i === kpiPage ? 'bg-primary w-5' : 'bg-outline-variant hover:bg-outline'}`}
+                    aria-label={`Go to page ${i + 1}`}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -73,15 +125,15 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                   <div className="grid grid-cols-4 gap-3 mb-5">
                     <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-primary/10" iconColor="text-primary" label="Total Open POs" value={openCount.toLocaleString()} subtitle="awaiting action" />
                     <KPICard variant="detailed" icon="fa-exclamation-triangle" iconBg="bg-error/10" iconColor="text-error" label="Total Overdue POs" value={overdueCount.toLocaleString()} subtitle="past due date" />
-                    <KPICard variant="detailed" icon="fa-dollar-sign" iconBg="bg-warning/10" iconColor="text-warning" label="Total Amount" value={`$${totalAmt >= 1e9 ? (totalAmt / 1e9).toFixed(1) + 'B' : totalAmt >= 1e6 ? (totalAmt / 1e6).toFixed(1) + 'M' : totalAmt >= 1e3 ? (totalAmt / 1e3).toFixed(1) + 'K' : totalAmt.toLocaleString()}`} subtitle="combined value" />
-                    <KPICard variant="detailed" icon="fa-clock" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Avg Days Overdue" value={`${avgDays}d`} subtitle="overdue POs only" />
+                    <KPICard variant="detailed" icon="fa-coins" iconBg="bg-warning/10" iconColor="text-warning" label="Total Amount" value={`${totalAmt >= 1e9 ? (totalAmt / 1e9).toFixed(1) + 'B' : totalAmt >= 1e6 ? (totalAmt / 1e6).toFixed(1) + 'M' : totalAmt >= 1e3 ? (totalAmt / 1e3).toFixed(1) + 'K' : totalAmt.toLocaleString()} ETB`} subtitle="combined value" />
+                    <KPICard variant="detailed" icon="fa-clock" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Avg Overdue Duration" value={avgDays ? fmtDuration(avgDays) : '0d'} subtitle="overdue POs only" />
                   </div>
                   <Table page={tp('open-pos')} setPage={sp('open-pos')}
                     headers={[
                       { key: 'poNo', label: 'PO No' },
                       { key: 'supplier', label: 'Supplier' },
                       { key: 'program', label: 'Program' },
-                      { key: 'amount', label: 'Amount', className: 'text-right' },
+                      { key: 'amount', label: 'Amount (ETB)', className: 'text-right' },
                       { key: 'issueDate', label: 'Issue Date' },
                       { key: 'dueDate', label: 'Due Date' },
                       { key: 'status', label: 'Status' },
@@ -93,11 +145,11 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                         <Td className="font-mono font-semibold">{row.poNo}</Td>
                         <Td>{row.supplier}</Td>
                         <Td>{row.program}</Td>
-                        <Td className="text-right font-mono font-medium">${row.amount.toLocaleString()}</Td>
+                        <Td className="text-right font-mono font-medium">{formatAmount(row.amount)}</Td>
                         <Td>{row.issueDate}</Td>
                         <Td>{row.dueDate}</Td>
                         <Td><StatusBadge status={row.status} /></Td>
-                        <Td className="text-right font-bold text-error">{row.status === 'Overdue' ? `${row.daysOverdue}d` : '—'}</Td>
+                        <Td className="text-right font-bold text-error">{row.status === 'Overdue' ? fmtDuration(row.daysOverdue) : '—'}</Td>
                       </>
                     )}
                   />
@@ -110,7 +162,18 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
 
       {activeSections.includes('ppc-open-po-items') && (
         <section id="ppc-open-po-items">
-          <SectionPanel title="Open PO Item Details" subtitle={`${data.openPOItemDetail.data.length} open line items`} action={<InfoButton contentId="po-open-items" />}>
+          <SectionPanel title="Open PO Item Details" subtitle={`${filteredOpenItems.length} of ${data.openPOItemDetail?.data?.length || 0} open line items`} action={
+            <div className="flex items-center gap-3">
+              <InfoButton contentId="po-open-items" />
+              <div className="relative">
+                <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
+                <input type="text" placeholder="Search PO, supplier, material..." value={itemSearch}
+                  onChange={(e) => setItemSearch(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 h-9 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64 transition-all"
+                />
+              </div>
+            </div>
+          }>
             <Table page={tp('open-po-items')} setPage={sp('open-po-items')} rowsPerPage={10}
               headers={[
                 { key: 'po', label: 'PO No' },
@@ -120,20 +183,20 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                 { key: 'ordered', label: 'Ordered', className: 'text-right' },
                 { key: 'received', label: 'Received', className: 'text-right' },
                 { key: 'open', label: 'Open Qty', className: 'text-right' },
-                { key: 'openAmt', label: 'Open Amount', className: 'text-right' },
+                { key: 'openAmt', label: 'Open Amount (ETB)', className: 'text-right' },
                 { key: 'delivery', label: 'Planned Delivery' },
               ]}
-              rows={data.openPOItemDetail.data}
+              rows={filteredOpenItems}
               renderRow={(row) => (
                 <>
                   <Td className="font-mono">{row.purchaseOrderNumber}</Td>
                   <Td className="text-center font-mono text-on-surface-variant">{row.purchaseOrderItemNumber}</Td>
-                  <Td className="max-w-[160px] truncate" title={row.supplierName}>{row.supplierName}</Td>
-                  <Td className="max-w-[200px] truncate" title={row.materialDescription}>{row.materialDescription}</Td>
+                  <Td className="whitespace-nowrap">{row.supplierName}</Td>
+                  <Td className="whitespace-nowrap">{row.materialDescription}</Td>
                   <Td className="text-right font-mono">{row.orderedQuantity?.toLocaleString()}</Td>
                   <Td className="text-right font-mono">{row.receivedQuantity?.toLocaleString()}</Td>
                   <Td className="text-right font-mono font-bold">{row.openQuantity?.toLocaleString()}</Td>
-                  <Td className="text-right font-mono">{row.openAmountReportingCurrency ? Math.round(row.openAmountReportingCurrency).toLocaleString() : '—'}</Td>
+                  <Td className="text-right font-mono">{row.openAmountReportingCurrency ? (() => { const v = row.openAmountReportingCurrency; return `${v >= 1e9 ? (v / 1e9).toFixed(1) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'K' : Math.round(v).toLocaleString()}`; })() : '—'}</Td>
                   <Td>{row.plannedDeliveryDate || '—'}</Td>
                 </>
               )}
@@ -144,7 +207,18 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
 
       {activeSections.includes('ppc-overdue-pos') && (
         <section id="ppc-overdue-pos">
-          <SectionPanel title="Overdue PO Schedule Lines" subtitle={`${data.overduePOScheduleLine.data.length} overdue schedule lines`} action={<InfoButton contentId="po-overdue-schedule" />}>
+          <SectionPanel title="Overdue PO Schedule Lines" subtitle={`${filteredOverdueLines.length} of ${data.overduePOScheduleLine?.data?.length || 0} overdue schedule lines`} action={
+            <div className="flex items-center gap-3">
+              <InfoButton contentId="po-overdue-schedule" />
+              <div className="relative">
+                <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
+                <input type="text" placeholder="Search PO, supplier, material..." value={overdueSearch}
+                  onChange={(e) => setOverdueSearch(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 h-9 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64 transition-all"
+                />
+              </div>
+            </div>
+          }>
             {(() => {
               const s = data.overduePOSummary.data;
               const fmtAmt = (v) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(1)}K` : v.toLocaleString();
@@ -170,7 +244,7 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                 { key: 'openQty', label: 'Open Qty', className: 'text-right' },
                 { key: 'openAmt', label: 'Open Amt (ETB)', className: 'text-right' },
               ]}
-              rows={data.overduePOScheduleLine.data}
+              rows={filteredOverdueLines}
               renderRow={(row) => {
                 const days = row.daysOverdue;
                 const colorCls = days > 730 ? 'bg-error/15 text-error font-bold' :
@@ -180,7 +254,16 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                   days > 60 ? 'text-warning font-semibold' :
                   days > 30 ? 'text-yellow-600 font-semibold' :
                   'text-success font-semibold';
-                const bucketLabel = row.overdueBucket.replace('OVERDUE_', '').replace(/_/g, '-').replace('-DAYS', 'd');
+                const fmtBucket = (b) => {
+                  if (b === 'OVERDUE_OVER_730_DAYS') return '2y+';
+                  const parts = b.match(/(\d+)_(\d+)_DAYS/);
+                  if (parts) {
+                    const lo = fmtDuration(parseInt(parts[1]));
+                    const hi = fmtDuration(parseInt(parts[2]));
+                    return `${lo}-${hi}`;
+                  }
+                  return b;
+                };
                 return (
                   <>
                     <Td className="font-mono">{row.purchaseOrderNumber}</Td>
@@ -189,10 +272,10 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                     <Td className="max-w-[200px] truncate" title={row.materialDescription}>{row.materialDescription}</Td>
                     <Td>{row.purchaseOrderDate}</Td>
                     <Td>{row.scheduledDeliveryDate}</Td>
-                    <Td className={`text-right font-mono ${colorCls}`}>{days}d</Td>
-                    <Td><span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md ${days > 90 ? 'bg-error/10 text-error' : days > 60 ? 'bg-warning/10 text-warning' : days > 30 ? 'bg-yellow-50 text-yellow-700' : 'bg-success/10 text-success'}`}>{bucketLabel}</span></Td>
+                    <Td className={`text-right font-mono ${colorCls}`}>{fmtDuration(days)}</Td>
+                    <Td><span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md ${days > 90 ? 'bg-error/10 text-error' : days > 60 ? 'bg-warning/10 text-warning' : days > 30 ? 'bg-yellow-50 text-yellow-700' : 'bg-success/10 text-success'}`}>{fmtBucket(row.overdueBucket)}</span></Td>
                     <Td className="text-right font-mono">{row.openQuantity?.toLocaleString()}</Td>
-                    <Td className="text-right font-mono">{row.openAmountReportingCurrency ? Math.round(row.openAmountReportingCurrency).toLocaleString() : '—'}</Td>
+                  <Td className="text-right font-mono">{row.openAmountReportingCurrency ? (() => { const v = row.openAmountReportingCurrency; return `${v >= 1e9 ? (v / 1e9).toFixed(1) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'K' : Math.round(v).toLocaleString()}`; })() : '—'}</Td>
                   </>
                 );
               }}
@@ -286,13 +369,13 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                         const isHovered = trendHover === i;
                         return (
                           <g key={t.date}>
-                             <rect x={x} y={y} width={barWidth} height={h} rx="3" fill="#0B4F54"
+                             <rect x={x} y={y} width={barWidth} height={h} rx="3" fill={i % 2 === 0 ? '#0B4F54' : '#D97706'}
                               opacity={trendHover === null || isHovered ? 1 : 0.25}
                               onMouseEnter={() => setTrendHover(i)} onMouseLeave={() => setTrendHover(null)}
                               style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
                             />
                             {isHovered && (
-                              <text x={x + barWidth / 2} y={y - 10} textAnchor="middle" fontSize="12" fontWeight="800" fill="#0B4F54">
+                              <text x={x + barWidth / 2} y={y - 10} textAnchor="middle" fontSize="12" fontWeight="800" fill="#D97706">
                                 {formatAmount(t.amount)}
                               </text>
                             )}
@@ -313,8 +396,8 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                         <div className="space-y-4">
                           <div>
                             <p className="text-label-sm text-on-surface-variant uppercase tracking-wider">{formatMonth(t)} {trendYear}</p>
-                            <p className="text-[22px] font-extrabold text-on-surface mt-1 leading-tight font-mono tracking-tight">
-                              {t.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span className="text-[11px] text-on-surface-variant font-bold">ETB</span>
+                            <p className="text-[28px] font-extrabold text-on-surface mt-1 leading-tight font-mono tracking-tight">
+                              {formatAmount(t.amount)} <span className="text-[11px] text-on-surface-variant font-bold">ETB</span>
                             </p>
                           </div>
                           {change !== null && (

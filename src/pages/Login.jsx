@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { login, logout, fetchEnvironments } from '../api/auth.ts'
+import { fetchEnvironments } from '../api/auth.ts'
+import { useAuth } from '../contexts/AuthContext'
 import LoginCanvasAnimation from '../components/LoginCanvasAnimation'
 
-export default function Login({ onLogin }) {
+export default function Login() {
+  const { login } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -42,7 +44,6 @@ export default function Login({ onLogin }) {
     setLoading(true)
     try {
       await login(username.trim(), password, selectedEnv?.EnvironmentCode || '')
-      onLogin?.()
     } catch (err) {
       if (err.code === 'ERR_NETWORK') {
         setError('Unable to connect to the server. Please check your network connection.')

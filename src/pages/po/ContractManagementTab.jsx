@@ -3,7 +3,7 @@ import KPICard from '../../components/KPICard';
 import InfoButton from '../../components/InfoButton';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 
-const FUNNEL_COLORS = ['#00373B', '#0B4F54', '#4A9598', '#86BFC5'];
+const FUNNEL_COLORS = ['#00373B', '#0B4F54', '#D97706', '#86BFC5'];
 const FUNNEL_LABELS = ['Contract', 'PO', 'Inbound', 'Received'];
 const FIELDS = ['contractAmount', 'purchaseOrderAmount', 'inboundAmount', 'receivedAmount'];
 
@@ -14,7 +14,7 @@ function FunnelChart({ data }) {
   const w = 720, h = 300;
   const chartW = w - padL - padR;
   const groupW = chartW / rows.length;
-  const barW = Math.max(8, groupW * 0.15);
+  const barW = Math.max(6, groupW * 0.1);
   const gap = (groupW - barW * 4) / 5;
   const [tooltip, setTooltip] = useState(null);
 
@@ -23,10 +23,6 @@ function FunnelChart({ data }) {
     if (v >= 1e9) return `${(v / 1e9).toFixed(1)}B`;
     if (v >= 1e6) return `${(v / 1e6).toFixed(0)}M`;
     return `${(v / 1e3).toFixed(0)}K`;
-  }
-  function fmtFull(v) {
-    if (!v) return '—';
-    return v.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   return (
@@ -72,7 +68,7 @@ function FunnelChart({ data }) {
           <div className="absolute pointer-events-none bg-white rounded-xl shadow-lg border border-outline-variant px-4 py-3 text-xs z-50" style={{ left: Math.min(tooltip.x + 12, w - 220), top: Math.max(tooltip.y - 100, 0) }}>
             <div className="font-bold text-on-surface mb-1.5">{tooltip.year} — {tooltip.stageLabel}</div>
             <div className="space-y-1 text-on-surface-variant">
-              <div className="flex justify-between gap-6"><span>Amount</span><span className="font-semibold text-on-surface">{fmtFull(tooltip.v)} ETB</span></div>
+              <div className="flex justify-between gap-6"><span>Amount</span><span className="font-semibold text-on-surface">{fmt(tooltip.v)} ETB</span></div>
               {r.contractAmount > 0 && tooltip.fi === 0 && <div className="flex justify-between gap-6"><span>Contracts</span><span className="font-semibold text-on-surface">{r.contractCount.toLocaleString()}</span></div>}
               {r.purchaseOrderCount > 0 && tooltip.fi === 1 && <div className="flex justify-between gap-6"><span>POs</span><span className="font-semibold text-on-surface">{r.purchaseOrderCount.toLocaleString()}</span></div>}
               {tooltip.fi < 3 && <div className="border-t border-outline-variant my-1" />}
@@ -102,6 +98,24 @@ function FunnelPercentRow({ data }) {
 }
 
 export default function ContractManagementTab({ data, activeSections, tp, sp }) {
+  const allYears = data.yearlyContractToReceipt?.data?.map(r => r.year).sort() || [];
+  const [funnelYear, setFunnelYear] = useState(allYears.length ? String(allYears[allYears.length - 1]) : '2026');
+  const funnelFiltered = { ...data.yearlyContractToReceipt, data: data.yearlyContractToReceipt.data.filter(r => r.year === Number(funnelYear)) };
+  const [ctrSearch, setCtrSearch] = useState('');
+  const [ctrProcessFilter, setCtrProcessFilter] = useState('');
+  const [ctrRouteFilter, setCtrRouteFilter] = useState('');
+  const filteredCtr = (data.contractToReceiveTracking || []).filter((row) => {
+    const q = ctrSearch.toLowerCase();
+    const matchSearch = !ctrSearch || row.purchaseOrderNumber?.toLowerCase().includes(q) ||
+      row.supplierName?.toLowerCase().includes(q) ||
+      row.currentProcessStatus?.toLowerCase().includes(q) ||
+      row.routeStatus?.toLowerCase().includes(q) ||
+      row.currentMilestoneName?.toLowerCase().includes(q) ||
+      row.processPhase?.toLowerCase().includes(q);
+    const matchProcess = !ctrProcessFilter || row.currentProcessStatus === ctrProcessFilter;
+    const matchRoute = !ctrRouteFilter || row.routeStatus === ctrRouteFilter;
+    return matchSearch && matchProcess && matchRoute;
+  });
   return (
     <>
       {activeSections.includes('ppc-pipeline') && (
@@ -122,10 +136,10 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
                     headers={[
                       { key: 'contract', label: 'Contract' },
                       { key: 'supplier', label: 'Supplier' },
-                      { key: 'ctAmount', label: 'Contract Amount', className: 'text-right' },
-                      { key: 'po', label: 'PO Amount', className: 'text-right' },
-                      { key: 'inbound', label: 'Invoiced', className: 'text-right' },
-                      { key: 'received', label: 'Received', className: 'text-right' },
+                      { key: 'ctAmount', label: 'Contract Amount (ETB)', className: 'text-right' },
+                      { key: 'po', label: 'PO Amount (ETB)', className: 'text-right' },
+                      { key: 'inbound', label: 'Invoiced (ETB)', className: 'text-right' },
+                      { key: 'received', label: 'Received (ETB)', className: 'text-right' },
                       { key: 'progress', label: 'Pipeline Fill' },
                     ]}
                     rows={data.contractPipeline}
@@ -167,11 +181,13 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
                 const totalPO = data.contractVsPO.reduce((s, c) => s + c.poAmount, 0);
                 const totalConsumption = data.contractVsPO.reduce((s, c) => s + c.consumption, 0);
                 const totalRemaining = data.contractVsPO.reduce((s, c) => s + c.remaining, 0);
+                const avgPct = data.contractVsPO.length ? Math.round(data.contractVsPO.reduce((s, c) => s + c.pctConsumed, 0) / data.contractVsPO.length) : 0;
                 return (
                   <>
                     <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total PO Amount" value={formatAmount(totalPO)} subtitle="all contracts" />
                     <KPICard variant="detailed" icon="fa-cart-shopping" iconBg="bg-success/10" iconColor="text-success" label="Total Consumption" value={formatAmount(totalConsumption)} subtitle={`${totalPO ? Math.round((totalConsumption / totalPO) * 100) : 0}% consumed`} />
                     <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-warning/10" iconColor="text-warning" label="Total Remaining" value={formatAmount(totalRemaining)} subtitle="yet to consume" />
+                    <KPICard variant="detailed" icon="fa-file-contract" iconBg="bg-primary/10" iconColor="text-primary" label="Contracts" value={data.contractVsPO.length.toLocaleString()} subtitle={`avg ${avgPct}% consumed`} />
                   </>
                 );
               })()}
@@ -180,10 +196,10 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
               headers={[
                 { key: 'contract', label: 'Contract' },
                 { key: 'supplier', label: 'Supplier' },
-                { key: 'ctAmount', label: 'Contract Amt', className: 'text-right' },
-                { key: 'poAmount', label: 'PO Amt', className: 'text-right' },
+                { key: 'ctAmount', label: 'Contract Amt (ETB)', className: 'text-right' },
+                { key: 'poAmount', label: 'PO Amt (ETB)', className: 'text-right' },
                 { key: 'consumption', label: 'PO Rate', className: 'text-right' },
-                { key: 'remaining', label: 'Remaining', className: 'text-right' },
+                { key: 'remaining', label: 'Remaining (ETB)', className: 'text-right' },
                 { key: 'progress', label: 'Progress' },
               ]}
               rows={data.contractVsPO}
@@ -214,16 +230,42 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
       {activeSections.includes('ppc-contract-to-receive') && (
         <section id="ppc-contract-to-receive">
           {(() => {
-            const tracking = data.contractToReceiveTracking || [];
             const routeColors = { DELAYED_BEYOND_DELIVERY_DEADLINE: 'bg-error/10 text-error', CLOSED: 'bg-surface-container text-on-surface-variant', PARTIALLY_RECEIVED_BUT_OVERDUE: 'bg-warning/10 text-warning', NO_ROUTE_DEADLINE_BREACH_DETECTED: 'bg-success/10 text-success', ROUTE_DATA_QUALITY_ISSUE: 'bg-warning/10 text-warning', ROUTE_NOT_CLASSIFIED: 'bg-surface-container text-on-surface-variant' };
             const phaseColors = { PLANNING: 'bg-[#4A8EA5]/10 text-[#4A8EA5]', EXECUTION: 'bg-primary/10 text-primary', COMPLETED: 'bg-success/10 text-success' };
             return (
-              <SectionPanel title="Contract-to-Receipt Status Tracking" subtitle="PO-level milestone tracking from contract to delivery" action={<InfoButton contentId="po-contract-to-receive" />}>
+              <SectionPanel title="Contract-to-Receipt Status Tracking" subtitle={`${filteredCtr.length} of ${(data.contractToReceiveTracking || []).length} PO-level milestones`} action={
+                <div className="flex items-center gap-2">
+                  <InfoButton contentId="po-contract-to-receive" />
+                  <div className="relative">
+                    <i className="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-on-surface-variant/60 text-[11px]"></i>
+                    <input type="text" placeholder="Search..." value={ctrSearch}
+                      onChange={(e) => setCtrSearch(e.target.value)}
+                      className="pl-7 pr-2 py-1 h-8 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-44 transition-all"
+                    />
+                  </div>
+                  <select value={ctrProcessFilter} onChange={(e) => setCtrProcessFilter(e.target.value)}
+                    className="h-8 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[140px]"
+                  >
+                    <option value="">All Process Status</option>
+                    {[...new Set((data.contractToReceiveTracking || []).map(r => r.currentProcessStatus))].map(s => (
+                      <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                    ))}
+                  </select>
+                  <select value={ctrRouteFilter} onChange={(e) => setCtrRouteFilter(e.target.value)}
+                    className="h-8 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[130px]"
+                  >
+                    <option value="">All Route Status</option>
+                    {[...new Set((data.contractToReceiveTracking || []).map(r => r.routeStatus))].map(s => (
+                      <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                    ))}
+                  </select>
+                </div>
+              }>
                 <Table page={tp('contract-to-receive')} setPage={sp('contract-to-receive')}
                   headers={[
                     { key: 'poNo', label: 'PO No' },
                     { key: 'supplier', label: 'Supplier' },
-                    { key: 'amount', label: 'Amount', className: 'text-right' },
+                { key: 'amount', label: 'Amount (ETB)', className: 'text-right' },
                     { key: 'processStatus', label: 'Process Status' },
                     { key: 'routeStatus', label: 'Route Status' },
                     { key: 'deadline', label: 'Deadline' },
@@ -232,17 +274,17 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
                     { key: 'currentMile', label: 'Current Milestone' },
                     { key: 'phase', label: 'Phase', className: 'text-center' },
                   ]}
-                  rows={tracking}
+                  rows={filteredCtr}
                   renderRow={(row) => (
                     <>
                       <Td className="font-mono">{row.purchaseOrderNumber}</Td>
-                      <Td className="max-w-[180px] truncate font-bold" title={row.supplierName}>{row.supplierName}</Td>
+                      <Td className="whitespace-nowrap font-bold" title={row.supplierName}>{row.supplierName}</Td>
                       <Td className="text-right font-mono">{formatAmount(row.purchaseOrderAmount)}</Td>
                       <Td>
-                        <span className="inline-block px-2.5 py-1 text-[11px] font-bold rounded-md max-w-[150px] truncate bg-primary/10 text-primary" title={row.currentProcessStatus}>{row.currentProcessStatus.replace(/_/g, ' ')}</span>
+                        <span className="inline-block px-2.5 py-1 text-[11px] font-bold rounded-md whitespace-nowrap bg-primary/10 text-primary" title={row.currentProcessStatus}>{row.currentProcessStatus.replace(/_/g, ' ')}</span>
                       </Td>
                       <Td>
-                        <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md max-w-[160px] truncate ${routeColors[row.routeStatus] || 'bg-surface-container text-on-surface-variant'}`} title={row.routeStatus}>{row.routeStatus.replace(/_/g, ' ')}</span>
+                        <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md whitespace-nowrap ${routeColors[row.routeStatus] || 'bg-surface-container text-on-surface-variant'}`} title={row.routeStatus}>{row.routeStatus.replace(/_/g, ' ')}</span>
                       </Td>
                       <Td>{row.deliveryDeadline}</Td>
                       <Td className={`text-right font-bold ${row.daysToOrPastDeadline > 0 ? 'text-error' : 'text-success'}`}>{row.daysToOrPastDeadline > 0 ? `+${row.daysToOrPastDeadline}` : row.daysToOrPastDeadline}</Td>
@@ -255,7 +297,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
                           </div>
                         </div>
                       </Td>
-                      <Td className="max-w-[170px] truncate" title={row.currentMilestoneName}>{row.currentMilestoneName}</Td>
+                      <Td className="whitespace-nowrap" title={row.currentMilestoneName}>{row.currentMilestoneName}</Td>
                       <Td className="text-center">
                         <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded-md ${phaseColors[row.processPhase] || 'bg-surface-container text-on-surface-variant'}`}>{row.processPhase}</span>
                       </Td>
@@ -269,41 +311,79 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
       )}
 
       {activeSections.includes('ppc-yearly-contract-receipt') && (
-        <section id="ppc-yearly-contract-receipt">
-          <SectionPanel title="Yearly Contract-to-Receipt Funnel" subtitle="Year-over-year pipeline summary from contract to delivery" action={<InfoButton contentId="po-yearly-funnel" />}>
-            <div className="flex flex-col items-center gap-4">
-              <FunnelPercentRow />
-              <FunnelChart data={data.yearlyContractToReceipt} />
-              <div className="w-full grid grid-cols-4 gap-4">
-                {data.yearlyContractToReceipt.data.map(row => {
-                  const poVsContract = row.contractAmount && row.contractAmount > 0 ? Math.round((row.purchaseOrderAmount / row.contractAmount) * 100) : null;
-                  const inboundVsPO = row.purchaseOrderAmount > 0 ? Math.round((row.inboundAmount / row.purchaseOrderAmount) * 100) : 0;
-                  const receivedVsInbound = row.inboundAmount > 0 ? Math.round((row.receivedAmount / row.inboundAmount) * 100) : 0;
-                  return (
-                    <div key={row.year} className="bg-surface-container-low rounded-xl p-4 text-center">
-                      <div className="text-sm font-bold text-on-surface mb-2">{row.year}</div>
-                      <div className="space-y-1 text-[11px]">
-                        <div className="flex justify-between"><span className="text-on-surface-variant">PO/Contract</span><span className={poVsContract >= 100 ? 'font-bold text-error' : 'font-semibold'}>{poVsContract !== null ? `${poVsContract}%` : '—'}</span></div>
-                        <div className="flex justify-between"><span className="text-on-surface-variant">Inbound/PO</span><span className="font-semibold">{inboundVsPO}%</span></div>
-                        <div className="flex justify-between"><span className="text-on-surface-variant">Received/Inbound</span><span className="font-semibold">{receivedVsInbound}%</span></div>
-                        <div className="flex justify-between"><span className="text-on-surface-variant">Overall</span><span className="font-bold">{row.purchaseOrderAmount > 0 ? `${Math.round((row.receivedAmount / row.purchaseOrderAmount) * 100)}%` : '—'}</span></div>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div className="bg-primary/5 rounded-xl p-4 text-center border border-primary/20">
-                  <div className="text-sm font-bold text-primary mb-2">Totals</div>
-                  <div className="space-y-1 text-[11px]">
-                    <div className="flex justify-between"><span className="text-on-surface-variant">Contracts</span><span className="font-semibold">{data.yearlyContractToReceipt.meta.totals.contractCount.toLocaleString()}</span></div>
-                    <div className="flex justify-between"><span className="text-on-surface-variant">POs</span><span className="font-semibold">{data.yearlyContractToReceipt.meta.totals.purchaseOrderCount.toLocaleString()}</span></div>
-                    <div className="flex justify-between"><span className="text-on-surface-variant">Suppliers</span><span className="font-semibold">{data.yearlyContractToReceipt.meta.totals.supplierCount?.toLocaleString() || '—'}</span></div>
-                    <div className="flex justify-between"><span className="text-on-surface-variant">Lines</span><span className="font-semibold">{data.yearlyContractToReceipt.meta.totals.purchaseOrderLineCount.toLocaleString()}</span></div>
+          <section id="ppc-yearly-contract-receipt">
+            <SectionPanel title="Yearly Contract-to-Receipt Funnel" subtitle="Year-over-year pipeline summary from contract to delivery" action={
+              <div className="relative">
+                <select value={funnelYear} onChange={e => setFunnelYear(e.target.value)}
+                  className="appearance-none h-8 min-w-[100px] rounded-md border border-outline-variant bg-white pl-2.5 pr-7 text-body-sm text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
+                  {allYears.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+                <i className="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary pointer-events-none" />
+              </div>
+            }>
+              <div className="flex items-start gap-6">
+                <div className="flex-1 min-w-0">
+                  <FunnelChart data={funnelFiltered} />
+                  <div className="mt-4 flex justify-center">
+                    <FunnelPercentRow />
                   </div>
                 </div>
+                <div className="w-full xl:w-[480px] shrink-0 grid grid-cols-2 gap-4">
+                      {funnelFiltered.data.map(row => {
+                        const poVsContract = row.contractAmount && row.contractAmount > 0 ? Math.round((row.purchaseOrderAmount / row.contractAmount) * 100) : null;
+                        const inboundVsPO = row.purchaseOrderAmount > 0 ? Math.round((row.inboundAmount / row.purchaseOrderAmount) * 100) : 0;
+                        const receivedVsInbound = row.inboundAmount > 0 ? Math.round((row.receivedAmount / row.inboundAmount) * 100) : 0;
+                        return (
+                          <div key={row.year} className="bg-white rounded-xl border border-outline-variant shadow-sm p-5">
+                            <div className="mb-5">
+                              <span className="text-title-sm font-bold text-on-surface">Summary</span>
+                            </div>
+                            <div className="space-y-4 text-[13px]">
+                              <div className="space-y-1.5">
+                                <div className="flex justify-between items-center text-on-surface-variant font-medium"><span>PO → Contract</span><span className={`font-bold ${poVsContract >= 100 ? 'text-error' : 'text-on-surface'}`}>{poVsContract !== null ? `${poVsContract}%` : '—'}</span></div>
+                                <div className="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+                                  <div className={`h-full rounded-full ${poVsContract >= 100 ? 'bg-error' : 'bg-[#00373B]'}`} style={{ width: `${Math.min(poVsContract || 0, 100)}%` }} />
+                                </div>
+                              </div>
+                              <div className="space-y-1.5">
+                                <div className="flex justify-between items-center text-on-surface-variant font-medium"><span>Inbound → PO</span><span className="font-bold text-on-surface">{inboundVsPO}%</span></div>
+                                <div className="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+                                  <div className="h-full rounded-full bg-[#00373B]" style={{ width: `${Math.min(inboundVsPO, 100)}%` }} />
+                                </div>
+                              </div>
+                              <div className="space-y-1.5">
+                                <div className="flex justify-between items-center text-on-surface-variant font-medium"><span>Received → Inbound</span><span className="font-bold text-on-surface">{receivedVsInbound}%</span></div>
+                                <div className="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+                                  <div className="h-full rounded-full bg-[#4A9598]" style={{ width: `${Math.min(receivedVsInbound, 100)}%` }} />
+                                </div>
+                              </div>
+                              <div className="border-t border-outline-variant pt-3 mt-2 flex justify-between items-center text-on-surface font-semibold text-[14px]">
+                                <span>Overall</span>
+                                <span className="font-extrabold">{row.purchaseOrderAmount > 0 ? `${Math.round((row.receivedAmount / row.purchaseOrderAmount) * 100)}%` : '—'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {(() => {
+                        const row = funnelFiltered.data[0];
+                        if (!row) return null;
+                        return (
+                          <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-5">
+                            <div className="mb-5"><span className="text-title-sm font-bold text-on-surface">Counts</span></div>
+                            <div className="space-y-6 text-[13px] text-on-surface-variant">
+                              <div className="flex justify-between"><span className="font-medium">Contracts</span><span className="font-bold text-on-surface">{row.contractCount?.toLocaleString() || '—'}</span></div>
+                              <div className="flex justify-between"><span className="font-medium">POs</span><span className="font-bold text-on-surface">{row.purchaseOrderCount?.toLocaleString()}</span></div>
+                              <div className="flex justify-between"><span className="font-medium">Suppliers</span><span className="font-bold text-on-surface">{row.supplierCount?.toLocaleString() || '—'}</span></div>
+                              <div className="flex justify-between"><span className="font-medium">Lines</span><span className="font-bold text-on-surface">{row.purchaseOrderLineCount?.toLocaleString()}</span></div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
               </div>
-            </div>
-          </SectionPanel>
-        </section>
+            </SectionPanel>
+          </section>
       )}
 
       {activeSections.includes('ppc-lc-cad') && (
@@ -318,7 +398,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
               return (
                 <div className="grid grid-cols-4 gap-4 mb-6">
                   <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-primary/10" iconColor="text-primary" label="Total POs" value={s.purchaseOrderCount?.toLocaleString() || '—'} subtitle={`${s.purchaseOrderLineCount?.toLocaleString() || '—'} lines`} />
-                  <KPICard variant="detailed" icon="fa-building" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Suppliers" value={s.supplierCount?.toLocaleString() || '—'} subtitle={`${s.currency || 'ETB'}`} />
+                  <KPICard variant="detailed" icon="fa-building" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Suppliers" value={s.supplierCount?.toLocaleString() || '—'} subtitle="active suppliers" />
                   <KPICard variant="detailed" icon="fa-coins" iconBg="bg-warning/10" iconColor="text-warning" label="Total Amount" value={formatAmount(s.totalAmount)} subtitle={`${s.currency || 'ETB'}`} />
                   <KPICard variant="detailed" icon="fa-clock" iconBg="bg-error/10" iconColor="text-error" label="Expired" value={expired?.count?.toLocaleString() || '—'} subtitle={expired ? `${formatAmount(expired.amount)}` : '—'} />
                 </div>
@@ -328,7 +408,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
               headers={[
                 { key: 'lcNo', label: 'LC No' },
                 { key: 'supplier', label: 'Supplier' },
-                { key: 'amount', label: 'Amount', className: 'text-right' },
+                { key: 'amount', label: 'Amount (ETB)', className: 'text-right' },
                 { key: 'issueDate', label: 'Issue Date' },
                 { key: 'expiryDate', label: 'Expiry Date' },
                 { key: 'status', label: 'Status' },

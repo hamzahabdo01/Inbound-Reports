@@ -9,13 +9,42 @@ const fanosClient: AxiosInstance = axios.create({
 })
 
 export function setFanosAuthKey(key: string) {
-  fanosClient.defaults.headers.common['Authorization'] = `Basic ${key}`
+  if (key) {
+    fanosClient.defaults.headers.common['Authorization'] = `Basic ${key}`
+  } else {
+    delete fanosClient.defaults.headers.common['Authorization']
+  }
 }
 
-// Restore auth key from localStorage on module load
-const storedKey = typeof window !== 'undefined' ? localStorage.getItem('platformKey') : null
+// Restore auth key from sessionStorage on module load
+const storedKey = typeof window !== 'undefined' ? sessionStorage.getItem('platformKey') : null
 if (storedKey) {
   setFanosAuthKey(storedKey)
+}
+
+// ─── Auth response interceptor ──────────────────────────────────────────────
+
+fanosClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      sessionStorage.removeItem('platformKey')
+      setFanosAuthKey('')
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:expired'))
+      }
+    }
+    return Promise.reject(error)
+  }
+)
+
+export async function validateAuthKey(): Promise<boolean> {
+  try {
+    await fanosClient.get('/api/AccountManager/UserLog', { params: { $top: 1 } })
+    return true
+  } catch {
+    return false
+  }
 }
 
 // ─── Common response wrappers used across modules ──────────────────────────

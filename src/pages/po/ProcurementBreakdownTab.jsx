@@ -6,7 +6,7 @@ import InfoButton from '../../components/InfoButton';
 import ExpandButton from '../../components/ExpandButton';
 import { SectionPanel, formatAmount } from './poShared';
 
-const PO_TYPE_COLORS = ['#0B4F54', '#216E6A', '#4A9598', '#86BFC5'];
+const PO_TYPE_COLORS = ['#0B4F54', '#D97706', '#216E6A', '#4A9598'];
 
 function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, barAreaW = 400, setHover, activeHover }) {
   const types = [...data].sort((a, b) => b[amountKey] - a[amountKey]);

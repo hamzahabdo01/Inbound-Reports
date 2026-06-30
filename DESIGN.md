@@ -11,7 +11,7 @@ Corporate Modernism with Minimalist lean. Deep forest teals and steel slates on 
 | Primary Dark | `#00373B` |
 | Primary Hover | `#115E59` |
 | On Primary Container | `#86BFC5` |
-| Secondary (Steel Slate) | `#515F74` |
+| Secondary / Warning | `#D97706` |
 | Tertiary | `#003734` |
 | Background / Surface | `#F6FAFC` |
 | Surface Low | `#F0F4F6` |
@@ -69,8 +69,8 @@ All pie charts MUST use a brand-cohesive categorical palette drawn from the desi
 | 3 | `#216E6A` | Medium teal (between Primary & Tertiary) |
 | 4 | `#4A9598` | Medium-light teal |
 | 5 | `#86BFC5` | On Primary Container |
-| 6 | `#515F74` | Secondary (Steel Slate) |
-| 7 | `#D97706` | Warning |
+| 6 | `#D97706` | Secondary / Warning |
+| 7 | `#515F74` | Steel Slate (accent) |
 | 8 | `#059669` | Success |
 
 ### Bar / Area Charts

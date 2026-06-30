@@ -85,12 +85,12 @@ export function StatusBadge({ status }) {
 export function SectionPanel({ title, subtitle, action, children }) {
   return (
     <div className="bg-white rounded-xl border border-outline-variant shadow-level-1">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/50">
-        <div>
-          <h3 className="text-title-sm font-bold text-on-surface">{title}</h3>
-          {subtitle && <p className="text-body-sm text-on-surface-variant mt-0.5">{subtitle}</p>}
+      <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-outline-variant/50">
+        <div className="min-w-0 shrink">
+          <h3 className="text-title-sm font-bold text-on-surface truncate">{title}</h3>
+          {subtitle && <p className="text-body-sm text-on-surface-variant mt-0.5 truncate">{subtitle}</p>}
         </div>
-        {action && <div>{action}</div>}
+        {action && <div className="shrink-0">{action}</div>}
       </div>
       <div className="p-5">{children}</div>
     </div>

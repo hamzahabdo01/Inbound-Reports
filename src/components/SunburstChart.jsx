@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-const colors = ['#00373B', '#0B4F54', '#216E6A', '#4A9598', '#86BFC5', '#515F74', '#D97706', '#059669', '#BA1A1A', '#4A8EA5'];
+const colors = ['#00373B', '#D97706', '#0B4F54', '#216E6A', '#4A9598', '#86BFC5', '#515F74', '#059669', '#BA1A1A', '#4A8EA5'];
 
 function polarToCartesian(cx, cy, r, angle) {
   return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };

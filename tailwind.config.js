@@ -41,7 +41,7 @@ export default {
           'on-container': '#ffffff',
         },
         secondary: {
-          DEFAULT: '#515F74',
+          DEFAULT: '#D97706',
         },
         tertiary: {
           DEFAULT: '#003734',

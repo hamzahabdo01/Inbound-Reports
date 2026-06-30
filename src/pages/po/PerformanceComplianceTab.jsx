@@ -2,6 +2,28 @@ import KPICard from '../../components/KPICard';
 import InfoButton from '../../components/InfoButton';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 
+const fmtDuration = (days) => {
+  if (days == null || days < 0) return null;
+  if (days === 0) return '0d';
+  if (days >= 365) {
+    const y = Math.round(days / 365);
+    const rem = Math.round((days % 365) / 30);
+    return rem ? `${y}y ${rem}mo` : `${y}y`;
+  }
+  if (days >= 90) return `${Math.round(days / 30)}mo`;
+  if (days >= 30) {
+    const mo = Math.floor(days / 30);
+    const d = days % 30;
+    return d ? `${mo}mo ${d}d` : `${mo}mo`;
+  }
+  if (days >= 7) {
+    const w = Math.floor(days / 7);
+    const d = days % 7;
+    return d ? `${w}w ${d}d` : `${w}w`;
+  }
+  return `${days}d`;
+};
+
 export default function PerformanceComplianceTab({ data, activeSections, tp, sp }) {
   return (
     <>
@@ -9,11 +31,11 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
         <section id="ppc-leadtime">
           <SectionPanel title="Leadtime Analysis" subtitle="Average processing times across procurement stages" action={<InfoButton contentId="po-leadtime" />}>
             <div className="grid grid-cols-5 gap-4 mb-6">
-              <KPICard variant="detailed" icon="fa-file-signature" iconBg="bg-primary/10" iconColor="text-primary" label="Contract → PO" value={`${data.leadtime.summary.contractToPO}d`} subtitle="Tender process" />
-              <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="PO → LC Opening" value={`${data.leadtime.summary.poToLCOpening}d`} subtitle="Contract management" />
-              <KPICard variant="detailed" icon="fa-ship" iconBg="bg-warning/10" iconColor="text-warning" label="LC → Port Arrival" value={`${data.leadtime.summary.lcToPortArrival}d`} subtitle="Supplier lead" />
-              <KPICard variant="detailed" icon="fa-check-circle" iconBg="bg-success/10" iconColor="text-success" label="Port → Cleared" value={`${data.leadtime.summary.portToCleared}d`} subtitle="Customs & clearance" />
-              <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-success/10" iconColor="text-success" label="Cleared → Received" value={`${data.leadtime.summary.clearedToReceive}d`} subtitle="Inbound delivery" />
+              <KPICard variant="detailed" icon="fa-file-signature" iconBg="bg-primary/10" iconColor="text-primary" label="Contract → PO" value={fmtDuration(data.leadtime.summary.contractToPO)} subtitle="Tender process" />
+              <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="PO → LC Opening" value={fmtDuration(data.leadtime.summary.poToLCOpening)} subtitle="Contract management" />
+              <KPICard variant="detailed" icon="fa-ship" iconBg="bg-warning/10" iconColor="text-warning" label="LC → Port Arrival" value={fmtDuration(data.leadtime.summary.lcToPortArrival)} subtitle="Supplier lead" />
+              <KPICard variant="detailed" icon="fa-check-circle" iconBg="bg-success/10" iconColor="text-success" label="Port → Cleared" value={fmtDuration(data.leadtime.summary.portToCleared)} subtitle="Customs & clearance" />
+              <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-success/10" iconColor="text-success" label="Cleared → Received" value={fmtDuration(data.leadtime.summary.clearedToReceive)} subtitle="Inbound delivery" />
             </div>
             <Table page={tp('leadtime')} setPage={sp('leadtime')}
               headers={[
@@ -31,12 +53,12 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                 <>
                   <Td className="font-mono">{row.poNo}</Td>
                   <Td>{row.supplier}</Td>
-                  <Td className="text-right">{row.contractToPO}d</Td>
-                  <Td className="text-right">{row.poToLCOpening}d</Td>
-                  <Td className="text-right">{row.lcToPortArrival}d</Td>
-                  <Td className="text-right">{row.portToCleared}d</Td>
-                  <Td className="text-right">{row.clearedToReceive}d</Td>
-                  <Td className="text-right font-bold">{row.totalLeadtime}d</Td>
+                  <Td className="text-right">{fmtDuration(row.contractToPO)}</Td>
+                  <Td className="text-right">{fmtDuration(row.poToLCOpening)}</Td>
+                  <Td className="text-right">{fmtDuration(row.lcToPortArrival)}</Td>
+                  <Td className="text-right">{fmtDuration(row.portToCleared)}</Td>
+                  <Td className="text-right">{fmtDuration(row.clearedToReceive)}</Td>
+                  <Td className="text-right font-bold">{fmtDuration(row.totalLeadtime)}</Td>
                 </>
               )}
             />
@@ -55,7 +77,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                     <KPICard variant="detailed" icon="fa-building" iconBg="bg-primary/10" iconColor="text-primary" label="Suppliers" value={s.supplierCount.toLocaleString()} subtitle={`${s.purchaseOrderCount.toLocaleString()} POs`} />
                     <KPICard variant="detailed" icon="fa-truck" iconBg="bg-success/10" iconColor="text-success" label="Favorable Rate" value={`${s.performanceRatesPercent.favorableRate}%`} subtitle={`${s.performanceMeasurementCounts.favorableRecordCount.toLocaleString()} of ${s.performanceMeasurementCounts.evaluatedRecordCount.toLocaleString()}`} />
                     <KPICard variant="detailed" icon="fa-exclamation-circle" iconBg="bg-warning/10" iconColor="text-warning" label="Overdue Schedule" value={s.overdueScheduleLineCount.toLocaleString()} subtitle={`${s.overdueOpenAmountPercent}% overdue amount`} />
-                    <KPICard variant="detailed" icon="fa-clock" iconBg="bg-error/10" iconColor="text-error" label="Open Amount" value={formatAmount(s.totalOpenAmount)} subtitle={`${formatAmount(s.totalOverdueOpenAmount)} overdue`} />
+                    <KPICard variant="detailed" icon="fa-clock" iconBg="bg-error/10" iconColor="text-error" label="Open Amount" value={`${formatAmount(s.totalOpenAmount)} ETB`} subtitle={`${formatAmount(s.totalOverdueOpenAmount)} overdue`} />
                   </div>
                 )}
                 <Table page={tp('supplier-perf')} setPage={sp('supplier-perf')}
@@ -89,7 +111,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                         <Td className={`text-right font-bold ${pctColor}`}>{row.favorableDeliveryRatePercent != null ? `${row.favorableDeliveryRatePercent}%` : '—'}</Td>
                         <Td className="text-right">{row.secondaryPerformanceRatePercent != null ? `${row.secondaryPerformanceRatePercent}%` : '—'}</Td>
                         <Td className="text-right">{row.overdueScheduleLineCount.toLocaleString()}</Td>
-                        <Td className="text-right font-mono">{row.maximumDaysOverdue != null ? `${row.maximumDaysOverdue}d` : '—'}</Td>
+                        <Td className="text-right font-mono">{row.maximumDaysOverdue != null ? fmtDuration(row.maximumDaysOverdue) : '—'}</Td>
                       </>
                     );
                   }}
@@ -132,7 +154,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                         <Td className="text-right">{row.purchaseOrderItemCount.toLocaleString()}</Td>
                         <Td className="text-right">{row.favorableDeliveryRatePercent != null ? `${row.favorableDeliveryRatePercent}%` : '—'}</Td>
                         <Td className="text-right">{row.overdueOpenAmountPercent}%</Td>
-                        <Td className="text-right font-mono">{row.maximumDaysOverdue}d</Td>
+                        <Td className="text-right font-mono">{fmtDuration(row.maximumDaysOverdue)}</Td>
                         <Td className="text-right font-mono">{formatAmount(row.totalOpenAmount)}</Td>
                         <Td className="text-center">
                           <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md ${levelColors[row.riskLevel] || 'bg-surface-container text-on-surface-variant'}`}>
@@ -174,7 +196,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                     headers={[
                       { key: 'bondNo', label: 'Bond No' },
                       { key: 'supplier', label: 'Supplier' },
-                      { key: 'amount', label: 'Amount', className: 'text-right' },
+                      { key: 'amount', label: 'Amount (ETB)', className: 'text-right' },
                       { key: 'received', label: 'Received Date' },
                       { key: 'verified', label: 'Verified Date' },
                       { key: 'expiry', label: 'Expiry Date' },

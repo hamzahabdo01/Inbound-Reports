@@ -149,6 +149,22 @@
     animation: fadeOut 0.25s ease-out;
   }
 
+  /* Slide in animation for KPI carousel */
+  @keyframes slideIn {
+    from {
+      transform: translateX(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
   /* Section highlight flash — triggered by SectionNavigator on scroll-to */
   @keyframes sectionHighlight {
     0%   { background-color: #ffffff; }
