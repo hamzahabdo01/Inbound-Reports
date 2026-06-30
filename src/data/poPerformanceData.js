@@ -183,12 +183,14 @@ function generateContractVsPO(contracts, pos) {
   });
 }
 
-function generateContractPipeline(contracts, pos) {
+function generateContractPipeline(contracts) {
   return contracts.slice(0, 20).map((c) => {
-    const relatedPOs = pos.filter((p) => p.supplier === c.supplier);
-    const poAmount = relatedPOs.reduce((s, p) => s + p.amount, 0);
-    const inbound = Math.round(poAmount * (0.6 + Math.random() * 0.3));
-    const received = Math.round(inbound * (0.7 + Math.random() * 0.25));
+    const poPct = 0.65 + Math.random() * 0.30;
+    const poAmount = Math.round(c.amount * poPct);
+    const inboundPct = 0.75 + Math.random() * 0.20;
+    const inbound = Math.round(poAmount * inboundPct);
+    const receivedPct = 0.70 + Math.random() * 0.25;
+    const received = Math.round(inbound * receivedPct);
     return {
       contractNo: c.contractNo,
       supplier: c.supplier,
@@ -344,7 +346,7 @@ export default function generateAllData() {
     }),
     lcCadExpirySummary: lcCadExpirySummaryRaw.data,
     contractVsPO: generateContractVsPO(contracts, pos),
-    contractPipeline: generateContractPipeline(contracts, pos),
+    contractPipeline: generateContractPipeline(contracts),
     performanceBonds: generatePerformanceBonds(),
     leadtime,
     procurementStatus: generateProcurementStatus(),
