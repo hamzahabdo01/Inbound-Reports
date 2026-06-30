@@ -7,7 +7,7 @@ export const formatAmount = (v) => {
   return String(v);
 };
 
-export function Table({ headers, rows, renderRow, className = '', page, setPage, rowsPerPage = 15 }) {
+export function Table({ headers, rows, renderRow, className = '', page, setPage, rowsPerPage = 15, expandedRow, onRowClick, rowKey, renderExpanded }) {
   if (!rows.length) {
     return <div className="p-6 text-center text-body-sm text-on-surface-variant">No records</div>;
   }
@@ -27,11 +27,27 @@ export function Table({ headers, rows, renderRow, className = '', page, setPage,
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/30">
-            {displayRows.map((row, i) => (
-              <tr key={i} className="hover:bg-surface-container-low transition-colors">
-                {renderRow(row, i)}
-              </tr>
-            ))}
+            {displayRows.flatMap((row, i) => {
+              const id = rowKey ? row[rowKey] : i;
+              const key = rowKey ? row[rowKey] : i;
+              const isExpanded = expandedRow !== undefined && expandedRow === id;
+              const rowEl = (
+                <tr key={key} className={`hover:bg-primary transition-colors ${onRowClick ? 'group cursor-pointer' : ''} ${isExpanded ? 'bg-primary' : ''}`}
+                  onClick={() => onRowClick && onRowClick(id)}>
+                  {renderRow(row, i, isExpanded)}
+                </tr>
+              );
+              if (!isExpanded || !renderExpanded) return [rowEl];
+              return [rowEl, (
+                <tr key={`${key}-expanded`}>
+                  <td colSpan={headers.length} className="p-0 border-b border-outline-variant/30">
+                    <div className="animate-fade-in bg-surface-container-lowest/50">
+                      {renderExpanded(row)}
+                    </div>
+                  </td>
+                </tr>
+              )];
+            })}
           </tbody>
         </table>
       </div>

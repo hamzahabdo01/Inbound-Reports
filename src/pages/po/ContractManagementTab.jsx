@@ -101,6 +101,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
   const allYears = data.yearlyContractToReceipt?.data?.map(r => r.year).sort() || [];
   const [funnelYear, setFunnelYear] = useState(allYears.length ? String(allYears[allYears.length - 1]) : '2026');
   const funnelFiltered = { ...data.yearlyContractToReceipt, data: data.yearlyContractToReceipt.data.filter(r => r.year === Number(funnelYear)) };
+  const [pipelineExpanded, setPipelineExpanded] = useState(null);
   const [ctrSearch, setCtrSearch] = useState('');
   const [ctrProcessFilter, setCtrProcessFilter] = useState('');
   const [ctrRouteFilter, setCtrRouteFilter] = useState('');
@@ -133,6 +134,8 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
                     <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-success/10" iconColor="text-success" label="Received" value={formatAmount(totalReceived)} subtitle={`${totalInbound ? Math.round((totalReceived / totalInbound) * 100) : 0}% of inbound`} />
                   </div>
                   <Table page={tp('pipeline')} setPage={sp('pipeline')}
+                    expandedRow={pipelineExpanded} rowKey="contractNo"
+                    onRowClick={(id) => setPipelineExpanded(pipelineExpanded === id ? null : id)}
                     headers={[
                       { key: 'contract', label: 'Contract' },
                       { key: 'supplier', label: 'Supplier' },
@@ -143,26 +146,59 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
                       { key: 'progress', label: 'Pipeline Fill' },
                     ]}
                     rows={data.contractPipeline}
-                    renderRow={(row) => {
+                    renderRow={(row, i, isExpanded) => {
                       const fillPct = row.poAmount ? Math.round((row.received / row.poAmount) * 100) : 0;
+                      const tx = `group-hover:text-white transition-colors ${isExpanded ? 'text-white' : ''}`;
                       return (
                         <>
-                          <Td className="font-mono">{row.contractNo}</Td>
-                          <Td>{row.supplier}</Td>
-                          <Td className="text-right font-mono">{formatAmount(row.contractAmount)}</Td>
-                          <Td className="text-right font-mono">{formatAmount(row.poAmount)}</Td>
-                          <Td className="text-right font-mono">{formatAmount(row.inboundDelivery)}</Td>
-                          <Td className="text-right font-mono">{formatAmount(row.received)}</Td>
-                          <Td className="min-w-[140px]">
+                          <Td className={`font-mono ${tx}`}>{row.contractNo}</Td>
+                          <Td className={tx}>{row.supplier}</Td>
+                          <Td className={`text-right font-mono ${tx}`}>{formatAmount(row.contractAmount)}</Td>
+                          <Td className={`text-right font-mono ${tx}`}>{formatAmount(row.poAmount)}</Td>
+                          <Td className={`text-right font-mono ${tx}`}>{formatAmount(row.inboundDelivery)}</Td>
+                          <Td className={`text-right font-mono ${tx}`}>{formatAmount(row.received)}</Td>
+                          <Td className={`min-w-[140px] ${tx}`}>
                             <div className="flex items-center gap-2">
                               <div className="flex-1 h-2.5 bg-surface-container-low rounded-full overflow-hidden">
                                 <div className={`h-full rounded-full ${fillPct >= 80 ? 'bg-success' : fillPct >= 50 ? 'bg-warning' : 'bg-error'}`}
                                   style={{ width: `${fillPct}%` }} />
                               </div>
-                              <span className="text-xs font-bold text-on-surface shrink-0">{fillPct}%</span>
+                              <span className={`text-xs font-bold shrink-0 ${isExpanded ? 'text-white' : 'text-on-surface'}`}>{fillPct}%</span>
                             </div>
                           </Td>
                         </>
+                      );
+                    }}
+                    renderExpanded={(row) => {
+                      const bars = [
+                        { label: 'Contract Amount', amount: row.contractAmount, color: '#00373B' },
+                        { label: 'PO Amount', amount: row.poAmount, color: '#0B4F54' },
+                        { label: 'Invoiced', amount: row.inboundDelivery, color: '#D97706' },
+                        { label: 'Received', amount: row.received, color: '#86BFC5' },
+                      ];
+                      const maxAmount = Math.max(...bars.map(b => b.amount), 1);
+                      return (
+                        <div className="px-6 py-5 space-y-3">
+                          <div className="flex items-center gap-2 text-xs text-on-surface-variant font-semibold mb-2">
+                            <span className="w-40" />
+                            <span className="flex-1">Amount (ETB)</span>
+                            <span className="w-24 text-right">% of Contract</span>
+                          </div>
+                          {bars.map((b) => {
+                            const pctOfContract = row.contractAmount > 0 ? Math.round((b.amount / row.contractAmount) * 100) : 0;
+                            const barPct = Math.max(4, (b.amount / maxAmount) * 100);
+                            return (
+                              <div key={b.label} className="flex items-center gap-2">
+                                <span className="w-40 text-xs font-semibold text-on-surface truncate shrink-0">{b.label}</span>
+                                <div className="flex-1 h-7 bg-surface-container-low rounded-md overflow-hidden relative">
+                                  <div className="h-full rounded-md transition-all" style={{ width: `${barPct}%`, backgroundColor: b.color }} />
+                                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-white drop-shadow-sm">{formatAmount(b.amount)}</span>
+                                </div>
+                                <span className="w-24 text-right text-xs font-bold text-on-surface-variant shrink-0">{pctOfContract}%</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       );
                     }}
                   />
