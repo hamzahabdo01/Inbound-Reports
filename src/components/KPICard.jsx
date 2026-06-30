@@ -1,5 +1,27 @@
 import { memo } from 'react';
 
+const parseValue = (val) => {
+  if (typeof val !== 'string') return val;
+  if (val.endsWith(' ETB')) {
+    return <>{val.slice(0, -4)}<span className="text-[0.45em] font-medium text-on-surface-variant align-baseline leading-none"> ETB</span></>;
+  }
+  if (val.endsWith('ETB')) {
+    return <>{val.slice(0, -3)}<span className="text-[0.45em] font-medium text-on-surface-variant align-baseline leading-none">ETB</span></>;
+  }
+  if (val.endsWith('%')) {
+    return <>{val.slice(0, -1)}<span className="text-[0.45em] font-medium text-on-surface-variant align-baseline leading-none">%</span></>;
+  }
+  if (/^\d+(mo|[dyw])(\s+\d+(mo|[dyw]))*$/.test(val)) {
+    return <>{val.split(/\s+/).map((part, i) => {
+      const m = part.match(/^(\d+)(mo|[dyw])$/);
+      return m
+        ? <span key={i}>{i > 0 ? ' ' : ''}{m[1]}<span className="text-[0.45em] font-medium text-on-surface-variant align-baseline leading-none">{m[2]}</span></span>
+        : <span key={i}>{i > 0 ? ' ' : ''}{part}</span>;
+    })}</>;
+  }
+  return val;
+};
+
 function KPICard({ icon, iconBg, iconColor, label, value, valueColor, subtitle, trend, trendIcon, variant, className, children }) {
   const iconColorClass = iconColor || 'text-on-surface-variant';
   const valueColorClass = valueColor || 'text-on-surface';
@@ -13,7 +35,7 @@ function KPICard({ icon, iconBg, iconColor, label, value, valueColor, subtitle, 
             <i className={`fa-solid ${icon}`}></i>
           </div>
         </div>
-        <div className={`text-display-kpi leading-none ${valueColorClass || 'text-slate-900'}`}>{value}</div>
+        <div className={`text-display-kpi leading-none ${valueColorClass || 'text-slate-900'}`}>{parseValue(value)}</div>
         {subtitle && <p className={`text-xs font-semibold mt-2 ${trendIcon || 'text-on-surface-variant'}`}>{subtitle}</p>}
         {children}
       </div>
@@ -27,7 +49,7 @@ function KPICard({ icon, iconBg, iconColor, label, value, valueColor, subtitle, 
         <div className="text-label-caps text-on-surface-variant uppercase text-[11px]">{label}</div>
       </div>
       <div className="flex items-baseline gap-3">
-        <div className={`text-display-kpi font-extrabold ${valueColorClass}`}>{value}</div>
+        <div className={`text-display-kpi font-extrabold ${valueColorClass}`}>{parseValue(value)}</div>
         {trend && (
           <span className={`flex items-center text-body-sm ${trendIcon ? trendIcon : ''}`}>
             {trend}

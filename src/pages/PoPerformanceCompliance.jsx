@@ -13,8 +13,8 @@ import ContractManagementTab from './po/ContractManagementTab';
 import PerformanceComplianceTab from './po/PerformanceComplianceTab';
 
 const TABS = [
-  { key: 'overview',     label: 'Overview',              icon: 'fa-gauge-high',        sections: ['ppc-overview', 'ppc-open-pos', 'ppc-open-po-items', 'ppc-overdue-pos', 'ppc-status', 'ppc-trend'] },
-  { key: 'procurement',  label: 'Procurement Breakdown',  icon: 'fa-cart-shopping',     sections: ['ppc-procurement-breakdown', 'ppc-supplier-share', 'ppc-funding', 'ppc-local-intl'] },
+  { key: 'overview',     label: 'Overview',              icon: 'fa-gauge-high',        sections: ['ppc-overview', 'ppc-procurement-breakdown', 'ppc-supplier-share', 'ppc-funding', 'ppc-local-intl', 'ppc-trend'] },
+  { key: 'procurement',  label: 'Procurement Breakdown',  icon: 'fa-cart-shopping',     sections: ['ppc-open-pos', 'ppc-open-po-items', 'ppc-overdue-pos', 'ppc-status'] },
     { key: 'contracts',    label: 'Contract Management',    icon: 'fa-file-signature',    sections: ['ppc-pipeline', 'ppc-contract-vs-po', 'ppc-lc-cad', 'ppc-contract-to-receive', 'ppc-yearly-contract-receipt'] },
   { key: 'compliance',   label: 'Performance & Compliance', icon: 'fa-shield-halved',   sections: ['ppc-leadtime', 'ppc-supplier-perf', 'ppc-supplier-risk', 'ppc-bond'] },
 ];
@@ -84,7 +84,7 @@ export default function PoPerformanceCompliance() {
     const poToReceivePct = poIssued ? Math.round((received / poIssued) * 100) : 0;
     return [
       { icon: 'fa-coins',                iconBg: 'bg-warning/10',    iconColor: 'text-warning',        label: 'Total Contract',     value: formatAmount(data.kpis.totalContractAmount),                          subtitle: `${data.kpis.totalContracts} contracts` },
-      { icon: 'fa-file-invoice',         iconBg: 'bg-primary/10',     iconColor: 'text-primary',       label: 'Total PO Amount',          value: data.poSummary.purchaseOrderCount.toLocaleString(),               subtitle: `${data.poSummary.convertedPurchaseOrderCount} converted` },
+      { icon: 'fa-file-invoice',         iconBg: 'bg-primary/10',     iconColor: 'text-primary',       label: 'Total PO Amount',          value: `${formatAmount(data.poSummary.totalAmount)} ETB`,                 subtitle: `${data.poSummary.purchaseOrderCount.toLocaleString()} purchase orders` },
       { icon: 'fa-list',                 iconBg: 'bg-[#4A8EA5]/10',  iconColor: 'text-[#4A8EA5]',     label: 'Num of Procured Items',           value: data.poSummary.purchaseOrderLineCount.toLocaleString(),           subtitle: `${data.poSummary.lineCurrencyConversionCoveragePercent}% conversion` },
       { icon: 'fa-building',             iconBg: 'bg-surface-container', iconColor: 'text-primary',    label: 'Suppliers',          value: data.poSummary.supplierCount.toLocaleString(),                    subtitle: 'active vendors' },
       { icon: 'fa-percent',              iconBg: 'bg-primary/10',     iconColor: 'text-primary',       label: 'Conversion',         value: `${data.poSummary.purchaseOrderCurrencyConversionCoveragePercent}%`, subtitle: 'currency coverage' },
@@ -140,6 +140,29 @@ export default function PoPerformanceCompliance() {
       </StickyHeader>
 
       {activeTab === 'overview' && (
+        <>
+          <OverviewTab
+            data={data} activeSections={activeSections}
+            kpiPage={kpiPage} setKpiPage={setKpiPage}
+            visibleKpiCards={visibleKpiCards} kpiTotalPages={kpiTotalPages}
+            filteredOpenOverduePOs={filteredOpenOverduePOs}
+            overviewSearch={overviewSearch} setOverviewSearch={setOverviewSearch}
+            overviewStatus={overviewStatus} setOverviewStatus={setOverviewStatus}
+            procurementStatusFilter={procurementStatusFilter}
+            setProcurementStatusFilter={setProcurementStatusFilter}
+            filteredStatusDetails={filteredStatusDetails}
+            tp={tp} sp={sp}
+          />
+          <ProcurementBreakdownTab
+            data={data} activeSections={activeSections}
+            supplierHover={supplierHover} setSupplierHover={setSupplierHover}
+            trendYears={trendYears} trendYear={trendYear} setTrendYear={setTrendYear}
+            filteredTrend={filteredTrend} trendHover={trendHover} setTrendHover={setTrendHover}
+          />
+        </>
+      )}
+
+      {activeTab === 'procurement' && (
         <OverviewTab
           data={data} activeSections={activeSections}
           kpiPage={kpiPage} setKpiPage={setKpiPage}
@@ -147,20 +170,10 @@ export default function PoPerformanceCompliance() {
           filteredOpenOverduePOs={filteredOpenOverduePOs}
           overviewSearch={overviewSearch} setOverviewSearch={setOverviewSearch}
           overviewStatus={overviewStatus} setOverviewStatus={setOverviewStatus}
-          trendWithDates={trendWithDates} trendYears={trendYears}
-          trendYear={trendYear} setTrendYear={setTrendYear}
-          filteredTrend={filteredTrend} trendHover={trendHover} setTrendHover={setTrendHover}
           procurementStatusFilter={procurementStatusFilter}
           setProcurementStatusFilter={setProcurementStatusFilter}
           filteredStatusDetails={filteredStatusDetails}
           tp={tp} sp={sp}
-        />
-      )}
-
-      {activeTab === 'procurement' && (
-        <ProcurementBreakdownTab
-          data={data} activeSections={activeSections}
-          supplierHover={supplierHover} setSupplierHover={setSupplierHover}
         />
       )}
 

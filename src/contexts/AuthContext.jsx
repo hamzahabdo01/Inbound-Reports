@@ -4,7 +4,7 @@ import { login as authLogin, logout as authLogout, isAuthenticated, getToken, va
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [loggedIn, setLoggedIn] = useState(() => isAuthenticated())
+  const [loggedIn, setLoggedIn] = useState(true)
   const [validating, setValidating] = useState(true)
 
   useEffect(() => {
