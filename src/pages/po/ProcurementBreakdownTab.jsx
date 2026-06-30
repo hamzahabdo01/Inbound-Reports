@@ -62,7 +62,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, supplier
           <SectionPanel title="Contract by Supplier Share" subtitle="Distribution of contract value by supplier">
             {(() => {
               const SUPPLIER_COLORS = {
-                'EPSS': '#00373B', 'MOH': '#0B4F54', 'Global Fund': '#115E59', 'UNICEF': '#216E6A',
+                'EPSS': '#00373B', 'MOH': '#0B4F54', 'Global Fund': '#D97706', 'UNICEF': '#216E6A',
                 'WHO': '#4A9598', 'UNDP': '#86BFC5', 'UNFPA': '#A4D1D6', 'Clinton Access Initiative': '#CFD8DC',
               };
               const totalContracts = data.supplierShare.reduce((s, x) => s + x.amount, 0);
