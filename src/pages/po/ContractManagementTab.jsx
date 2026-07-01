@@ -130,7 +130,7 @@ const PIPELINE_STEPS = [
   },
   {
     label: 'Partially Received',
-    icon: 'fa-boxes-stacking',
+    icon: 'fa-box-open',
     statuses: new Set(['PARTIALLY_RECEIVED']),
   },
   {
@@ -140,80 +140,40 @@ const PIPELINE_STEPS = [
   },
 ];
 
-// routeStatus → active-step accent color
-const ROUTE_ACCENT = {
-  NO_ROUTE_DEADLINE_BREACH_DETECTED: { dot: 'bg-[#0B4F54] text-white border-[#0B4F54] ring-4 ring-[#0B4F54]/10', bar: 'bg-[#0B4F54]', label: 'text-[#0B4F54]' },
-  DELAYED_BEYOND_DELIVERY_DEADLINE:  { dot: 'bg-error text-white border-error ring-4 ring-error/10',             bar: 'bg-error',      label: 'text-error' },
-  PARTIALLY_RECEIVED_BUT_OVERDUE:    { dot: 'bg-warning text-white border-warning ring-4 ring-warning/10',        bar: 'bg-warning',    label: 'text-warning' },
-  CLOSED:                            { dot: 'bg-success text-white border-success ring-4 ring-success/10',        bar: 'bg-success',    label: 'text-success' },
-  ROUTE_DATA_QUALITY_ISSUE:          { dot: 'bg-warning text-white border-warning ring-4 ring-warning/10',        bar: 'bg-warning',    label: 'text-warning' },
-  ROUTE_NOT_CLASSIFIED:              { dot: 'bg-outline text-white border-outline ring-4 ring-outline/10',        bar: 'bg-outline',    label: 'text-on-surface-variant' },
-};
-
-function fmtDate(d) {
-  if (!d || typeof d !== 'string') return null;
-  const p = d.split('-');
-  if (p.length !== 3) return d;
-  const [y, m, day] = p.map(Number);
-  if (isNaN(y) || isNaN(m) || isNaN(day)) return d;
-  return `${day} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]} ${y}`;
-}
 
 function MilestoneTracker({ row }) {
-  const status  = row.currentProcessStatus || '';
-  const route   = row.routeStatus || '';
-  const accent  = ROUTE_ACCENT[route] || ROUTE_ACCENT.NO_ROUTE_DEADLINE_BREACH_DETECTED;
+  const status = row.currentProcessStatus || '';
 
-  // Find which step index the current status belongs to
   const currentStepIdx = (() => {
     const idx = PIPELINE_STEPS.findIndex(s => s.statuses.has(status));
-    // If status not found in any group, default to last step for ORDER_CLOSED-like unknowns
     return idx === -1 ? PIPELINE_STEPS.length - 1 : idx;
   })();
 
-  const isFullyComplete = status === 'DELIVERY_COMPLETE' || status === 'ORDER_CLOSED' || route === 'CLOSED';
-
-  const routeBadgeColor = {
-    NO_ROUTE_DEADLINE_BREACH_DETECTED: 'bg-success/10 text-success',
-    DELAYED_BEYOND_DELIVERY_DEADLINE:  'bg-error/10 text-error',
-    PARTIALLY_RECEIVED_BUT_OVERDUE:    'bg-warning/10 text-warning',
-    CLOSED:                            'bg-success/10 text-success',
-    ROUTE_DATA_QUALITY_ISSUE:          'bg-warning/10 text-warning',
-    ROUTE_NOT_CLASSIFIED:              'bg-surface-container text-on-surface-variant',
-  };
+  const isFullyComplete = status === 'DELIVERY_COMPLETE' || status === 'ORDER_CLOSED';
 
   return (
-    <div className="bg-[#F8FAFC] border border-outline-variant/60 rounded-xl p-6 my-4 shadow-sm">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h4 className="text-sm font-bold text-on-surface">
-            Milestone Progress: <span className="font-mono text-primary">{row.purchaseOrderNumber}</span>
-          </h4>
-          <p className="text-xs text-on-surface-variant mt-1">
-            <span className="font-semibold">{row.supplierName}</span>
-            {row.currentMilestoneName && <> &mdash; <span className="italic">{row.currentMilestoneName}</span></>}
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-1.5">
-          <span className={`inline-block px-2.5 py-1 text-xs font-bold rounded-md ${routeBadgeColor[route] || 'bg-surface-container text-on-surface-variant'}`}>
-            {route.replace(/_/g, ' ')}
-          </span>
-          <span className="text-[10px] text-on-surface-variant font-medium">
-            {row.completedMilestoneCount ?? '—'} / {row.totalMilestoneCount ?? '—'} milestones &nbsp;·&nbsp; {row.milestoneCompletionPercent ?? 0}% complete
-          </span>
-        </div>
+    <div className="bg-[#F8FAFC] border border-outline-variant/60 rounded-xl px-6 pt-5 pb-6 my-4 shadow-sm">
+      {/* Title */}
+      <div className="mb-6">
+        <h4 className="text-sm font-bold text-on-surface">
+          <span className="font-mono text-primary">{row.purchaseOrderNumber}</span>
+          <span className="mx-2 text-outline">·</span>
+          <span className="font-normal text-on-surface-variant">{row.supplierName}</span>
+        </h4>
+        <p className="text-[11px] text-on-surface-variant mt-1">
+          Status: <span className="font-semibold text-on-surface">{status.replace(/_/g, ' ')}</span>
+        </p>
       </div>
 
       {/* Stepper */}
       <div className="relative flex items-start justify-between w-full">
         {/* Background rail */}
-        <div className="absolute left-0 right-0 h-1 bg-[#E2E8F0] z-0 top-[22px] rounded-full" />
+        <div className="absolute left-[10%] right-[10%] h-1 bg-[#E2E8F0] z-0 top-[22px] rounded-full" />
 
         {/* Progress rail */}
         <div
-          className={`absolute left-0 h-1 z-0 top-[22px] rounded-full transition-all duration-500 ${isFullyComplete ? 'bg-success' : accent.bar}`}
-          style={{ width: isFullyComplete ? '100%' : `${(currentStepIdx / (PIPELINE_STEPS.length - 1)) * 100}%` }}
+          className="absolute left-[10%] h-1 bg-[#0B4F54] z-0 top-[22px] rounded-full transition-all duration-500"
+          style={{ width: isFullyComplete ? '80%' : `${(currentStepIdx / (PIPELINE_STEPS.length - 1)) * 80}%` }}
         />
 
         {PIPELINE_STEPS.map((step, idx) => {
@@ -221,19 +181,11 @@ function MilestoneTracker({ row }) {
           const isActive = idx === currentStepIdx && !isFullyComplete;
           const isFuture = !isDone && !isActive;
 
-          const doneDot   = 'bg-[#0B4F54] text-white border-[#0B4F54]';
-          const futureDot = 'bg-[#E2E8F0] text-slate-400 border-[#CBD5E1]';
-          const dotClass  = isDone ? doneDot : isActive ? accent.dot : futureDot;
-          const labelClass = isActive ? accent.label : isFuture ? 'text-slate-400' : 'text-on-surface';
-
-          // Date to show under the step
-          const date = idx === 0
-            ? fmtDate(row.purchaseOrderDate)
-            : idx === currentStepIdx
-            ? fmtDate(row.currentMilestoneDate)
-            : isDone
-            ? null   // no date for past steps (data not individually stored)
-            : null;
+          const dotClass = isDone
+            ? 'bg-[#0B4F54] text-white border-[#0B4F54]'
+            : isActive
+            ? 'bg-white text-[#0B4F54] border-[#0B4F54] ring-4 ring-[#0B4F54]/10'
+            : 'bg-[#E2E8F0] text-slate-400 border-[#CBD5E1]';
 
           return (
             <div key={idx} className="relative z-10 flex flex-col items-center flex-1">
@@ -243,40 +195,22 @@ function MilestoneTracker({ row }) {
                   : <i className={`fa-solid ${step.icon} text-xs`} />
                 }
               </div>
-              <div className="text-center mt-3 max-w-[120px] px-1">
-                <span className={`text-[11px] font-bold block leading-tight ${labelClass}`}>
+              <div className="text-center mt-3 max-w-[110px] px-1">
+                <span className={`text-[11px] font-bold block leading-tight ${
+                  isActive ? 'text-[#0B4F54]' : isFuture ? 'text-slate-400' : 'text-on-surface'
+                }`}>
                   {step.label}
                 </span>
                 {isActive && (
-                  <span className="text-[9px] font-semibold uppercase tracking-wide mt-0.5 block opacity-70 text-on-surface-variant">
-                    Current
-                  </span>
+                  <span className="text-[9px] font-semibold uppercase tracking-wide mt-0.5 block text-[#0B4F54]/60">Current</span>
                 )}
-                {date ? (
-                  <span className="text-[10px] text-on-surface-variant font-mono mt-1 block">{date}</span>
-                ) : isFuture ? (
-                  <span className="text-[10px] text-slate-400 italic mt-1 block">
-                    {idx === PIPELINE_STEPS.length - 1 ? `Est. ${fmtDate(row.deliveryDeadline) || row.deliveryDeadline}` : 'Pending'}
-                  </span>
-                ) : null}
+                {isFuture && (
+                  <span className="text-[9px] text-slate-400 italic mt-0.5 block">Pending</span>
+                )}
               </div>
             </div>
           );
         })}
-      </div>
-
-      {/* Footer: current status chip + days indicator */}
-      <div className="flex items-center justify-between mt-8 pt-4 border-t border-outline-variant/40">
-        <span className="text-[11px] font-bold text-on-surface-variant">
-          Status: <span className="text-on-surface">{status.replace(/_/g, ' ')}</span>
-        </span>
-        {row.daysToOrPastDeadline != null && (
-          <span className={`text-[11px] font-bold ${row.daysToOrPastDeadline > 0 ? 'text-error' : 'text-success'}`}>
-            {row.daysToOrPastDeadline > 0
-              ? `${row.daysToOrPastDeadline}d past deadline`
-              : `${Math.abs(row.daysToOrPastDeadline)}d to deadline`}
-          </span>
-        )}
       </div>
     </div>
   );
@@ -498,6 +432,15 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
                       <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
                     ))}
                   </select>
+                  {(ctrSearch || ctrProcessFilter || ctrRouteFilter) && (
+                    <button
+                      type="button"
+                      onClick={() => { setCtrSearch(''); setCtrProcessFilter(''); setCtrRouteFilter(''); }}
+                      className="h-8 px-3 flex items-center gap-1.5 rounded-md border border-error/40 bg-error/5 text-error text-xs font-semibold hover:bg-error/10 transition-colors"
+                    >
+                      <i className="fa-solid fa-xmark text-[10px]" /> Clear
+                    </button>
+                  )}
                 </div>
               }>
                 <>
