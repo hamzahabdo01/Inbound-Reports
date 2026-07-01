@@ -1,4 +1,4 @@
-import { useState, useMemo, Fragment, useEffect } from 'react';
+import { useState, useMemo, Fragment, useEffect, useRef } from 'react';
 import stockData from '../data/NationalStockStatus.json';
 import { parseCSV } from '../utils/csvParser';
 import { nationalAMCCSVData } from '../data/nationalAMCData';
@@ -55,6 +55,13 @@ const HUB_KEYS = [
 function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
   const [activeTab, setActiveTab] = useState('stock-report');
 
+  useEffect(() => {
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTop = 0;
+    }
+  }, [activeTab]);
+
   // Search query
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -77,6 +84,19 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
 
   // Row Expansion (for dashboard summary view)
   const [expandedRow, setExpandedRow] = useState(null);
+
+  // Track the scroll container's visible width so the expanded row never stretches beyond the viewport
+  const scrollRef = useRef(null);
+  const [visibleWidth, setVisibleWidth] = useState(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const update = () => setVisibleWidth(el.offsetWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const [activeTabs, setActiveTabs] = useState({}); // { [itemSn]: 'pipeline' | 'hubs' | 'expiries' }
 
   // National AMC tab state
@@ -428,7 +448,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
 
       {/* Main Stock Table */}
       <div className="bg-white rounded-xl border border-outline-variant shadow-level-1 overflow-hidden">
-        <div className="overflow-x-auto relative">
+        <div ref={scrollRef} className="overflow-x-auto relative">
           <table className="w-full text-left border-collapse border border-outline-variant">
             <thead>
               {/* Grouped Headers (Row 1) */}
@@ -677,7 +697,10 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }) {
                       {isExpanded && (
                         <tr>
                           <td colSpan={maxTotalCols} className="py-0 px-0 bg-surface-container-lowest border-y border-outline-variant no-row-expand">
-                            <div className="p-lg space-y-md animate-slide-up">
+                            <div
+                              className="p-lg space-y-md animate-slide-up"
+                              style={visibleWidth ? { position: 'sticky', left: 0, width: visibleWidth, overflow: 'hidden' } : {}}
+                            >
                               {/* Detail Tabs */}
                               <div className="flex border-b border-outline-variant">
                                 <button

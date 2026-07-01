@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import StickyHeader from '../components/StickyHeader';
 import SectionNavigator from '../components/SectionNavigator';
 import { getTrendData } from '../api/trend';
@@ -15,7 +15,7 @@ import PerformanceComplianceTab from './po/PerformanceComplianceTab';
 const TABS = [
   { key: 'overview',     label: 'Overview',              icon: 'fa-gauge-high',        sections: ['ppc-overview', 'ppc-procurement-breakdown', 'ppc-supplier-share', 'ppc-funding', 'ppc-local-intl', 'ppc-trend'] },
   { key: 'procurement',  label: 'Procurement Breakdown',  icon: 'fa-cart-shopping',     sections: ['ppc-open-pos', 'ppc-open-po-items', 'ppc-overdue-pos', 'ppc-status'] },
-    { key: 'contracts',    label: 'Contract Management',    icon: 'fa-file-signature',    sections: ['ppc-pipeline', 'ppc-contract-vs-po', 'ppc-lc-cad', 'ppc-contract-to-receive', 'ppc-yearly-contract-receipt'] },
+  { key: 'contracts',    label: 'Contract Management',    icon: 'fa-file-signature',    sections: ['ppc-pipeline', 'ppc-contract-vs-po', 'ppc-contract-to-receive', 'ppc-yearly-contract-receipt', 'ppc-lc-cad'] },
   { key: 'compliance',   label: 'Performance & Compliance', icon: 'fa-shield-halved',   sections: ['ppc-leadtime', 'ppc-supplier-perf', 'ppc-supplier-risk', 'ppc-bond'] },
 ];
 
@@ -39,6 +39,13 @@ export default function PoPerformanceCompliance() {
 
   const [activeTab, setActiveTab] = useState('overview');
   const [tablePages, setTablePages] = useState({});
+
+  useEffect(() => {
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTop = 0;
+    }
+  }, [activeTab]);
   const [trendHover, setTrendHover] = useState(null);
   const [supplierHover, setSupplierHover] = useState(null);
   const [procurementStatusFilter, setProcurementStatusFilter] = useState('All');
@@ -67,7 +74,11 @@ export default function PoPerformanceCompliance() {
     return tab ? tab.sections : [];
   }, [activeTab]);
 
-  const navigatorSections = useMemo(() => activeSections.map(id => ({ id, label: SECTION_LABELS[id] || id })), [activeSections]);
+  const navigatorSections = useMemo(() => {
+    return activeSections
+      .filter(id => id !== 'ppc-overview')
+      .map(id => ({ id, label: SECTION_LABELS[id] || id }));
+  }, [activeSections]);
 
   const prevTab = useRef(activeTab);
   if (prevTab.current !== activeTab) {
@@ -144,7 +155,7 @@ export default function PoPerformanceCompliance() {
           <OverviewTab
             data={data} activeSections={activeSections}
             kpiPage={kpiPage} setKpiPage={setKpiPage}
-            visibleKpiCards={visibleKpiCards} kpiTotalPages={kpiTotalPages}
+            kpiCards={kpiCards} kpiTotalPages={kpiTotalPages}
             filteredOpenOverduePOs={filteredOpenOverduePOs}
             overviewSearch={overviewSearch} setOverviewSearch={setOverviewSearch}
             overviewStatus={overviewStatus} setOverviewStatus={setOverviewStatus}
@@ -166,7 +177,7 @@ export default function PoPerformanceCompliance() {
         <OverviewTab
           data={data} activeSections={activeSections}
           kpiPage={kpiPage} setKpiPage={setKpiPage}
-          visibleKpiCards={visibleKpiCards} kpiTotalPages={kpiTotalPages}
+          kpiCards={kpiCards} kpiTotalPages={kpiTotalPages}
           filteredOpenOverduePOs={filteredOpenOverduePOs}
           overviewSearch={overviewSearch} setOverviewSearch={setOverviewSearch}
           overviewStatus={overviewStatus} setOverviewStatus={setOverviewStatus}

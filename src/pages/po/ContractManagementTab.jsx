@@ -97,26 +97,217 @@ function FunnelPercentRow({ data }) {
   );
 }
 
+// Ordered pipeline groups — each status belongs to exactly one step.
+// The step whose group contains currentProcessStatus is the ACTIVE step.
+// All steps before it are DONE; all after are FUTURE.
+const PIPELINE_STEPS = [
+  {
+    label: 'Contract & PO',
+    icon: 'fa-file-signature',
+    statuses: new Set([
+      'MILESTONE_NOT_STARTED_OR_NOT_CAPTURED',
+      'CONTRACTING_IN_PROGRESS',
+      'SIGNED_CONTRACT_RECEIVED',
+      'BUDGET_CONFIRMED',
+      'PO_APPROVAL_IN_PROGRESS',
+      'PO_APPROVED',
+      'PROFORMA_RECEIVED',
+    ]),
+  },
+  {
+    label: 'LC / Payment',
+    icon: 'fa-coins',
+    statuses: new Set([
+      'LC_CAD_APPLICATION_IN_PROGRESS',
+      'LC_CAD_OPENED',
+      'PERFORMANCE_GUARANTEE_RECEIVED',
+    ]),
+  },
+  {
+    label: 'Awaiting Shipment',
+    icon: 'fa-ship',
+    statuses: new Set(['AWAITING_FOREIGN_SHIPMENT']),
+  },
+  {
+    label: 'Partially Received',
+    icon: 'fa-boxes-stacking',
+    statuses: new Set(['PARTIALLY_RECEIVED']),
+  },
+  {
+    label: 'Delivery Complete',
+    icon: 'fa-warehouse',
+    statuses: new Set(['DELIVERY_COMPLETE', 'ORDER_CLOSED']),
+  },
+];
+
+// routeStatus → active-step accent color
+const ROUTE_ACCENT = {
+  NO_ROUTE_DEADLINE_BREACH_DETECTED: { dot: 'bg-[#0B4F54] text-white border-[#0B4F54] ring-4 ring-[#0B4F54]/10', bar: 'bg-[#0B4F54]', label: 'text-[#0B4F54]' },
+  DELAYED_BEYOND_DELIVERY_DEADLINE:  { dot: 'bg-error text-white border-error ring-4 ring-error/10',             bar: 'bg-error',      label: 'text-error' },
+  PARTIALLY_RECEIVED_BUT_OVERDUE:    { dot: 'bg-warning text-white border-warning ring-4 ring-warning/10',        bar: 'bg-warning',    label: 'text-warning' },
+  CLOSED:                            { dot: 'bg-success text-white border-success ring-4 ring-success/10',        bar: 'bg-success',    label: 'text-success' },
+  ROUTE_DATA_QUALITY_ISSUE:          { dot: 'bg-warning text-white border-warning ring-4 ring-warning/10',        bar: 'bg-warning',    label: 'text-warning' },
+  ROUTE_NOT_CLASSIFIED:              { dot: 'bg-outline text-white border-outline ring-4 ring-outline/10',        bar: 'bg-outline',    label: 'text-on-surface-variant' },
+};
+
+function fmtDate(d) {
+  if (!d || typeof d !== 'string') return null;
+  const p = d.split('-');
+  if (p.length !== 3) return d;
+  const [y, m, day] = p.map(Number);
+  if (isNaN(y) || isNaN(m) || isNaN(day)) return d;
+  return `${day} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]} ${y}`;
+}
+
+function MilestoneTracker({ row }) {
+  const status  = row.currentProcessStatus || '';
+  const route   = row.routeStatus || '';
+  const accent  = ROUTE_ACCENT[route] || ROUTE_ACCENT.NO_ROUTE_DEADLINE_BREACH_DETECTED;
+
+  // Find which step index the current status belongs to
+  const currentStepIdx = (() => {
+    const idx = PIPELINE_STEPS.findIndex(s => s.statuses.has(status));
+    // If status not found in any group, default to last step for ORDER_CLOSED-like unknowns
+    return idx === -1 ? PIPELINE_STEPS.length - 1 : idx;
+  })();
+
+  const isFullyComplete = status === 'DELIVERY_COMPLETE' || status === 'ORDER_CLOSED' || route === 'CLOSED';
+
+  const routeBadgeColor = {
+    NO_ROUTE_DEADLINE_BREACH_DETECTED: 'bg-success/10 text-success',
+    DELAYED_BEYOND_DELIVERY_DEADLINE:  'bg-error/10 text-error',
+    PARTIALLY_RECEIVED_BUT_OVERDUE:    'bg-warning/10 text-warning',
+    CLOSED:                            'bg-success/10 text-success',
+    ROUTE_DATA_QUALITY_ISSUE:          'bg-warning/10 text-warning',
+    ROUTE_NOT_CLASSIFIED:              'bg-surface-container text-on-surface-variant',
+  };
+
+  return (
+    <div className="bg-[#F8FAFC] border border-outline-variant/60 rounded-xl p-6 my-4 shadow-sm">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h4 className="text-sm font-bold text-on-surface">
+            Milestone Progress: <span className="font-mono text-primary">{row.purchaseOrderNumber}</span>
+          </h4>
+          <p className="text-xs text-on-surface-variant mt-1">
+            <span className="font-semibold">{row.supplierName}</span>
+            {row.currentMilestoneName && <> &mdash; <span className="italic">{row.currentMilestoneName}</span></>}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1.5">
+          <span className={`inline-block px-2.5 py-1 text-xs font-bold rounded-md ${routeBadgeColor[route] || 'bg-surface-container text-on-surface-variant'}`}>
+            {route.replace(/_/g, ' ')}
+          </span>
+          <span className="text-[10px] text-on-surface-variant font-medium">
+            {row.completedMilestoneCount ?? '—'} / {row.totalMilestoneCount ?? '—'} milestones &nbsp;·&nbsp; {row.milestoneCompletionPercent ?? 0}% complete
+          </span>
+        </div>
+      </div>
+
+      {/* Stepper */}
+      <div className="relative flex items-start justify-between w-full">
+        {/* Background rail */}
+        <div className="absolute left-0 right-0 h-1 bg-[#E2E8F0] z-0 top-[22px] rounded-full" />
+
+        {/* Progress rail */}
+        <div
+          className={`absolute left-0 h-1 z-0 top-[22px] rounded-full transition-all duration-500 ${isFullyComplete ? 'bg-success' : accent.bar}`}
+          style={{ width: isFullyComplete ? '100%' : `${(currentStepIdx / (PIPELINE_STEPS.length - 1)) * 100}%` }}
+        />
+
+        {PIPELINE_STEPS.map((step, idx) => {
+          const isDone   = idx < currentStepIdx || isFullyComplete;
+          const isActive = idx === currentStepIdx && !isFullyComplete;
+          const isFuture = !isDone && !isActive;
+
+          const doneDot   = 'bg-[#0B4F54] text-white border-[#0B4F54]';
+          const futureDot = 'bg-[#E2E8F0] text-slate-400 border-[#CBD5E1]';
+          const dotClass  = isDone ? doneDot : isActive ? accent.dot : futureDot;
+          const labelClass = isActive ? accent.label : isFuture ? 'text-slate-400' : 'text-on-surface';
+
+          // Date to show under the step
+          const date = idx === 0
+            ? fmtDate(row.purchaseOrderDate)
+            : idx === currentStepIdx
+            ? fmtDate(row.currentMilestoneDate)
+            : isDone
+            ? null   // no date for past steps (data not individually stored)
+            : null;
+
+          return (
+            <div key={idx} className="relative z-10 flex flex-col items-center flex-1">
+              <div className={`w-11 h-11 rounded-full border-2 flex items-center justify-center transition-all duration-300 shadow-sm ${dotClass}`}>
+                {isDone
+                  ? <i className="fa-solid fa-check text-sm" />
+                  : <i className={`fa-solid ${step.icon} text-xs`} />
+                }
+              </div>
+              <div className="text-center mt-3 max-w-[120px] px-1">
+                <span className={`text-[11px] font-bold block leading-tight ${labelClass}`}>
+                  {step.label}
+                </span>
+                {isActive && (
+                  <span className="text-[9px] font-semibold uppercase tracking-wide mt-0.5 block opacity-70 text-on-surface-variant">
+                    Current
+                  </span>
+                )}
+                {date ? (
+                  <span className="text-[10px] text-on-surface-variant font-mono mt-1 block">{date}</span>
+                ) : isFuture ? (
+                  <span className="text-[10px] text-slate-400 italic mt-1 block">
+                    {idx === PIPELINE_STEPS.length - 1 ? `Est. ${fmtDate(row.deliveryDeadline) || row.deliveryDeadline}` : 'Pending'}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer: current status chip + days indicator */}
+      <div className="flex items-center justify-between mt-8 pt-4 border-t border-outline-variant/40">
+        <span className="text-[11px] font-bold text-on-surface-variant">
+          Status: <span className="text-on-surface">{status.replace(/_/g, ' ')}</span>
+        </span>
+        {row.daysToOrPastDeadline != null && (
+          <span className={`text-[11px] font-bold ${row.daysToOrPastDeadline > 0 ? 'text-error' : 'text-success'}`}>
+            {row.daysToOrPastDeadline > 0
+              ? `${row.daysToOrPastDeadline}d past deadline`
+              : `${Math.abs(row.daysToOrPastDeadline)}d to deadline`}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ContractManagementTab({ data, activeSections, tp, sp }) {
   const allYears = data.yearlyContractToReceipt?.data?.map(r => r.year).sort() || [];
   const [funnelYear, setFunnelYear] = useState(allYears.length ? String(allYears[allYears.length - 1]) : '2026');
   const funnelFiltered = { ...data.yearlyContractToReceipt, data: data.yearlyContractToReceipt.data.filter(r => r.year === Number(funnelYear)) };
   const [pipelineExpanded, setPipelineExpanded] = useState(null);
+  const [ctrExpanded, setCtrExpanded] = useState(null);
+  const [showCtrDaysPast, setShowCtrDaysPast] = useState(false);
+  const [showCtrMilestone, setShowCtrMilestone] = useState(false);
+  const [showCtrPhase, setShowCtrPhase] = useState(false);
   const [ctrSearch, setCtrSearch] = useState('');
   const [ctrProcessFilter, setCtrProcessFilter] = useState('');
   const [ctrRouteFilter, setCtrRouteFilter] = useState('');
-  const filteredCtr = (data.contractToReceiveTracking || []).filter((row) => {
-    const q = ctrSearch.toLowerCase();
-    const matchSearch = !ctrSearch || row.purchaseOrderNumber?.toLowerCase().includes(q) ||
-      row.supplierName?.toLowerCase().includes(q) ||
-      row.currentProcessStatus?.toLowerCase().includes(q) ||
-      row.routeStatus?.toLowerCase().includes(q) ||
-      row.currentMilestoneName?.toLowerCase().includes(q) ||
-      row.processPhase?.toLowerCase().includes(q);
-    const matchProcess = !ctrProcessFilter || row.currentProcessStatus === ctrProcessFilter;
-    const matchRoute = !ctrRouteFilter || row.routeStatus === ctrRouteFilter;
-    return matchSearch && matchProcess && matchRoute;
-  });
+  const filteredCtr = (data.contractToReceiveTracking || [])
+    .filter((row) => {
+      const q = ctrSearch.toLowerCase();
+      const matchSearch = !ctrSearch || row.purchaseOrderNumber?.toLowerCase().includes(q) ||
+        row.supplierName?.toLowerCase().includes(q) ||
+        row.currentProcessStatus?.toLowerCase().includes(q) ||
+        row.routeStatus?.toLowerCase().includes(q) ||
+        row.currentMilestoneName?.toLowerCase().includes(q) ||
+        row.processPhase?.toLowerCase().includes(q);
+      const matchProcess = !ctrProcessFilter || row.currentProcessStatus === ctrProcessFilter;
+      const matchRoute = !ctrRouteFilter || row.routeStatus === ctrRouteFilter;
+      return matchSearch && matchProcess && matchRoute;
+    })
+    .sort((a, b) => (a.purchaseOrderNumber || '').localeCompare(b.purchaseOrderNumber || '', undefined, { numeric: true, sensitivity: 'base' }));
   return (
     <>
       {activeSections.includes('ppc-pipeline') && (
@@ -267,7 +458,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
       {activeSections.includes('ppc-contract-to-receive') && (
         <section id="ppc-contract-to-receive">
           {(() => {
-            const routeColors = { DELAYED_BEYOND_DELIVERY_DEADLINE: 'bg-error/10 text-error', CLOSED: 'bg-surface-container text-on-surface-variant', PARTIALLY_RECEIVED_BUT_OVERDUE: 'bg-warning/10 text-warning', NO_ROUTE_DEADLINE_BREACH_DETECTED: 'bg-success/10 text-success', ROUTE_DATA_QUALITY_ISSUE: 'bg-warning/10 text-warning', ROUTE_NOT_CLASSIFIED: 'bg-surface-container text-on-surface-variant' };
+            const routeColors = { DELAYED_BEYOND_DELIVERY_DEADLINE: 'bg-error/10 text-error', CLOSED: 'bg-success/10 text-success', PARTIALLY_RECEIVED_BUT_OVERDUE: 'bg-warning/10 text-warning', NO_ROUTE_DEADLINE_BREACH_DETECTED: 'bg-success/10 text-success', ROUTE_DATA_QUALITY_ISSUE: 'bg-warning/10 text-warning', ROUTE_NOT_CLASSIFIED: 'bg-surface-container text-on-surface-variant' };
             const phaseColors = { PLANNING: 'bg-[#4A8EA5]/10 text-[#4A8EA5]', EXECUTION: 'bg-primary/10 text-primary', COMPLETED: 'bg-success/10 text-success' };
             return (
               <SectionPanel title="Contract-to-Receipt Status Tracking" subtitle={`${filteredCtr.length} of ${(data.contractToReceiveTracking || []).length} PO-level milestones`} action={
@@ -281,12 +472,23 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
                     />
                   </div>
                   <select value={ctrProcessFilter} onChange={(e) => setCtrProcessFilter(e.target.value)}
-                    className="h-8 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[140px]"
+                    className="h-8 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[160px]"
                   >
                     <option value="">All Process Status</option>
-                    {[...new Set((data.contractToReceiveTracking || []).map(r => r.currentProcessStatus))].map(s => (
-                      <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
-                    ))}
+                    {(() => {
+                      const present = new Set((data.contractToReceiveTracking || []).map(r => r.currentProcessStatus));
+                      return PIPELINE_STEPS.map(step => {
+                        const opts = [...step.statuses].filter(s => present.has(s));
+                        if (!opts.length) return null;
+                        return (
+                          <optgroup key={step.label} label={`— ${step.label} —`}>
+                            {opts.map(s => (
+                              <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                            ))}
+                          </optgroup>
+                        );
+                      });
+                    })()}
                   </select>
                   <select value={ctrRouteFilter} onChange={(e) => setCtrRouteFilter(e.target.value)}
                     className="h-8 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[130px]"
@@ -298,49 +500,83 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }) 
                   </select>
                 </div>
               }>
-                <Table page={tp('contract-to-receive')} setPage={sp('contract-to-receive')}
-                  headers={[
-                    { key: 'poNo', label: 'PO No' },
-                    { key: 'supplier', label: 'Supplier' },
-                { key: 'amount', label: 'Amount (ETB)', className: 'text-right' },
-                    { key: 'processStatus', label: 'Process Status' },
-                    { key: 'routeStatus', label: 'Route Status' },
-                    { key: 'deadline', label: 'Deadline' },
-                    { key: 'daysPast', label: 'Days ±', className: 'text-right' },
-                    { key: 'milestone', label: 'Milestone %', className: 'text-right' },
-                    { key: 'currentMile', label: 'Current Milestone' },
-                    { key: 'phase', label: 'Phase', className: 'text-center' },
-                  ]}
-                  rows={filteredCtr}
-                  renderRow={(row) => (
-                    <>
-                      <Td className="font-mono">{row.purchaseOrderNumber}</Td>
-                      <Td className="whitespace-nowrap font-bold" title={row.supplierName}>{row.supplierName}</Td>
-                      <Td className="text-right font-mono">{formatAmount(row.purchaseOrderAmount)}</Td>
-                      <Td>
-                        <span className="inline-block px-2.5 py-1 text-[11px] font-bold rounded-md whitespace-nowrap bg-primary/10 text-primary" title={row.currentProcessStatus}>{row.currentProcessStatus.replace(/_/g, ' ')}</span>
-                      </Td>
-                      <Td>
-                        <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md whitespace-nowrap ${routeColors[row.routeStatus] || 'bg-surface-container text-on-surface-variant'}`} title={row.routeStatus}>{row.routeStatus.replace(/_/g, ' ')}</span>
-                      </Td>
-                      <Td>{row.deliveryDeadline}</Td>
-                      <Td className={`text-right font-bold ${row.daysToOrPastDeadline > 0 ? 'text-error' : 'text-success'}`}>{row.daysToOrPastDeadline > 0 ? `+${row.daysToOrPastDeadline}` : row.daysToOrPastDeadline}</Td>
-                      <Td className="text-right">
-                        <div className="flex items-center gap-1.5 justify-end">
-                          <span className="text-xs font-bold">{row.milestoneCompletionPercent}%</span>
-                          <div className="w-12 h-1.5 bg-surface-container-low rounded-full overflow-hidden">
-                            <div className={`h-full rounded-full ${row.milestoneCompletionPercent >= 80 ? 'bg-success' : row.milestoneCompletionPercent >= 40 ? 'bg-warning' : 'bg-error'}`}
-                              style={{ width: `${row.milestoneCompletionPercent}%` }} />
-                          </div>
-                        </div>
-                      </Td>
-                      <Td className="whitespace-nowrap" title={row.currentMilestoneName}>{row.currentMilestoneName}</Td>
-                      <Td className="text-center">
-                        <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded-md ${phaseColors[row.processPhase] || 'bg-surface-container text-on-surface-variant'}`}>{row.processPhase}</span>
-                      </Td>
-                    </>
-                  )}
-                />
+                <>
+                  <div className="flex flex-wrap items-center gap-2 mb-4 bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/60">
+                    <span className="text-xs font-bold text-on-surface-variant mr-2 flex items-center gap-1.5"><i className="fa-solid fa-table-columns text-primary"></i> Toggle Columns:</span>
+                    {[
+                      { id: 'daysPast', label: 'Days ±', state: showCtrDaysPast, setState: setShowCtrDaysPast },
+                      { id: 'milestone', label: 'Milestone %', state: showCtrMilestone, setState: setShowCtrMilestone },
+                      { id: 'phase', label: 'Phase', state: showCtrPhase, setState: setShowCtrPhase },
+                    ].map((col) => (
+                      <button
+                        key={col.id}
+                        type="button"
+                        onClick={() => col.setState(!col.state)}
+                        className={`px-2.5 py-1 text-xs border rounded-md font-semibold flex items-center gap-1.5 transition-all duration-150 ${col.state ? 'bg-[#0B4F54]/10 border-[#0B4F54] text-[#0B4F54]' : 'bg-white border-outline-variant text-on-surface-variant/80 hover:bg-slate-50'}`}
+                      >
+                        <i className={col.state ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}></i>
+                        {col.label}
+                      </button>
+                    ))}
+                  </div>
+                  <Table page={tp('contract-to-receive')} setPage={sp('contract-to-receive')}
+                    expandedRow={ctrExpanded} rowKey="purchaseOrderNumber"
+                    onRowClick={(id) => setCtrExpanded(ctrExpanded === id ? null : id)}
+                    rowClassName="group hover:bg-primary"
+                    expandedRowClassName="bg-primary"
+                    headers={[
+                      { key: 'poNo', label: 'PO No' },
+                      { key: 'supplier', label: 'Supplier' },
+                      { key: 'amount', label: 'Amount (ETB)', className: 'text-right' },
+                      { key: 'processStatus', label: 'Process Status' },
+                      { key: 'routeStatus', label: 'Route Status' },
+                      { key: 'deadline', label: 'Deadline' },
+                      showCtrDaysPast && { key: 'daysPast', label: 'Days ±', className: 'text-right' },
+                      showCtrMilestone && { key: 'milestone', label: 'Milestone %', className: 'text-right' },
+                      { key: 'currentMile', label: 'Current Milestone' },
+                      showCtrPhase && { key: 'phase', label: 'Phase', className: 'text-center' },
+                    ].filter(Boolean)}
+                    rows={filteredCtr}
+                    renderRow={(row, i, isExpanded) => {
+                      const tx = `group-hover:text-white transition-colors ${isExpanded ? 'text-white' : ''}`;
+                      return (
+                        <>
+                          <Td className={`font-mono ${tx}`}>{row.purchaseOrderNumber}</Td>
+                          <Td className={`whitespace-nowrap font-bold ${tx}`} title={row.supplierName}>{row.supplierName}</Td>
+                          <Td className={`text-right font-mono ${tx}`}>{formatAmount(row.purchaseOrderAmount)}</Td>
+                          <Td>
+                            <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md whitespace-nowrap group-hover:bg-white/20 group-hover:text-white transition-colors ${isExpanded ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'}`} title={row.currentProcessStatus}>{row.currentProcessStatus.replace(/_/g, ' ')}</span>
+                          </Td>
+                          <Td>
+                            <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md whitespace-nowrap group-hover:bg-white/20 group-hover:text-white transition-colors ${isExpanded ? 'bg-white/20 text-white' : routeColors[row.routeStatus] || 'bg-surface-container text-on-surface-variant'}`} title={row.routeStatus}>{row.routeStatus.replace(/_/g, ' ')}</span>
+                          </Td>
+                          <Td className={tx}>{row.deliveryDeadline}</Td>
+                          {showCtrDaysPast && (
+                            <Td className={`text-right font-bold ${isExpanded ? 'text-white' : row.daysToOrPastDeadline > 0 ? 'text-error' : 'text-success'}`}>{row.daysToOrPastDeadline > 0 ? `+${row.daysToOrPastDeadline}` : row.daysToOrPastDeadline}</Td>
+                          )}
+                          {showCtrMilestone && (
+                            <Td className="text-right">
+                              <div className="flex items-center gap-1.5 justify-end">
+                                <span className={`text-xs font-bold ${isExpanded ? 'text-white' : 'text-on-surface'}`}>{row.milestoneCompletionPercent}%</span>
+                                <div className={`w-12 h-1.5 rounded-full overflow-hidden ${isExpanded ? 'bg-white/30' : 'bg-surface-container-low'}`}>
+                                  <div className={`h-full rounded-full ${isExpanded ? 'bg-white' : row.milestoneCompletionPercent >= 80 ? 'bg-success' : row.milestoneCompletionPercent >= 40 ? 'bg-warning' : 'bg-error'}`}
+                                    style={{ width: `${row.milestoneCompletionPercent}%` }} />
+                                </div>
+                              </div>
+                            </Td>
+                          )}
+                          <Td className={`whitespace-nowrap ${tx}`} title={row.currentMilestoneName}>{row.currentMilestoneName}</Td>
+                          {showCtrPhase && (
+                            <Td className="text-center">
+                              <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded-md group-hover:bg-white/20 group-hover:text-white transition-colors ${isExpanded ? 'bg-white/20 text-white' : phaseColors[row.processPhase] || 'bg-surface-container text-on-surface-variant'}`}>{row.processPhase}</span>
+                            </Td>
+                          )}
+                        </>
+                      );
+                    }}
+                    renderExpanded={(row) => <MilestoneTracker row={row} />}
+                  />
+                </>
               </SectionPanel>
             );
           })()}

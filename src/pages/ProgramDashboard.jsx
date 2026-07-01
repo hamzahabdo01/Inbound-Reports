@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProgramChips from '../components/program/ProgramChips';
 import ChildHealth from './programs/ChildHealth';
 import ClinicalChemistry from './programs/ClinicalChemistry';
@@ -49,6 +49,13 @@ function OrgToggle({ value, onChange }) {
 function ProgramDashboard() {
   const [activeProgram, setActiveProgram] = useState('Child Health');
   const [programType, setProgramType] = useState('HPR');
+
+  useEffect(() => {
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTop = 0;
+    }
+  }, [activeProgram]);
 
   const renderProgram = () => {
     switch (activeProgram) {

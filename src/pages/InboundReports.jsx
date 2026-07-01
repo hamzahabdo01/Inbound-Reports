@@ -227,16 +227,11 @@ function InboundReports() {
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
-  const mainRef = useRef(null);
-
   useEffect(() => {
     setTimeout(() => {
-      if (mainRef.current && typeof mainRef.current.scrollTo === 'function') {
-        try {
-          mainRef.current.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-        } catch (e) {
-          mainRef.current.scrollTop = 0;
-        }
+      const mainEl = document.querySelector('main');
+      if (mainEl) {
+        mainEl.scrollTop = 0;
       }
 
       try {
@@ -250,6 +245,10 @@ function InboundReports() {
   // Reset page when switching tabs
   useEffect(() => {
     setCurrentPage(1);
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTop = 0;
+    }
   }, [activeTab]);
 
   const handleExport = () => {

@@ -508,6 +508,12 @@ function ShipmentStatus() {
   // Load data when org changes
   useEffect(() => {
     setIsLoading(true);
+    
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTop = 0;
+    }
+
     const timer = setTimeout(() => {
       const rawShipment = activeOrg === 'HPR' ? shipmentStatusHPRData : shipmentStatusRDFData;
       const rawPO = activeOrg === 'HPR' ? purchaseOrderDetailHPRData : purchaseOrderDetailRDFData;

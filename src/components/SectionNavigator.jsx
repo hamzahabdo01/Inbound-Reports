@@ -3,31 +3,115 @@ import { useEffect, useRef, useState } from 'react';
 function SectionNavigator({ sections, scrollOffset = 120 }) {
   const [active, setActive] = useState(sections[0]?.id ?? '');
   const [expanded, setExpanded] = useState(false);
+  const [mergedSections, setMergedSections] = useState(sections);
+  const isScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef(null);
+
+  // Fallback initialize
+  useEffect(() => {
+    setMergedSections(sections);
+  }, [sections]);
+
+  // Dynamically group sections that are on the same vertical line
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const groups = [];
+      sections.forEach(({ id, label }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        
+        const rect = el.getBoundingClientRect();
+        
+        // Find if there is an existing group where the vertical difference is small (on the same line)
+        const matchedGroup = groups.find(g => Math.abs(g.top - rect.top) < 25);
+        
+        if (matchedGroup) {
+          matchedGroup.ids.push(id);
+          matchedGroup.labels.push(label);
+        } else {
+          groups.push({
+            top: rect.top,
+            ids: [id],
+            labels: [label]
+          });
+        }
+      });
+      
+      const newSections = groups.map(g => ({
+        id: g.ids[0],
+        ids: g.ids,
+        label: g.labels.join(' & ')
+      }));
+      
+      setMergedSections(newSections);
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [sections]);
 
   useEffect(() => {
     const scrollContainer = document.querySelector('main');
-    const observers = [];
-    sections.forEach(({ id }) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const observer = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActive(id); },
-        {
-          root: scrollContainer ?? null,
-          rootMargin: '-25% 0px -65% 0px',
-          threshold: 0,
-        },
-      );
-      observer.observe(el);
-      observers.push(observer);
-    });
-    return () => observers.forEach((o) => o.disconnect());
-  }, [sections]);
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      if (isScrollingRef.current) return;
+      
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const referenceLine = 150; // px from the top of the container
+      
+      // If we scroll to the absolute bottom of the container, highlight the last section
+      const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 25;
+      if (isAtBottom && mergedSections.length > 0) {
+        setActive(mergedSections[mergedSections.length - 1].id);
+        return;
+      }
+
+      let currentActiveId = null;
+
+      // Find the section that currently wraps the reference line
+      for (const section of sections) {
+        const el = document.getElementById(section.id);
+        if (!el) continue;
+        
+        const rect = el.getBoundingClientRect();
+        const relativeTop = rect.top - containerRect.top;
+        const relativeBottom = rect.bottom - containerRect.top;
+        
+        if (relativeTop <= referenceLine && relativeBottom > referenceLine) {
+          currentActiveId = section.id;
+          break;
+        }
+      }
+
+      // If we found an active section, update it to its merged group representative
+      if (currentActiveId) {
+        const group = mergedSections.find(g => g.ids && g.ids.includes(currentActiveId));
+        setActive(group ? group.id : currentActiveId);
+      }
+    };
+
+    // Run once initially and listen to scrolls
+    handleScroll();
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll);
+    };
+  }, [sections, mergedSections]);
 
   const handleClick = (id) => {
     const el = document.getElementById(id);
     if (!el) return;
     const scrollContainer = el.closest('main') ?? document.querySelector('main') ?? window;
+
+    // Set scrolling flag to prevent IntersectionObserver and scroll listener overrides
+    isScrollingRef.current = true;
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = setTimeout(() => {
+      isScrollingRef.current = false;
+    }, 1000);
+
     const offset = scrollOffset;
     if (scrollContainer === window) {
       const top = el.getBoundingClientRect().top + window.scrollY - offset;
@@ -58,7 +142,7 @@ function SectionNavigator({ sections, scrollOffset = 120 }) {
         }`}
         aria-hidden={!expanded}
       >
-        {sections.map(({ id, label }) => {
+        {mergedSections.map(({ id, label }) => {
           const isActive = active === id;
           return (
             <button
@@ -85,7 +169,7 @@ function SectionNavigator({ sections, scrollOffset = 120 }) {
       </div>
 
       <div className="flex flex-col gap-2 py-3 px-2 bg-[#0B4F54] border border-[#00373B] rounded-l-xl shadow-[0px_4px_20px_rgba(10,50,53,0.12)]">
-        {sections.map(({ id, label }) => {
+        {mergedSections.map(({ id, label }) => {
           const isActive = active === id;
           return (
             <button

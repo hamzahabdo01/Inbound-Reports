@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import SimplePagination from '../../components/SimplePagination';
 
 export const formatAmount = (v) => {
@@ -8,6 +9,20 @@ export const formatAmount = (v) => {
 };
 
 export function Table({ headers, rows, renderRow, className = '', page, setPage, rowsPerPage = 15, expandedRow, onRowClick, rowKey, renderExpanded, rowClassName = '', expandedRowClassName = '' }) {
+  // Track the scroll container's visible width so the expanded row never stretches wider than the viewport
+  const scrollRef = useRef(null);
+  const [visibleWidth, setVisibleWidth] = useState(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const update = () => setVisibleWidth(el.offsetWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   if (!rows.length) {
     return <div className="p-6 text-center text-body-sm text-on-surface-variant">No records</div>;
   }
@@ -15,7 +30,7 @@ export function Table({ headers, rows, renderRow, className = '', page, setPage,
   const displayRows = page ? rows.slice((page - 1) * rowsPerPage, page * rowsPerPage) : rows;
   return (
     <div>
-      <div className={`overflow-x-auto ${className}`}>
+      <div ref={scrollRef} className={`overflow-x-auto ${className}`}>
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-surface-container-low border-b border-outline-variant">
@@ -41,7 +56,11 @@ export function Table({ headers, rows, renderRow, className = '', page, setPage,
               return [rowEl, (
                 <tr key={`${key}-expanded`}>
                   <td colSpan={headers.length} className="p-0 border-b border-outline-variant/30">
-                    <div className="animate-fade-in bg-surface-container-lowest/50">
+                    {/* Pin to left edge of the scroll container so it never stretches with wide tables */}
+                    <div
+                      className="animate-fade-in bg-surface-container-lowest/50"
+                      style={visibleWidth ? { position: 'sticky', left: 0, width: visibleWidth, overflow: 'hidden' } : {}}
+                    >
                       {renderExpanded(row)}
                     </div>
                   </td>

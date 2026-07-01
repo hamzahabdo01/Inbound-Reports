@@ -106,6 +106,10 @@ function Procurement() {
     setContractTypeFilter('Sea');
     setCurrentPage(1);
     setSortConfig({ key: null, direction: 'asc' });
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTop = 0;
+    }
   }, [activeTab]);
 
   // Determine active stage of a row

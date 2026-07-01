@@ -5,7 +5,7 @@ import InfoButton from '../../components/InfoButton';
 import ExpandButton from '../../components/ExpandButton';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 
-export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage, visibleKpiCards, kpiTotalPages, filteredOpenOverduePOs, overviewSearch, setOverviewSearch, overviewStatus, setOverviewStatus, procurementStatusFilter, setProcurementStatusFilter, filteredStatusDetails, tp, sp }) {
+export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage, kpiCards = [], kpiTotalPages, filteredOpenOverduePOs, overviewSearch, setOverviewSearch, overviewStatus, setOverviewStatus, procurementStatusFilter, setProcurementStatusFilter, filteredStatusDetails, tp, sp }) {
   const fmtDuration = (days) => {
     if (days == null || days < 0) return null;
     if (days === 0) return '0d';
@@ -53,19 +53,28 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
         <section id="ppc-overview">
           <div className="space-y-3">
             <div className="relative pl-12 pr-12">
-              <div key={kpiPage} className="grid grid-cols-4 gap-3 animate-fade-in">
-                {visibleKpiCards.map((c) => (
-                  <KPICard key={c.label} variant="detailed" {...c} />
-                ))}
+              <div className="overflow-hidden w-full">
+                <div 
+                  className="flex transition-transform duration-500 ease-in-out"
+                  style={{ transform: `translateX(-${kpiPage * 100}%)` }}
+                >
+                  {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
+                    <div key={pageIdx} className="grid grid-cols-4 gap-3 w-full shrink-0">
+                      {kpiCards.slice(pageIdx * 4, pageIdx * 4 + 4).map((c, cardIdx) => (
+                        <KPICard key={c.label || cardIdx} variant="detailed" {...c} />
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
               {kpiTotalPages > 1 && (
                 <>
                   <button type="button" onClick={() => setKpiPage((p) => Math.max(p - 1, 0))} disabled={kpiPage === 0}
-                    className="absolute left-0 top-4 bottom-4 w-6 flex items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:opacity-0 disabled:pointer-events-none transition-all duration-200 z-10"
+                    className="absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200 z-10"
                     aria-label="Previous KPI page"
                   ><i className="fa-solid fa-chevron-left text-[10px]"></i></button>
                   <button type="button" onClick={() => setKpiPage((p) => Math.min(p + 1, kpiTotalPages - 1))} disabled={kpiPage === kpiTotalPages - 1}
-                    className="absolute right-0 top-4 bottom-4 w-6 flex items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:opacity-0 disabled:pointer-events-none transition-all duration-200 z-10"
+                    className="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200 z-10"
                     aria-label="Next KPI page"
                   ><i className="fa-solid fa-chevron-right text-[10px]"></i></button>
                 </>

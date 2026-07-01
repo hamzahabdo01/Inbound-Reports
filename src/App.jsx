@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -48,6 +48,13 @@ function AppContent() {
   const { loggedIn, validating, logout } = useAuth();
   const [activeSection, setActiveSection] = useState('Program');
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const mainRef = useRef(null);
+
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  }, [activeSection]);
 
   if (validating) {
     return (
@@ -88,7 +95,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-surface flex">
       <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={logout} />
-      <main className="flex-1 max-h-screen overflow-auto">
+      <main ref={mainRef} className="flex-1 max-h-screen overflow-auto">
         <div className="max-w-container mx-auto px-lg pb-lg">
           {renderPage({ sidebarVisible, toggleSidebar })}
         </div>
