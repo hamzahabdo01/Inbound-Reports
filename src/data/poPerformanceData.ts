@@ -4,6 +4,7 @@ import supplierRiskRankingRaw from './po-perfromance-and-compliance/SupplierRisk
 import supplierPerformanceLeaderboardRaw from './po-perfromance-and-compliance/SupplierPerformanceLeaderboard.json';
 import supplierPerformanceSummaryRaw from './po-perfromance-and-compliance/SupplierPerformanceSummary.json';
 import contractToReceiveTrackingRaw from './po-perfromance-and-compliance/ContractToReceiveStatusTrackingReport.json';
+import { computeAverageMilestoneIndex } from '../utils/leadtimeMilestones';
 import yearlyContractToReceiptRaw from './po-perfromance-and-compliance/YearlyContractToReceiptAmount.json';
 import openPOByMaterialTypeRaw from './po-perfromance-and-compliance/OpenPOByMaterialType.json';
 import openPOItemDetailRaw from './po-perfromance-and-compliance/OpenPOItemDetail.json';
@@ -232,39 +233,84 @@ function generatePerformanceBonds() {
   });
 }
 
-function generateLeadtime(pos) {
-  const details = pos.slice(0, 50).map((po) => {
-    const contractDate = new Date(po.issueDate);
-    contractDate.setDate(contractDate.getDate() - rand(30, 120));
-    const poDate = new Date(po.issueDate);
-    const lcDate = new Date(poDate);
-    lcDate.setDate(lcDate.getDate() + rand(15, 60));
-    const portDate = new Date(lcDate);
-    portDate.setDate(portDate.getDate() + rand(30, 90));
-    const clearedDate = new Date(portDate);
-    clearedDate.setDate(clearedDate.getDate() + rand(5, 25));
-    const receiveDate = new Date(clearedDate);
-    receiveDate.setDate(receiveDate.getDate() + rand(3, 15));
-    return {
-      poNo: po.poNo,
-      supplier: po.supplier,
-      contractToPO: Math.round((poDate.getTime() - contractDate.getTime()) / (1000 * 60 * 60 * 24)),
-      poToLCOpening: Math.round((lcDate.getTime() - poDate.getTime()) / (1000 * 60 * 60 * 24)),
-      lcToPortArrival: Math.round((portDate.getTime() - lcDate.getTime()) / (1000 * 60 * 60 * 24)),
-      portToCleared: Math.round((clearedDate.getTime() - portDate.getTime()) / (1000 * 60 * 60 * 24)),
-      clearedToReceive: Math.round((receiveDate.getTime() - clearedDate.getTime()) / (1000 * 60 * 60 * 24)),
-      totalLeadtime: Math.round((receiveDate.getTime() - contractDate.getTime()) / (1000 * 60 * 60 * 24)),
-    };
-  });
-  const summary = {
-    contractToPO: Math.round(details.reduce((s, d) => s + d.contractToPO, 0) / details.length),
-    poToLCOpening: Math.round(details.reduce((s, d) => s + d.poToLCOpening, 0) / details.length),
-    lcToPortArrival: Math.round(details.reduce((s, d) => s + d.lcToPortArrival, 0) / details.length),
-    portToCleared: Math.round(details.reduce((s, d) => s + d.portToCleared, 0) / details.length),
-    clearedToReceive: Math.round(details.reduce((s, d) => s + d.clearedToReceive, 0) / details.length),
-    total: Math.round(details.reduce((s, d) => s + d.totalLeadtime, 0) / details.length),
+function generateLeadtime(pos?: any) {
+  const parseDate = (dStr: any) => {
+    if (!dStr || typeof dStr !== 'string') return null;
+    const d = new Date(dStr);
+    return isNaN(d.getTime()) ? null : d;
   };
-  return { summary, details };
+
+  const diffDays = (d1: Date | null, d2: Date | null) => {
+    if (!d1 || !d2) return null;
+    const diff = d1.getTime() - d2.getTime();
+    const days = Math.round(diff / (1000 * 60 * 60 * 24));
+    return days >= 0 ? days : null;
+  };
+
+  const details = contractToReceiveTrackingRaw.data.map((r: any) => {
+    const poDate = parseDate(r.purchaseOrderDate);
+    if (!poDate) return null;
+
+    const m = r.milestoneDates || {};
+    
+    // Contract Date
+    const contractDateStr = m.sourceColumn36Date || m.sourceColumn35Date || m.sourceColumn41Date || m.sourceColumn42Date || m.sourceColumn43Date;
+    let contractDate = parseDate(contractDateStr);
+    if (!contractDate) {
+      // fallback: subtract average contract-to-PO time (e.g. 45 days)
+      contractDate = new Date(poDate);
+      contractDate.setDate(contractDate.getDate() - 45);
+    }
+
+    const lcDate = parseDate(m.sourceColumn55Date || m.sourceColumn56Date || m.sourceColumn54Date || m.sourceColumn48Date || m.sourceColumn47Date);
+    const portDate = parseDate(m.sourceColumn57Date || m.sourceColumn61Date || m.sourceColumn67Date);
+    const clearedDate = parseDate(m.sourceColumn71Date || m.sourceColumn72Date || m.sourceColumn73Date || m.sourceColumn76Date || m.sourceColumn77Date);
+    const receiveDate = parseDate(m.sourceColumn74Date || m.sourceColumn75Date);
+
+    const contractToPO = diffDays(poDate, contractDate);
+    const poToLCOpening = diffDays(lcDate, poDate);
+    const lcToPortArrival = diffDays(portDate, lcDate);
+    const portToCleared = diffDays(clearedDate, portDate);
+    const clearedToReceive = diffDays(receiveDate, clearedDate);
+
+    let totalLeadtime = diffDays(receiveDate, contractDate);
+    if (totalLeadtime === null) {
+      const parts = [contractToPO, poToLCOpening, lcToPortArrival, portToCleared, clearedToReceive].filter(v => v !== null) as number[];
+      if (parts.length > 0) {
+        totalLeadtime = parts.reduce((s, v) => s + v, 0);
+      }
+    }
+
+    return {
+      poNo: r.purchaseOrderNumber,
+      supplier: r.supplierName,
+      contractToPO,
+      poToLCOpening,
+      lcToPortArrival,
+      portToCleared,
+      clearedToReceive,
+      totalLeadtime,
+    };
+  }).filter((x: any): x is any => x !== null);
+
+  const getAvg = (arr: (number | null)[]) => {
+    const filtered = arr.filter((v): v is number => v !== null);
+    if (!filtered.length) return 0;
+    return Math.round(filtered.reduce((s, v) => s + v, 0) / filtered.length);
+  };
+
+  const summary = {
+    contractToPO: getAvg(details.map(d => d.contractToPO)),
+    poToLCOpening: getAvg(details.map(d => d.poToLCOpening)),
+    lcToPortArrival: getAvg(details.map(d => d.lcToPortArrival)),
+    portToCleared: getAvg(details.map(d => d.portToCleared)),
+    clearedToReceive: getAvg(details.map(d => d.clearedToReceive)),
+    total: getAvg(details.map(d => d.totalLeadtime)),
+  };
+
+  const milestone = computeAverageMilestoneIndex(contractToReceiveTrackingRaw.data);
+
+  return { summary, details, milestone };
 }
 
 function generateProcurementStatus() {

@@ -1,5 +1,6 @@
 import KPICard from '../../components/KPICard';
 import InfoButton from '../../components/InfoButton';
+import LeadtimeMilestoneTracker from '../../components/LeadtimeMilestoneTracker';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 
 const fmtDuration = (days) => {
@@ -30,6 +31,12 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
       {activeSections.includes('ppc-leadtime') && (
         <section id="ppc-leadtime">
           <SectionPanel title="Leadtime Analysis" subtitle="Average processing times across procurement stages" action={<InfoButton contentId="po-leadtime" />}>
+            {data.leadtime.milestone && (
+              <LeadtimeMilestoneTracker
+                averageIndex={data.leadtime.milestone.averageIndex}
+                totalCount={data.leadtime.milestone.totalCount}
+              />
+            )}
             <div className="grid grid-cols-5 gap-4 mb-6">
               <KPICard variant="detailed" icon="fa-file-signature" iconBg="bg-primary/10" iconColor="text-primary" label="Contract → PO" value={fmtDuration(data.leadtime.summary.contractToPO)} subtitle="Tender process" />
               <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="PO → LC Opening" value={fmtDuration(data.leadtime.summary.poToLCOpening)} subtitle="Contract management" />
