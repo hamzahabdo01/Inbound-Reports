@@ -2,21 +2,20 @@ export type MilestoneStepState = 'noData' | 'active' | 'pending';
 
 export interface LeadtimeMilestoneStep {
   label: string;
-  /** No process-status mapping yet — shown as no-data in UI. */
   dataAvailable: boolean;
 }
 
-/** Visual pipeline for leadtime analysis (9 steps). */
+/** Procurement pipeline — 9 stages from request to delivery. */
 export const LEADTIME_MILESTONE_STEPS: LeadtimeMilestoneStep[] = [
-  { label: 'Purchase request', dataAvailable: false },
-  { label: 'On tender process', dataAvailable: false },
-  { label: 'Tender awarded', dataAvailable: false },
+  { label: 'Purchase Request', dataAvailable: false },
+  { label: 'On Tender Process', dataAvailable: false },
+  { label: 'Tender Awarded', dataAvailable: false },
   { label: 'Contract', dataAvailable: true },
-  { label: 'Purchase order', dataAvailable: true },
+  { label: 'Purchase Order', dataAvailable: true },
   { label: 'LC / Payment', dataAvailable: true },
-  { label: 'Awaiting shipment', dataAvailable: true },
-  { label: 'Partially received', dataAvailable: true },
-  { label: 'Delivery complete', dataAvailable: true },
+  { label: 'Awaiting Shipment', dataAvailable: true },
+  { label: 'Partially Received', dataAvailable: true },
+  { label: 'Delivery Complete', dataAvailable: true },
 ];
 
 /** Map process status codes to milestone index (0-based). */
@@ -27,7 +26,6 @@ const STATUS_TO_MILESTONE: Record<string, number> = {
   PO_APPROVAL_IN_PROGRESS: 4,
   PO_APPROVED: 4,
   PROFORMA_RECEIVED: 4,
-  MILESTONE_NOT_STARTED_OR_NOT_CAPTURED: 4,
   LC_CAD_APPLICATION_IN_PROGRESS: 5,
   LC_CAD_OPENED: 5,
   PERFORMANCE_GUARANTEE_RECEIVED: 5,
@@ -92,5 +90,5 @@ export function getProgressRailPercent(counts: number[]): number {
     firstTracked,
   );
 
-  return (peakIndex / lastIndex) * 100;
+  return ((peakIndex - firstTracked) / (lastIndex - firstTracked)) * 100;
 }

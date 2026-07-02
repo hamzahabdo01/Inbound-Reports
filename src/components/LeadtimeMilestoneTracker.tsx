@@ -92,7 +92,7 @@ export default function LeadtimeMilestoneTracker({
                   <span className={`text-[10px] block leading-tight ${styles.label}`}>
                     {step.label}
                   </span>
-                  {step.dataAvailable && (
+                  {step.dataAvailable ? (
                     <div className={`mt-0.5 text-[10px] tabular-nums ${styles.stat}`}>
                       {hasStats ? (
                         <>
@@ -103,6 +103,8 @@ export default function LeadtimeMilestoneTracker({
                         <span className="block leading-tight">—</span>
                       )}
                     </div>
+                  ) : (
+                    <span className="text-[9px] text-[#94A3B8] italic mt-0.5 block">No data yet</span>
                   )}
                 </div>
               </div>

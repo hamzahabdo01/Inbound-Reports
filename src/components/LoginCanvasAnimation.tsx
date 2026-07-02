@@ -25,9 +25,9 @@ const DEFAULT_PROPS = {
   primaryColor: COLORS.primary,
   criticalColor: COLORS.error,
   dotGrid: { spacing: 38,  amplitude: null, speed: null,     size: null    },
-  routes:  { poolSize: 6, fadeDuration: 120, holdMin: 250, holdMax: 600 },
-  comets:  { speedMin: 0.0025, speedMax: 0.006, sizeMin: 2.2, sizeMax: 3.2, trailMin: 18, trailMax: 30 },
-  pings:   { minInterval: 120, maxInterval: 260, life: 140, speed: 0.22 },
+  routes:  { poolSize: 2, fadeDuration: 120, holdMin: 250, holdMax: 600 },
+  comets:  { speedMin: 0.0015, speedMax: 0.004, sizeMin: 2.2, sizeMax: 3.2, trailMin: 18, trailMax: 30 },
+  pings:   { minInterval: 300, maxInterval: 600, life: 140, speed: 0.15 },
   labels:  { font: '600 12px "Plus Jakarta Sans", sans-serif', opacity: 0.45 },
   cargoList: ['PO-1092', 'PO-3042', 'PO-8821', 'PO-4093', 'PO-5511', 'PO-7102', 'PO-9204', 'PO-1130'],
   pingMessages: [
