@@ -33,7 +33,8 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
           <SectionPanel title="Leadtime Analysis" subtitle="Average processing times across procurement stages" action={<InfoButton contentId="po-leadtime" />}>
             {data.leadtime.milestone && (
               <LeadtimeMilestoneTracker
-                averageIndex={data.leadtime.milestone.averageIndex}
+                counts={data.leadtime.milestone.counts}
+                percentages={data.leadtime.milestone.percentages}
                 totalCount={data.leadtime.milestone.totalCount}
               />
             )}

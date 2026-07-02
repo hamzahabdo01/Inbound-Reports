@@ -1,27 +1,33 @@
-export type MilestoneStepState = 'noData' | 'complete' | 'inProgress' | 'pending';
+export type MilestoneStepState = 'noData' | 'active' | 'pending';
 
 export interface LeadtimeMilestoneStep {
   label: string;
+  /** No process-status mapping yet — shown as no-data in UI. */
   dataAvailable: boolean;
 }
 
-/** Visual pipeline for leadtime analysis — matches design spec (9 steps). */
+/** Visual pipeline for leadtime analysis (9 steps). */
 export const LEADTIME_MILESTONE_STEPS: LeadtimeMilestoneStep[] = [
   { label: 'Purchase request', dataAvailable: false },
   { label: 'On tender process', dataAvailable: false },
   { label: 'Tender awarded', dataAvailable: false },
-  { label: 'Contract', dataAvailable: false },
-  { label: 'Purchase order', dataAvailable: false },
+  { label: 'Contract', dataAvailable: true },
+  { label: 'Purchase order', dataAvailable: true },
   { label: 'LC / Payment', dataAvailable: true },
   { label: 'Awaiting shipment', dataAvailable: true },
   { label: 'Partially received', dataAvailable: true },
   { label: 'Delivery complete', dataAvailable: true },
 ];
 
-const FIRST_TRACKED_INDEX = LEADTIME_MILESTONE_STEPS.findIndex((s) => s.dataAvailable);
-
 /** Map process status codes to milestone index (0-based). */
 const STATUS_TO_MILESTONE: Record<string, number> = {
+  CONTRACTING_IN_PROGRESS: 3,
+  BUDGET_CONFIRMED: 3,
+  SIGNED_CONTRACT_RECEIVED: 3,
+  PO_APPROVAL_IN_PROGRESS: 4,
+  PO_APPROVED: 4,
+  PROFORMA_RECEIVED: 4,
+  MILESTONE_NOT_STARTED_OR_NOT_CAPTURED: 4,
   LC_CAD_APPLICATION_IN_PROGRESS: 5,
   LC_CAD_OPENED: 5,
   PERFORMANCE_GUARANTEE_RECEIVED: 5,
@@ -31,49 +37,60 @@ const STATUS_TO_MILESTONE: Record<string, number> = {
   ORDER_CLOSED: 8,
 };
 
-/** Items without a mapped status are treated as pre-LC (index 4). */
-const PRE_TRACKED_INDEX = FIRST_TRACKED_INDEX - 1;
+export interface MilestoneDistribution {
+  counts: number[];
+  percentages: number[];
+  totalCount: number;
+}
 
 export function getMilestoneIndexForStatus(status: string | null | undefined): number | null {
   if (!status) return null;
-  return STATUS_TO_MILESTONE[status] ?? PRE_TRACKED_INDEX;
+  return STATUS_TO_MILESTONE[status] ?? null;
 }
 
-export function computeAverageMilestoneIndex(
+export function computeMilestoneDistribution(
   items: Array<{ currentProcessStatus?: string | null }>,
-): { averageIndex: number; mappedCount: number; totalCount: number } {
-  const totalCount = items.length;
-  if (!totalCount) {
-    return { averageIndex: PRE_TRACKED_INDEX, mappedCount: 0, totalCount: 0 };
+): MilestoneDistribution {
+  const stepCount = LEADTIME_MILESTONE_STEPS.length;
+  const counts = Array.from({ length: stepCount }, () => 0);
+  let totalCount = 0;
+
+  for (const item of items) {
+    const idx = getMilestoneIndexForStatus(item.currentProcessStatus);
+    if (idx == null) continue;
+    counts[idx]++;
+    totalCount++;
   }
 
-  const indices = items
-    .map((item) => getMilestoneIndexForStatus(item.currentProcessStatus))
-    .filter((idx): idx is number => idx !== null);
+  const percentages = counts.map((c) =>
+    totalCount > 0 ? Math.round((c / totalCount) * 1000) / 10 : 0,
+  );
 
-  if (!indices.length) {
-    return { averageIndex: PRE_TRACKED_INDEX, mappedCount: 0, totalCount };
-  }
-
-  const averageIndex = indices.reduce((sum, idx) => sum + idx, 0) / indices.length;
-  return { averageIndex, mappedCount: indices.length, totalCount };
+  return { counts, percentages, totalCount };
 }
 
-export function getMilestoneStepState(stepIndex: number, averageIndex: number): MilestoneStepState {
-  const lastIndex = LEADTIME_MILESTONE_STEPS.length - 1;
+/** Visual state from PO counts. */
+export function getMilestoneStepState(
+  stepIndex: number,
+  counts: number[],
+): MilestoneStepState {
+  const step = LEADTIME_MILESTONE_STEPS[stepIndex];
+  if (!step?.dataAvailable) return 'noData';
 
-  if (averageIndex >= lastIndex) return 'complete';
-
-  // e.g. avg 5.4 → steps 1–5 (indices 0–4) complete, step 6 (index 5) in progress
-  if (stepIndex < Math.floor(averageIndex)) return 'complete';
-
-  if (stepIndex === Math.floor(averageIndex)) return 'inProgress';
-
+  const count = counts[stepIndex] ?? 0;
+  if (count > 0) return 'active';
   return 'pending';
 }
 
-export function getProgressPercent(averageIndex: number): number {
+export function getProgressRailPercent(counts: number[]): number {
   const lastIndex = LEADTIME_MILESTONE_STEPS.length - 1;
-  const clamped = Math.max(0, Math.min(averageIndex, lastIndex));
-  return (clamped / lastIndex) * 100;
+  const firstTracked = LEADTIME_MILESTONE_STEPS.findIndex((s) => s.dataAvailable);
+  if (firstTracked < 0) return 0;
+
+  const peakIndex = counts.reduce(
+    (max, c, i) => (c > 0 ? Math.max(max, i) : max),
+    firstTracked,
+  );
+
+  return (peakIndex / lastIndex) * 100;
 }

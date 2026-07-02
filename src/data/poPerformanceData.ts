@@ -4,7 +4,7 @@ import supplierRiskRankingRaw from './po-perfromance-and-compliance/SupplierRisk
 import supplierPerformanceLeaderboardRaw from './po-perfromance-and-compliance/SupplierPerformanceLeaderboard.json';
 import supplierPerformanceSummaryRaw from './po-perfromance-and-compliance/SupplierPerformanceSummary.json';
 import contractToReceiveTrackingRaw from './po-perfromance-and-compliance/ContractToReceiveStatusTrackingReport.json';
-import { computeAverageMilestoneIndex } from '../utils/leadtimeMilestones';
+import { computeMilestoneDistribution } from '../utils/leadtimeMilestones';
 import yearlyContractToReceiptRaw from './po-perfromance-and-compliance/YearlyContractToReceiptAmount.json';
 import openPOByMaterialTypeRaw from './po-perfromance-and-compliance/OpenPOByMaterialType.json';
 import openPOItemDetailRaw from './po-perfromance-and-compliance/OpenPOItemDetail.json';
@@ -308,7 +308,7 @@ function generateLeadtime(pos?: any) {
     total: getAvg(details.map(d => d.totalLeadtime)),
   };
 
-  const milestone = computeAverageMilestoneIndex(contractToReceiveTrackingRaw.data);
+  const milestone = computeMilestoneDistribution(contractToReceiveTrackingRaw.data);
 
   return { summary, details, milestone };
 }
