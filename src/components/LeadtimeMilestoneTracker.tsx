@@ -4,6 +4,18 @@ import {
   getProgressRailPercent,
 } from '../utils/leadtimeMilestones';
 
+const MILESTONE_ICONS = [
+  'fa-file-pen',             // Purchase Request
+  'fa-gavel',                // On Tender Process
+  'fa-trophy',               // Tender Awarded
+  'fa-handshake',            // Contract
+  'fa-clipboard-list',       // Purchase Order
+  'fa-coins',                // LC / Payment
+  'fa-ship',                 // Awaiting Shipment
+  'fa-box-open',             // Partially Received
+  'fa-check-double',         // Delivery Complete
+];
+
 const STATE_STYLES = {
   active: {
     dot: 'bg-primary border-primary text-white',
@@ -22,14 +34,14 @@ const STATE_STYLES = {
   },
 };
 
-function MilestoneDot({ state }: { state: keyof typeof STATE_STYLES }) {
+function MilestoneDot({ state, stepIndex }: { state: keyof typeof STATE_STYLES; stepIndex: number }) {
   const styles = STATE_STYLES[state];
 
   return (
     <div
       className={`w-11 h-11 rounded-full border-2 flex items-center justify-center transition-all duration-300 shadow-sm shrink-0 ${styles.dot}`}
     >
-      {state === 'active' && <i className="fa-solid fa-check text-xs" />}
+      {state === 'active' && <i className={`fa-solid ${MILESTONE_ICONS[stepIndex]} text-sm`} />}
       {(state === 'pending' || state === 'noData') && (
         <span className="text-sm font-bold leading-none">—</span>
       )}
@@ -87,7 +99,7 @@ export default function LeadtimeMilestoneTracker({
 
             return (
               <div key={step.label} className="flex flex-col items-center flex-1 min-w-0">
-                <MilestoneDot state={state} />
+                <MilestoneDot state={state} stepIndex={idx} />
                 <div className="text-center mt-2.5 px-0.5 w-full">
                   <span className={`text-[10px] block leading-tight ${styles.label}`}>
                     {step.label}

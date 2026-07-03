@@ -143,7 +143,7 @@ function SectionNavigator({ sections, scrollOffset = 120 }: any) {
         }`}
         aria-hidden={!expanded}
       >
-        {mergedSections.map(({ id, label }) => {
+        {sections.map(({ id, label }) => {
           const isActive = active === id;
           return (
             <button
@@ -170,7 +170,7 @@ function SectionNavigator({ sections, scrollOffset = 120 }: any) {
       </div>
 
       <div className="flex flex-col gap-2 py-3 px-2 bg-[#0B4F54] border border-[#00373B] rounded-l-xl shadow-[0px_4px_20px_rgba(10,50,53,0.12)]">
-        {mergedSections.map(({ id, label }) => {
+        {sections.map(({ id, label }) => {
           const isActive = active === id;
           return (
             <button

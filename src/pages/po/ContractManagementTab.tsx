@@ -39,9 +39,9 @@ function FunnelChart({ data }: any) {
             const stageLabel = FUNNEL_LABELS[fi];
             const priorLabels = FUNNEL_LABELS.slice(0, fi).join(' → ');
             return (
-              <g key={`${r.year}-${fi}`}>
+              <g key={`fi-${fi}`}>
                 <rect x={x} y={y} width={barW} height={barH} rx={3} fill={FUNNEL_COLORS[fi]} opacity={tooltip?.fi === fi && tooltip?.year === r.year ? 1 : 0.85}
-                  style={{ cursor: 'pointer', transition: 'opacity 0.15s' }}
+                  style={{ cursor: 'pointer', transition: 'all 0.3s ease-in-out' }}
                   onMouseEnter={(e) => setTooltip({ year: r.year, fi, v, stageLabel, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, row: r })}
                   onMouseMove={(e) => setTooltip((prev) => prev ? { ...prev, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY } : null)}
                   onMouseLeave={() => setTooltip(null)}

@@ -193,6 +193,7 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+
 }
 
 /* Custom scrollbar - Deep Eucalyptus Design System */

@@ -105,6 +105,24 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
           <svg className="w-full h-auto" viewBox={`0 0 ${viewWidth} ${viewHeight}`} role="img" aria-label={totalLabel || 'Pie chart'}>
             {slices.map((slice, index) => {
               const activeSlice = index === activeIndex;
+              const isFullCircle = slices.length === 1 && slice.percent >= 99.99;
+              if (isFullCircle) {
+                return (
+                  <circle
+                    key={slice.label}
+                    cx={cx}
+                    cy={cy}
+                    r={r}
+                    fill={slice.color}
+                    stroke="#ffffff"
+                    strokeWidth="4"
+                    className="cursor-pointer transition-opacity duration-200"
+                    opacity={hoveredIndex === null || activeSlice ? 0.95 : 0.42}
+                    onMouseEnter={() => setHoveredIndex(index)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                  />
+                );
+              }
               const path = describeSlice(cx, cy, r, slice.startAngle, slice.endAngle, activeSlice ? (isCompact ? 5 : 7) : 2);
               return (
                 <path

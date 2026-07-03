@@ -10,18 +10,24 @@ import openPOByMaterialTypeRaw from './po-perfromance-and-compliance/OpenPOByMat
 import openPOItemDetailRaw from './po-perfromance-and-compliance/OpenPOItemDetail.json';
 import overduePOScheduleLineRaw from './po-perfromance-and-compliance/OverduePOsScheduleLineDetail.json';
 import overduePOSummaryRaw from './po-perfromance-and-compliance/OverduePOsSummary.json';
+import fundYearSummaryRaw from './FundYearSummary_202607021033.json';
+
+const FUND_NAME_MAP: Record<string, string> = {
+  EPSSDEF: 'EPSS',
+  SDGFUND: 'SDG',
+  GFFUND: 'Global Fund',
+  MOFFUND: 'Ministry of Finance',
+  MOHFUND: 'MOH',
+  CONSFUND: 'Consolidated',
+  STBFUND: 'STB Foundation',
+  EPHIFUND: 'EPHI',
+  PSMFUND: 'PSM',
+  '[Unassigned]': 'Unassigned',
+};
 
 const PROGRAMS = ['HIV/AIDS', 'TB', 'Malaria', 'EPI', 'Reproductive Health', 'Child Health', 'Clinical Chemistry', 'Nutrition'];
 const COMMODITIES = ['ARVs', 'Antimalarials', 'Vaccines', 'Lab Reagents', 'Family Planning', 'Essential Medicines', 'Nutrition Supplies', 'Diagnostics'];
 const SUPPLIERS = ['EPSS', 'MOH', 'Global Fund', 'UNICEF', 'WHO', 'UNDP', 'UNFPA', 'Clinton Access Initiative'];
-const FUNDING_SOURCES = [
-  { name: 'Government', sub: [{ name: 'MOH', share: 0.6 }, { name: 'EPSS', share: 0.4 }], share: 0.35 },
-  { name: 'Global Fund', sub: null, share: 0.30 },
-  { name: 'World Bank', sub: null, share: 0.15 },
-  { name: 'Bilateral', sub: [{ name: 'USAID', share: 0.5 }, { name: 'DFID', share: 0.3 }, { name: 'EU', share: 0.2 }], share: 0.12 },
-  { name: 'UN Agencies', sub: [{ name: 'UNICEF', share: 0.5 }, { name: 'WHO', share: 0.3 }, { name: 'UNFPA', share: 0.2 }], share: 0.08 },
-];
-
 const rand = (min, max) => Math.round(min + Math.random() * (max - min));
 const pick = (arr) => arr[rand(0, arr.length - 1)];
 const formatAmount = (v) => v.toLocaleString('en');
@@ -105,13 +111,24 @@ function generateTrend() {
 }
 
 function generateFundingSourceSunburst() {
-  return FUNDING_SOURCES.map((fs) => ({
-    name: fs.name,
-    value: Math.round(fs.share * 1_200_000_000),
-    children: fs.sub
-      ? fs.sub.map((s) => ({ name: s.name, value: Math.round(s.share * fs.share * 1_200_000_000) }))
-      : null,
-  }));
+  const data: any[] = Object.values(fundYearSummaryRaw as any)[0] as any[];
+  const years = [...new Set(data.map((d) => d.PROCUREMENT_YEAR))].sort();
+  return years.map((year) => {
+    const yearRecords = data.filter((d) => d.PROCUREMENT_YEAR === year && d.FUND !== '[Unassigned]');
+    const totalValue = yearRecords.reduce((s, d) => s + d.PROCUREMENT_VALUE_ETB, 0);
+    return {
+      name: String(year),
+      value: totalValue,
+      children: yearRecords.map((d) => ({
+        name: FUND_NAME_MAP[d.FUND] || d.FUND,
+        value: d.PROCUREMENT_VALUE_ETB,
+        poCount: d.PURCHASE_ORDER_COUNT,
+        supplierCount: d.DISTINCT_SUPPLIER_COUNT,
+        materialCount: d.DISTINCT_MATERIAL_COUNT,
+        yearPct: d.PERCENT_OF_YEAR_TOTAL_VALUE,
+      })),
+    };
+  });
 }
 
 function generateLocalVsIntl() {

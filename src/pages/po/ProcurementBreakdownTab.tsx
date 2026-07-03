@@ -1,342 +1,291 @@
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
+import KPICard from '../../components/KPICard';
 import PieChart from '../../components/PieChart';
-import SunburstChart from '../../components/SunburstChart';
 import InfoButton from '../../components/InfoButton';
 import ExpandButton from '../../components/ExpandButton';
-import { SectionPanel, formatAmount } from './poShared';
+import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 
-const PO_TYPE_COLORS = ['#0B4F54', '#D97706', '#216E6A', '#4A9598'];
+const fmtDuration = (days) => {
+  if (days == null || days < 0) return null;
+  if (days === 0) return '0d';
+  if (days >= 365) {
+    const y = Math.round(days / 365);
+    const rem = Math.round((days % 365) / 30);
+    return rem ? `${y}y ${rem}mo` : `${y}y`;
+  }
+  if (days >= 90) return `${Math.round(days / 30)}mo`;
+  if (days >= 30) {
+    const mo = Math.floor(days / 30);
+    const d = days % 30;
+    return d ? `${mo}mo ${d}d` : `${mo}mo`;
+  }
+  if (days >= 7) {
+    const w = Math.floor(days / 7);
+    const d = days % 7;
+    return d ? `${w}w ${d}d` : `${w}w`;
+  }
+  return `${days}d`;
+};
 
-function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, barAreaW = 400, setHover, activeHover }: any) {
-  const types = [...data].sort((a, b) => b[amountKey] - a[amountKey]);
-  const barH = 28;
-  const gap = 10;
-  const chartH = types.length * (barH + gap) - gap;
-  const svgW = labelW + barAreaW + 120;
-  const maxAmount = types[0]?.[amountKey] || 1;
+export default function ProcurementBreakdownTab({ data, activeSections, filteredOpenOverduePOs, overviewSearch, setOverviewSearch, overviewStatus, setOverviewStatus, procurementStatusFilter, setProcurementStatusFilter, filteredStatusDetails, tp, sp }: any) {
+  const [itemSearch, setItemSearch] = useState('');
+  const filteredOpenItems = data.openPOItemDetail?.data?.filter((row) => {
+    if (!itemSearch) return true;
+    const q = itemSearch.toLowerCase();
+    return (row.purchaseOrderNumber?.toLowerCase().includes(q) ||
+      row.supplierName?.toLowerCase().includes(q) ||
+      row.materialDescription?.toLowerCase().includes(q) ||
+      String(row.purchaseOrderItemNumber).includes(q));
+  }) || [];
+  const [overdueSearch, setOverdueSearch] = useState('');
+  const filteredOverdueLines = data.overduePOScheduleLine?.data?.filter((row) => {
+    if (!overdueSearch) return true;
+    const q = overdueSearch.toLowerCase();
+    return (row.purchaseOrderNumber?.toLowerCase().includes(q) ||
+      row.supplierName?.toLowerCase().includes(q) ||
+      row.materialDescription?.toLowerCase().includes(q) ||
+      String(row.purchaseOrderItemNumber).includes(q) ||
+      row.overdueBucket?.toLowerCase().includes(q));
+  }) || [];
 
-  const labelMap = {
-    'Laboratory commodity': 'Lab Commodity',
-    'Medical Supply': 'Med Supply',
-    'By Health Program': 'Health Program',
-    'RDF International': 'RDF Intl.',
-    'RDF  local': 'RDF Local',
-  };
-
-  return (
-    <div className="font-sans">
-      <svg width="100%" viewBox={`0 0 ${svgW} ${chartH + 24}`} role="img">
-        {types.map((t, i) => {
-          const y = i * (barH + gap) + 8;
-          const barW = Math.max(10, (t[amountKey] / maxAmount) * barAreaW);
-          const amountStr = formatAmount(t[amountKey]);
-          const label = labelMap[t[labelKey]] || t[labelKey];
-          return (
-            <g key={t[labelKey]} className="cursor-pointer" 
-              onMouseEnter={(e) => setHover({ ...t, mx: e.clientX, my: e.clientY })}
-              onMouseMove={(e) => setHover(prev => prev ? { ...prev, mx: e.clientX, my: e.clientY } : prev)}
-              onMouseLeave={() => setHover(null)}>
-              <text x={labelW - 8} y={y + barH / 2 + 4} textAnchor="end" fontSize="11" fontWeight={activeHover && activeHover[labelKey] === t[labelKey] ? 800 : 700} fill={activeHover && activeHover[labelKey] === t[labelKey] ? "#0B4F54" : "#404849"}>{label}</text>
-              <rect x={labelW} y={y} width={barW} height={barH} rx="5" fill={colors[i % colors.length]} opacity={activeHover && activeHover[labelKey] === t[labelKey] ? 1 : 0.8}
-                style={{ transition: 'opacity 0.15s' }}
-              />
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
-
-export default function ProcurementBreakdownTab({ data, activeSections, supplierHover, setSupplierHover, trendYears, trendYear, setTrendYear, filteredTrend, trendHover, setTrendHover }: any) {
   return (
     <>
-      {activeSections.includes('ppc-procurement-breakdown') && (
-        <MergedBreakdownSection data={data} />
-      )}
-
-
-      {activeSections.includes('ppc-supplier-share') && (
-        <section id="ppc-supplier-share">
-          <SectionPanel title="Contract by Supplier Share" subtitle="Distribution of contract value by supplier">
-            {(() => {
-              const SUPPLIER_COLORS = {
-                'EPSS': '#00373B', 'MOH': '#0B4F54', 'Global Fund': '#D97706', 'UNICEF': '#216E6A',
-                'WHO': '#4A9598', 'UNDP': '#86BFC5', 'UNFPA': '#A4D1D6', 'Clinton Access Initiative': '#CFD8DC',
-              };
-              const totalContracts = data.supplierShare.reduce((s, x) => s + x.amount, 0);
-              const cx = 140, cy = 140, r = 115;
-              const polarToCartesian = (x, y, radius, angle) => ({
-                x: x + radius * Math.cos(angle),
-                y: y + radius * Math.sin(angle),
-              });
-              const describeSlice = (x, y, radius, startAngle, endAngle) => {
-                const start = polarToCartesian(x, y, radius, startAngle);
-                const end = polarToCartesian(x, y, radius, endAngle);
-                const largeArcFlag = endAngle - startAngle <= Math.PI ? '0' : '1';
-                return `M ${x} ${y} L ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y} Z`;
-              };
-              let accumulatedAngle = -Math.PI / 2;
-              const slices = data.supplierShare.map((s) => {
-                const angle = (s.amount / totalContracts) * Math.PI * 2;
-                const slice = { ...s, color: SUPPLIER_COLORS[s.label] || '#CFD8DC', startAngle: accumulatedAngle, endAngle: accumulatedAngle + angle };
-                accumulatedAngle += angle;
-                return slice;
-              });
-              return (
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center font-sans">
-                  <div className="md:col-span-6 flex justify-center relative select-none">
-                    <svg width="280" height="280" viewBox="0 0 280 280" className="drop-shadow-sm">
-                      {slices.map((slice) => {
-                        const isHovered = supplierHover?.label === slice.label;
-                        const opacity = supplierHover ? (isHovered ? 1 : 0.42) : 0.95;
-                        const offset = isHovered ? 5 : 0;
-                        const midAngle = (slice.startAngle + slice.endAngle) / 2;
-                        const ox = offset * Math.cos(midAngle);
-                        const oy = offset * Math.sin(midAngle);
-                        return (
-                          <path key={slice.label}
-                            d={describeSlice(cx + ox, cy + oy, r, slice.startAngle, slice.endAngle)}
-                            fill={slice.color} stroke="#ffffff" strokeWidth="2.5"
-                            className="cursor-pointer transition-all duration-200" style={{ opacity }}
-                            onMouseEnter={() => setSupplierHover(slice)} onMouseLeave={() => setSupplierHover(null)}
-                          />
-                        );
-                      })}
-                      <circle cx={cx} cy={cy} r={r * 0.65} fill="#ffffff" />
-                      {supplierHover ? (
-                        <g className="animate-fade-in text-center">
-                          <text x={cx} y={cy - 14} textAnchor="middle" fontSize="11" fontWeight="700" fill="#707979" className="uppercase tracking-wider">
-                            {supplierHover.label.length > 18 ? `${supplierHover.label.slice(0, 15)}...` : supplierHover.label}
-                          </text>
-                          <text x={cx} y={cy + 8} textAnchor="middle" fontSize="22" fontWeight="800" fill="#181C1E">{supplierHover.value}%</text>
-                          <text x={cx} y={cy + 25} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="#404849" className="font-mono">${formatAmount(supplierHover.amount)}</text>
-                        </g>
-                      ) : (
-                        <g className="text-center">
-                          <text x={cx} y={cy - 14} textAnchor="middle" fontSize="11" fontWeight="700" fill="#707979" className="uppercase tracking-wider">Total Contracts</text>
-                          <text x={cx} y={cy + 8} textAnchor="middle" fontSize="22" fontWeight="800" fill="#0B4F54" className="font-mono">${formatAmount(totalContracts)}</text>
-                          <text x={cx} y={cy + 25} textAnchor="middle" fontSize="11" fontWeight="600" fill="#707979">{data.supplierShare.length} Suppliers</text>
-                        </g>
-                      )}
-                    </svg>
-                  </div>
-                  <div className="md:col-span-6 space-y-1.5">
-                    {slices.map((slice) => {
-                      const isHovered = supplierHover?.label === slice.label;
-                      return (
-                        <div key={slice.label}
-                          className={`flex items-center gap-3 px-3 py-2 rounded-lg border transition-all duration-150 cursor-pointer ${isHovered ? 'bg-surface-container-low border-outline-variant/60 shadow-sm' : 'bg-white border-transparent hover:bg-surface-low'}`}
-                          onMouseEnter={() => setSupplierHover(slice)} onMouseLeave={() => setSupplierHover(null)}
-                        >
-                          <span className="w-3 h-3 rounded-full shrink-0 border border-black/5" style={{ backgroundColor: slice.color }} />
-                          <span className="text-body-sm font-semibold text-on-surface flex-1 truncate" title={slice.label}>{slice.label}</span>
-                          <span className="inline-block px-2 py-0.5 text-[10.5px] font-bold rounded-md bg-surface-container text-on-surface-variant shrink-0">{slice.value}%</span>
-                          <span className="text-body-sm font-mono font-semibold text-on-surface-variant w-24 text-right shrink-0">${formatAmount(slice.amount)}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
+      {activeSections.includes('ppc-open-pos') && (
+        <section id="ppc-open-pos">
+          <SectionPanel
+            title="Open & Overdue Purchase Orders"
+            subtitle={`${filteredOpenOverduePOs.length} records requiring attention`}
+            action={
+              <div className="flex items-center gap-3">
+                <InfoButton contentId="po-overdue" />
+                <div className="relative">
+                  <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
+                  <input type="text" placeholder="Search PO, supplier, program..." value={overviewSearch}
+                    onChange={(e) => setOverviewSearch(e.target.value)}
+                    className="pl-8 pr-3 py-1.5 h-9 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64 transition-all"
+                  />
                 </div>
+                <select value={overviewStatus} onChange={(e) => setOverviewStatus(e.target.value)}
+                  className="h-9 rounded-md border border-outline-variant bg-white px-3 text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="All">All Statuses</option>
+                  <option value="Open">Open</option>
+                  <option value="Overdue">Overdue</option>
+                </select>
+              </div>
+            }
+          >
+            {(() => {
+              const openCount = filteredOpenOverduePOs.filter((p) => p.status === 'Open').length;
+              const overdueCount = filteredOpenOverduePOs.filter((p) => p.status === 'Overdue').length;
+              const totalAmt = filteredOpenOverduePOs.reduce((s, p) => s + p.amount, 0);
+              const overduePOs = filteredOpenOverduePOs.filter((p) => p.status === 'Overdue' && p.daysOverdue);
+              const avgDays = overduePOs.length ? Math.round(overduePOs.reduce((s, p) => s + p.daysOverdue, 0) / overduePOs.length) : 0;
+              return (
+                <>
+                  <div className="grid grid-cols-4 gap-3 mb-5">
+                    <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-primary/10" iconColor="text-primary" label="Total Open POs" value={openCount.toLocaleString()} subtitle="awaiting action" />
+                    <KPICard variant="detailed" icon="fa-exclamation-triangle" iconBg="bg-error/10" iconColor="text-error" label="Total Overdue POs" value={overdueCount.toLocaleString()} subtitle="past due date" />
+                    <KPICard variant="detailed" icon="fa-coins" iconBg="bg-warning/10" iconColor="text-warning" label="Total Amount" value={`${totalAmt >= 1e9 ? (totalAmt / 1e9).toFixed(1) + 'B' : totalAmt >= 1e6 ? (totalAmt / 1e6).toFixed(1) + 'M' : totalAmt >= 1e3 ? (totalAmt / 1e3).toFixed(1) + 'K' : totalAmt.toLocaleString()} ETB`} subtitle="combined value" />
+                    <KPICard variant="detailed" icon="fa-clock" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Avg Overdue Duration" value={avgDays ? fmtDuration(avgDays) : '0d'} subtitle="overdue POs only" />
+                  </div>
+                  <Table page={tp('open-pos')} setPage={sp('open-pos')}
+                    headers={[
+                      { key: 'poNo', label: 'PO No' },
+                      { key: 'supplier', label: 'Supplier' },
+                      { key: 'program', label: 'Program' },
+                      { key: 'amount', label: 'Amount (ETB)', className: 'text-right' },
+                      { key: 'issueDate', label: 'Issue Date' },
+                      { key: 'dueDate', label: 'Due Date' },
+                      { key: 'status', label: 'Status' },
+                      { key: 'overdue', label: 'Days Overdue', className: 'text-right' },
+                    ]}
+                    rows={filteredOpenOverduePOs}
+                    renderRow={(row) => (
+                      <>
+                        <Td className="font-mono font-semibold">{row.poNo}</Td>
+                        <Td>{row.supplier}</Td>
+                        <Td>{row.program}</Td>
+                        <Td className="text-right font-mono font-medium">{formatAmount(row.amount)}</Td>
+                        <Td>{row.issueDate}</Td>
+                        <Td>{row.dueDate}</Td>
+                        <Td><StatusBadge status={row.status} /></Td>
+                        <Td className="text-right font-bold text-error">{row.status === 'Overdue' ? fmtDuration(row.daysOverdue) : '—'}</Td>
+                      </>
+                    )}
+                  />
+                </>
               );
             })()}
           </SectionPanel>
         </section>
       )}
 
-      {(activeSections.includes('ppc-funding') || activeSections.includes('ppc-local-intl')) && (
-        <div className="grid grid-cols-2 gap-5">
-          {activeSections.includes('ppc-funding') && (
-            <section id="ppc-funding">
-              <SectionPanel title="Procurement by Funding Source" subtitle="Hierarchical view of funding distribution">
-                <SunburstChart data={data.fundingSources} />
-              </SectionPanel>
-            </section>
-          )}
-          {activeSections.includes('ppc-local-intl') && (
-            <section id="ppc-local-intl">
-              <SectionPanel title="Local vs International Procurement" subtitle="Breakdown by procurement origin" action={<div className="flex items-center gap-1"><ExpandButton data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount }))} title="Local vs International Procurement" /><InfoButton contentId="procurement-local-intl" /></div>}>
-                <div className="max-w-sm mx-auto h-[310px] flex flex-col justify-center">
-                  <PieChart data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount }))} totalLabel="Procurement origin" />
-                </div>
-              </SectionPanel>
-            </section>
-          )}
-        </div>
+      {activeSections.includes('ppc-open-po-items') && (
+        <section id="ppc-open-po-items">
+          <SectionPanel title="Open PO Item Details" subtitle={`${filteredOpenItems.length} of ${data.openPOItemDetail?.data?.length || 0} open line items`} action={
+            <div className="flex items-center gap-3">
+              <InfoButton contentId="po-open-items" />
+              <div className="relative">
+                <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
+                <input type="text" placeholder="Search PO, supplier, material..." value={itemSearch}
+                  onChange={(e) => setItemSearch(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 h-9 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64 transition-all"
+                />
+              </div>
+            </div>
+          }>
+            <Table page={tp('open-po-items')} setPage={sp('open-po-items')} rowsPerPage={10}
+              headers={[
+                { key: 'po', label: 'PO No' },
+                { key: 'item', label: 'Item', className: 'text-center' },
+                { key: 'supplier', label: 'Supplier' },
+                { key: 'material', label: 'Material' },
+                { key: 'ordered', label: 'Ordered', className: 'text-right' },
+                { key: 'received', label: 'Received', className: 'text-right' },
+                { key: 'open', label: 'Open Qty', className: 'text-right' },
+                { key: 'openAmt', label: 'Open Amount (ETB)', className: 'text-right' },
+                { key: 'delivery', label: 'Planned Delivery' },
+              ]}
+              rows={filteredOpenItems}
+              renderRow={(row) => (
+                <>
+                  <Td className="font-mono">{row.purchaseOrderNumber}</Td>
+                  <Td className="text-center font-mono text-on-surface-variant">{row.purchaseOrderItemNumber}</Td>
+                  <Td className="whitespace-nowrap">{row.supplierName}</Td>
+                  <Td className="whitespace-nowrap">{row.materialDescription}</Td>
+                  <Td className="text-right font-mono">{row.orderedQuantity?.toLocaleString()}</Td>
+                  <Td className="text-right font-mono">{row.receivedQuantity?.toLocaleString()}</Td>
+                  <Td className="text-right font-mono font-bold">{row.openQuantity?.toLocaleString()}</Td>
+                  <Td className="text-right font-mono">{row.openAmountReportingCurrency ? (() => { const v = row.openAmountReportingCurrency; return `${v >= 1e9 ? (v / 1e9).toFixed(1) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'K' : Math.round(v).toLocaleString()}`; })() : '—'}</Td>
+                  <Td>{row.plannedDeliveryDate || '—'}</Td>
+                </>
+              )}
+            />
+          </SectionPanel>
+        </section>
       )}
 
-      {activeSections.includes('ppc-trend') && (
-        <section id="ppc-trend">
-          <SectionPanel title="Procurement Amount Trend" subtitle={`Monthly procurement trajectory — ${trendYear}`} action={
-            <div className="relative">
-              <select value={trendYear} onChange={e => { setTrendYear(Number(e.target.value)); setTrendHover(null) }}
-                className="appearance-none h-8 min-w-[90px] rounded-md border border-outline-variant bg-white pl-2.5 pr-7 text-body-sm text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
-                {trendYears.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-              <i className="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary pointer-events-none" />
+      {activeSections.includes('ppc-overdue-pos') && (
+        <section id="ppc-overdue-pos">
+          <SectionPanel title="Overdue PO Schedule Lines" subtitle={`${filteredOverdueLines.length} of ${data.overduePOScheduleLine?.data?.length || 0} overdue schedule lines`} action={
+            <div className="flex items-center gap-3">
+              <InfoButton contentId="po-overdue-schedule" />
+              <div className="relative">
+                <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
+                <input type="text" placeholder="Search PO, supplier, material..." value={overdueSearch}
+                  onChange={(e) => setOverdueSearch(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 h-9 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64 transition-all"
+                />
+              </div>
             </div>
           }>
             {(() => {
-              const formatMonth = (d) => {
-                const dt = new Date(d.date);
-                return dt.toLocaleDateString('en', { month: 'short' });
-              };
-              const dataLen = filteredTrend.length;
-              if (!dataLen) return <div className="text-center py-10 text-body-sm text-on-surface-variant">No data for {trendYear}.</div>;
-              const svgW = 900, svgH = 300;
-              const pad = { top: 24, right: 24, bottom: 48, left: 72 };
-              const chartW = svgW - pad.left - pad.right;
-              const chartH = svgH - pad.top - pad.bottom;
-              const maxVal = Math.max(...filteredTrend.map(d => d.amount));
-              const range = maxVal || 1;
-              const barWidth = Math.min((chartW / dataLen) * 0.6, 48);
-              const barGap = (chartW - barWidth * dataLen) / Math.max(dataLen - 1, 1);
-              const yTicks = [0, Math.round(maxVal * 0.25), Math.round(maxVal * 0.5), Math.round(maxVal * 0.75), maxVal];
-
+              const s = data.overduePOSummary.data;
+              const fmtAmt = (v) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(1)}K` : v.toLocaleString();
               return (
-                <div className="flex items-stretch gap-6">
-                  <div className="flex-1 min-w-0">
-                    <svg width="100%" height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} role="img" aria-label="Procurement amount trend chart" className="font-sans">
-                      {yTicks.map((tick) => (
-                        <g key={tick}>
-                          <line x1={pad.left} y1={pad.top + chartH - (tick / range) * chartH} x2={pad.left + chartW} y2={pad.top + chartH - (tick / range) * chartH} stroke="#EAEEF0" strokeWidth="1" />
-                          <text x={pad.left - 10} y={pad.top + chartH - (tick / range) * chartH + 4} textAnchor="end" fontSize="11" fill="#707979" fontWeight="600">{formatAmount(tick)}</text>
-                        </g>
-                      ))}
-                      <line x1={pad.left} y1={pad.top} x2={pad.left} y2={pad.top + chartH} stroke="#CFD8DC" strokeWidth="1" />
-                      <line x1={pad.left} y1={pad.top + chartH} x2={pad.left + chartW} y2={pad.top + chartH} stroke="#CFD8DC" strokeWidth="1" />
-                      {filteredTrend.map((t, i) => {
-                        const x = pad.left + i * (barWidth + barGap);
-                        const y = pad.top + chartH - (t.amount / range) * chartH;
-                        const h = chartH - (y - pad.top);
-                        const isHovered = trendHover === i;
-                        return (
-                          <g key={t.date}>
-                             <rect x={x} y={y} width={barWidth} height={h} rx="3" fill={i % 2 === 0 ? '#0B4F54' : '#D97706'}
-                              opacity={trendHover === null || isHovered ? 1 : 0.25}
-                              onMouseEnter={() => setTrendHover(i)} onMouseLeave={() => setTrendHover(null)}
-                              style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
-                            />
-                            {isHovered && (
-                              <text x={x + barWidth / 2} y={y - 10} textAnchor="middle" fontSize="12" fontWeight="800" fill="#D97706">
-                                {formatAmount(t.amount)}
-                              </text>
-                            )}
-                            <text x={x + barWidth / 2} y={pad.top + chartH + 18} textAnchor="middle" fontSize="11" fontWeight="600" fill="#707979">
-                              {formatMonth(t)}
-                            </text>
-                          </g>
-                        );
-                      })}
-                    </svg>
-                  </div>
-                  <div className="w-72 shrink-0 bg-surface-container-low rounded-xl p-5 flex flex-col justify-center min-h-[200px]">
-                    {trendHover !== null ? (() => {
-                      const t = filteredTrend[trendHover];
-                      const prev = filteredTrend[trendHover - 1];
-                      const change = prev ? ((t.amount - prev.amount) / prev.amount) * 100 : null;
-                      return (
-                        <div className="space-y-4">
-                          <div>
-                            <p className="text-label-sm text-on-surface-variant uppercase tracking-wider">{formatMonth(t)} {trendYear}</p>
-                            <p className="text-[28px] font-extrabold text-on-surface mt-1 leading-tight font-mono tracking-tight">
-                              {formatAmount(t.amount)} <span className="text-[11px] text-on-surface-variant font-bold">ETB</span>
-                            </p>
-                          </div>
-                          {change !== null && (
-                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-bold ${change >= 0 ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
-                              <i className={`fa-solid ${change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'} text-[10px]`} />
-                              {Math.abs(change).toFixed(1)}% vs prev month
-                            </div>
-                          )}
-                          <div className="h-px bg-outline-variant/50" />
-                        </div>
-                      );
-                    })() : (
-                      <div className="text-center space-y-3">
-                        <div className="w-12 h-12 rounded-xl bg-primary/5 mx-auto flex items-center justify-center">
-                          <i className="fa-solid fa-chart-line text-xl text-primary/40" />
-                        </div>
-                        <p className="text-body-sm text-on-surface-variant leading-relaxed">Hover a bar for details and month-over-month comparison.</p>
-                      </div>
-                    )}
-                  </div>
+                <div className="grid grid-cols-4 gap-3 mb-5">
+                  <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-error/10" iconColor="text-error" label="Overdue POs" value={s.overduePurchaseOrderCount.toLocaleString()} subtitle={`${s.supplierCount} suppliers`} />
+                  <KPICard variant="detailed" icon="fa-list" iconBg="bg-warning/10" iconColor="text-warning" label="Schedule Lines" value={s.overdueScheduleLineCount.toLocaleString()} subtitle="overdue items" />
+                  <KPICard variant="detailed" icon="fa-building" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Suppliers" value={s.supplierCount.toLocaleString()} subtitle="with overdue POs" />
+                  <KPICard variant="detailed" icon="fa-coins" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total Overdue Amount" value={`${fmtAmt(s.totalOverdueOpenAmount)} ETB`} subtitle="open balance" />
                 </div>
               );
             })()}
+            <Table page={tp('overdue-pos')} setPage={sp('overdue-pos')} rowsPerPage={10}
+              headers={[
+                { key: 'po', label: 'PO No' },
+                { key: 'item', label: 'Item', className: 'text-center' },
+                { key: 'supplier', label: 'Supplier' },
+                { key: 'material', label: 'Material' },
+                { key: 'poDate', label: 'PO Date' },
+                { key: 'dueDate', label: 'Due Date' },
+                { key: 'daysOverdue', label: 'Days Overdue', className: 'text-right' },
+                { key: 'bucket', label: 'Bucket' },
+                { key: 'openQty', label: 'Open Qty', className: 'text-right' },
+                { key: 'openAmt', label: 'Open Amt (ETB)', className: 'text-right' },
+              ]}
+              rows={filteredOverdueLines}
+              renderRow={(row) => {
+                const days = row.daysOverdue;
+                const colorCls = days > 730 ? 'bg-error/15 text-error font-bold' :
+                  days > 365 ? 'bg-error/10 text-error font-bold' :
+                  days > 180 ? 'text-orange-600 font-bold' :
+                  days > 90 ? 'text-warning font-bold' :
+                  days > 60 ? 'text-warning font-semibold' :
+                  days > 30 ? 'text-yellow-600 font-semibold' :
+                  'text-success font-semibold';
+                const fmtBucket = (b) => {
+                  if (b === 'OVERDUE_OVER_730_DAYS') return '2y+';
+                  const parts = b.match(/(\d+)_(\d+)_DAYS/);
+                  if (parts) {
+                    const lo = fmtDuration(parseInt(parts[1]));
+                    const hi = fmtDuration(parseInt(parts[2]));
+                    return `${lo}-${hi}`;
+                  }
+                  return b;
+                };
+                return (
+                  <>
+                    <Td className="font-mono">{row.purchaseOrderNumber}</Td>
+                    <Td className="text-center font-mono text-on-surface-variant">{row.purchaseOrderItemNumber}</Td>
+                    <Td className="max-w-[160px] truncate" title={row.supplierName}>{row.supplierName}</Td>
+                    <Td className="max-w-[200px] truncate" title={row.materialDescription}>{row.materialDescription}</Td>
+                    <Td>{row.purchaseOrderDate}</Td>
+                    <Td>{row.scheduledDeliveryDate}</Td>
+                    <Td className={`text-right font-mono ${colorCls}`}>{fmtDuration(days)}</Td>
+                    <Td><span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md ${days > 90 ? 'bg-error/10 text-error' : days > 60 ? 'bg-warning/10 text-warning' : days > 30 ? 'bg-yellow-50 text-yellow-700' : 'bg-success/10 text-success'}`}>{fmtBucket(row.overdueBucket)}</span></Td>
+                    <Td className="text-right font-mono">{row.openQuantity?.toLocaleString()}</Td>
+                  <Td className="text-right font-mono">{row.openAmountReportingCurrency ? (() => { const v = row.openAmountReportingCurrency; return `${v >= 1e9 ? (v / 1e9).toFixed(1) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'K' : Math.round(v).toLocaleString()}`; })() : '—'}</Td>
+                  </>
+                );
+              }}
+            />
+          </SectionPanel>
+        </section>
+      )}
+
+      {activeSections.includes('ppc-status') && (
+        <section id="ppc-status">
+          <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received" action={<div className="flex items-center gap-1"><ExpandButton data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} title="Procurement Status" /><InfoButton contentId="po-proc-status" /></div>}>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <PieChart data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} totalLabel="Procurement stages" />
+              </div>
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-sm font-bold text-on-surface">Filter by stage:</span>
+                  <select value={procurementStatusFilter} onChange={(e) => setProcurementStatusFilter(e.target.value)}
+                    className="h-8 rounded-md border border-outline-variant bg-white px-2 text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  >
+                    <option value="All">All Stages</option>
+                    {data.procurementStatus.stages.map((s) => (
+                      <option key={s.stage} value={s.stage}>{s.stage} ({s.count})</option>
+                    ))}
+                  </select>
+                </div>
+                <Table page={tp('proc-status')} setPage={sp('proc-status')} rowsPerPage={5}
+                  headers={[
+                    { key: 'ref', label: 'Reference' },
+                    { key: 'supplier', label: 'Supplier' },
+                    { key: 'stage', label: 'Stage' },
+                    { key: 'date', label: 'Status Date' },
+                  ]}
+                  rows={filteredStatusDetails}
+                  renderRow={(row) => (
+                    <>
+                      <Td className="font-mono">{row.refNo}</Td>
+                      <Td>{row.supplier}</Td>
+                      <Td><StatusBadge status={row.stage} /></Td>
+                      <Td>{row.statusDate}</Td>
+                    </>
+                  )}
+                />
+              </div>
+            </div>
           </SectionPanel>
         </section>
       )}
     </>
-  );
-}
-
-const OPEN_TYPE_LABEL = { 'ZHP1': 'Health Program', 'ZRDL': 'RDF Local', 'ZRDI': 'RDF Intl.', 'FO': 'Framework Order' };
-
-function MergedBreakdownSection({ data }: any) {
-  const [view, setView] = useState('material');
-  const [hover, setHover] = useState(null);
-  const totalAllPO = data.poByType.reduce((s, t) => s + t.totalAmount, 0);
-  const totalOpen = data.openPOByType.data.reduce((s, d) => s + d.totalOpenAmount, 0);
-  const openMapped = data.openPOByType.data.map(d => ({ ...d, label: OPEN_TYPE_LABEL[d.sourceCategoryCode] || d.sourceCategoryCode }));
-  const totalMat = data.poByMaterialType.reduce((s, t) => s + t.totalAmount, 0);
-
-  const views = [
-    { key: 'material', label: 'By Material Type', subtitle: `${data.poByMaterialType.length} types — ${formatAmount(totalMat)} total`,
-      data: data.poByMaterialType, labelKey: 'materialTypeName', amountKey: 'totalAmount', shareKey: 'amountSharePercent',
-      tooltipKeys: { name: 'materialTypeName', amount: 'totalAmount', share: 'amountSharePercent', lines: 'purchaseOrderLineCount' } },
-    { key: 'po-type', label: 'By PO Type', subtitle: `${data.poByType.length} types — ${formatAmount(totalAllPO)} total`,
-      data: data.poByType, labelKey: 'purchaseOrderType', amountKey: 'totalAmount', shareKey: 'amountSharePercent',
-      tooltipKeys: { name: 'purchaseOrderType', amount: 'totalAmount', share: 'amountSharePercent', lines: 'purchaseOrderLineCount' } },
-    { key: 'open-po', label: 'Open by PO Type', subtitle: `${openMapped.length} types — ${formatAmount(totalOpen)} open`,
-      data: openMapped, labelKey: 'label', amountKey: 'totalOpenAmount', shareKey: 'openAmountSharePercent',
-      tooltipKeys: { name: 'label', amount: 'totalOpenAmount', share: 'openAmountSharePercent', lines: 'purchaseOrderItemCount' } },
-  ];
-
-  const active = views.find(v => v.key === view) || views[0];
-
-  return (
-    <section id="ppc-procurement-breakdown">
-      <SectionPanel title="Procurement Breakdown" subtitle={active.subtitle} action={<InfoButton contentId="po-procurement-breakdown" />}>
-        <div className="flex items-center gap-1 mb-5 bg-surface-container-low rounded-lg p-1 w-fit">
-          {views.map(v => (
-            <button key={v.key} onClick={() => { setView(v.key); setHover(null); }}
-              className={`px-3 py-1.5 text-[12px] font-bold rounded-md transition-all duration-150 ${
-                view === v.key ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >{v.label}</button>
-          ))}
-        </div>
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-7">
-            <BarChart data={active.data} labelKey={active.labelKey} amountKey={active.amountKey} shareKey={active.shareKey} colors={PO_TYPE_COLORS} setHover={setHover} activeHover={hover} />
-          </div>
-          <div className="col-span-5 bg-surface-container-low rounded-xl p-6 flex flex-col justify-center min-h-[200px]">
-            {hover ? (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-label-sm text-on-surface-variant uppercase tracking-wider">{active.label}</p>
-                  <p className="text-[20px] font-extrabold text-on-surface mt-1">{hover[active.tooltipKeys.name]}</p>
-                </div>
-                <div className="space-y-2 text-body-sm">
-                  <div className="flex justify-between"><span className="text-on-surface-variant">Amount</span><span className="font-bold text-on-surface">{formatAmount(hover[active.tooltipKeys.amount])} ETB</span></div>
-                  <div className="flex justify-between"><span className="text-on-surface-variant">Share</span><span className="font-bold text-on-surface">{hover[active.tooltipKeys.share].toFixed(1)}%</span></div>
-                  <div className="flex justify-between"><span className="text-on-surface-variant">POs</span><span className="font-bold text-on-surface">{hover.purchaseOrderCount}</span></div>
-                  <div className="flex justify-between"><span className="text-on-surface-variant">Lines</span><span className="font-bold text-on-surface">{hover[active.tooltipKeys.lines]}</span></div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-primary/5 mx-auto flex items-center justify-center">
-                  <i className="fa-solid fa-chart-bar text-xl text-primary/40" />
-                </div>
-                <p className="text-body-sm text-on-surface-variant leading-relaxed">Hover over a bar to view category-specific details.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </SectionPanel>
-    </section>
   );
 }

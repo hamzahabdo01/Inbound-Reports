@@ -7,8 +7,7 @@ export const PROGRAM_ITEMS = [
 function ProgramChips({ active, onChange }: any) {
   return (
     <div className="border-b border-outline-variant/30 py-2">
-      <div className="relative">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {PROGRAM_ITEMS.map((item) => (
             <button
               key={item}
@@ -24,8 +23,6 @@ function ProgramChips({ active, onChange }: any) {
             </button>
           ))}
         </div>
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-[#F6FAFC] to-transparent" />
-      </div>
     </div>
   );
 }

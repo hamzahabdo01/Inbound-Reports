@@ -151,33 +151,19 @@ export default function PoPerformanceCompliance() {
       </StickyHeader>
 
       {activeTab === 'overview' && (
-        <>
-          <OverviewTab
-            data={data} activeSections={activeSections}
-            kpiPage={kpiPage} setKpiPage={setKpiPage}
-            kpiCards={kpiCards} kpiTotalPages={kpiTotalPages}
-            filteredOpenOverduePOs={filteredOpenOverduePOs}
-            overviewSearch={overviewSearch} setOverviewSearch={setOverviewSearch}
-            overviewStatus={overviewStatus} setOverviewStatus={setOverviewStatus}
-            procurementStatusFilter={procurementStatusFilter}
-            setProcurementStatusFilter={setProcurementStatusFilter}
-            filteredStatusDetails={filteredStatusDetails}
-            tp={tp} sp={sp}
-          />
-          <ProcurementBreakdownTab
-            data={data} activeSections={activeSections}
-            supplierHover={supplierHover} setSupplierHover={setSupplierHover}
-            trendYears={trendYears} trendYear={trendYear} setTrendYear={setTrendYear}
-            filteredTrend={filteredTrend} trendHover={trendHover} setTrendHover={setTrendHover}
-          />
-        </>
-      )}
-
-      {activeTab === 'procurement' && (
         <OverviewTab
           data={data} activeSections={activeSections}
           kpiPage={kpiPage} setKpiPage={setKpiPage}
           kpiCards={kpiCards} kpiTotalPages={kpiTotalPages}
+          supplierHover={supplierHover} setSupplierHover={setSupplierHover}
+          trendYears={trendYears} trendYear={trendYear} setTrendYear={setTrendYear}
+          filteredTrend={filteredTrend} trendHover={trendHover} setTrendHover={setTrendHover}
+        />
+      )}
+
+      {activeTab === 'procurement' && (
+        <ProcurementBreakdownTab
+          data={data} activeSections={activeSections}
           filteredOpenOverduePOs={filteredOpenOverduePOs}
           overviewSearch={overviewSearch} setOverviewSearch={setOverviewSearch}
           overviewStatus={overviewStatus} setOverviewStatus={setOverviewStatus}
