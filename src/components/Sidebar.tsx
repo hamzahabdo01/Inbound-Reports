@@ -103,7 +103,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
           e.preventDefault();
           if (onNavigate) onNavigate(item.label);
         }}
-        className={`${linkBase} justify-center xl:justify-start ${active ? linkActive : linkDefault}`}
+        className={`${linkBase} justify-start ${active ? linkActive : linkDefault}`}
         title={collapsed ? item.label : undefined}
       >
         <i className={`fa-solid ${item.icon} text-sm w-4 text-center shrink-0 transition-colors ${
@@ -127,7 +127,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
               toggle(item.label);
             }
           }}
-          className={`w-full flex items-center justify-center xl:justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 group ${
+          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 group ${
             (hasActiveChild(item) || item.label === activeSection)
               ? 'text-white bg-sidebar-active/30'
               : 'text-white/70 hover:bg-sidebar-hover hover:text-white'
@@ -176,9 +176,9 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
   };
 
   return (
-    <aside className={`${collapsed ? 'w-[60px]' : 'w-[240px]'} shrink-0 flex flex-col h-screen sticky top-0 z-40 bg-sidebar-bg text-white transition-all duration-200`}>
+    <aside className={`${collapsed ? 'w-[60px]' : 'w-[240px]'} shrink-0 flex flex-col h-screen max-h-dvh sticky top-0 z-40 bg-sidebar-bg text-white transition-all duration-200 overscroll-contain`}>
       <div className="flex-1 overflow-y-auto px-2 xl:px-4 py-5 scrollbar-thin">
-        <div className={`flex items-center mb-8 ${collapsed ? 'justify-center' : 'justify-between'}`}>
+          <div className={`flex items-center mb-8 justify-between`}>
           <div className="flex items-center gap-3 min-w-0">
             {!collapsed && (
               <div className="text-sm font-bold text-white tracking-tight leading-none truncate">Fanos Dashboard</div>
@@ -194,7 +194,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
           </button>
         </div>
 
-        <nav className={`space-y-0.5 ${collapsed ? 'flex flex-col items-center' : ''}`}>
+        <nav className="space-y-0.5">
           {navItems.map((item) =>
             item.children ? navGroup(item) : navLink(item)
           )}
@@ -204,7 +204,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
       <div className="px-2 xl:px-3 py-2 border-t border-white/10 space-y-2">
         <button
           onClick={onLogout}
-          className={`w-full flex items-center gap-3 py-2 rounded-lg text-sm text-white/50 hover:text-error hover:bg-white/5 transition-all duration-150 ${collapsed ? 'justify-center px-3' : 'pl-5 pr-3'}`}
+          className={`w-full flex items-center gap-3 py-2 rounded-lg text-sm text-white/50 hover:text-error hover:bg-white/5 transition-all duration-150 px-3`}
           title="Logout"
         >
           <i className="fa-solid fa-right-from-bracket text-sm w-4 text-center shrink-0"></i>

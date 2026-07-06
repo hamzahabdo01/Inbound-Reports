@@ -1,10 +1,44 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import PieChart from '../../components/PieChart';
 import FundingSourceChart from '../../components/FundingSourceChart';
 import KPICard from '../../components/KPICard';
 import InfoButton from '../../components/InfoButton';
 import ExpandButton from '../../components/ExpandButton';
 import { SectionPanel, formatAmount } from './poShared';
+
+function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const onChange = () => setMatches(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [query]);
+  return matches;
+}
+
+function DetailRow({ label, value }: any) {
+  return (
+    <div className="flex justify-between"><span className="text-on-surface-variant">{label}</span><span className="font-bold text-on-surface">{value}</span></div>
+  );
+}
+
+function DetailContent({ active, hover }: any) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-label-sm text-on-surface-variant uppercase tracking-wider">{active.label}</p>
+        <p className="text-[20px] font-extrabold text-on-surface mt-1">{hover[active.tooltipKeys.name]}</p>
+      </div>
+      <div className="space-y-2 text-body-sm">
+        <DetailRow label="Amount" value={`${formatAmount(hover[active.tooltipKeys.amount])} ETB`} />
+        <DetailRow label="Share" value={`${hover[active.tooltipKeys.share].toFixed(1)}%`} />
+        <DetailRow label="POs" value={hover.purchaseOrderCount} />
+        <DetailRow label="Lines" value={hover[active.tooltipKeys.lines]} />
+      </div>
+    </div>
+  );
+}
 
 const PO_TYPE_COLORS = ['#0B4F54', '#D97706', '#216E6A', '#4A9598'];
 
@@ -48,42 +82,64 @@ function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, b
   );
 }
 
-export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage, kpiCards = [], kpiTotalPages, supplierHover, setSupplierHover, trendYears, trendYear, setTrendYear, filteredTrend, trendHover, setTrendHover }: any) {
+export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage, kpiCards = [], kpiTotalPages: _kpiTotalPages, supplierHover, setSupplierHover, trendYears, trendYear, setTrendYear, filteredTrend, trendHover, setTrendHover }: any) {
   const fundingYears = useMemo(() => data.fundingSources.map((d: any) => d.name), [data.fundingSources]);
   const [fundingYear, setFundingYear] = useState<string>(() => fundingYears[fundingYears.length - 1] || '');
+  const [cardsPerPage, setCardsPerPage] = useState(() => window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1);
+  const [selectedTrendIdx, setSelectedTrendIdx] = useState(-1);
+  const [fundOpenIdx, setFundOpenIdx] = useState(-1);
+  const isTrendMobile = useMediaQuery('(max-width: 767px)');
+
+  useEffect(() => {
+    const onResize = () => {
+      const next = window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1;
+      setCardsPerPage(prev => {
+        if (prev !== next) setKpiPage(0);
+        return next;
+      });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [setKpiPage]);
+
+  useEffect(() => { setSelectedTrendIdx(filteredTrend.length - 1); }, [filteredTrend]);
+
+  const kpiTotalPages = Math.ceil(kpiCards.length / cardsPerPage);
 
   return (
     <>
       {activeSections.includes('ppc-overview') && (
         <section id="ppc-overview">
           <div className="space-y-3">
-            <div className="relative pl-12 pr-12">
-              <div className="overflow-hidden w-full">
+            <div className="flex items-stretch gap-0">
+                {kpiTotalPages > 1 && (
+                  <button type="button" onClick={() => setKpiPage((p) => Math.max(p - 1, 0))} disabled={kpiPage === 0}
+                    className="w-7 sm:w-8 flex items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200 shrink-0"
+                    aria-label="Previous KPI page"
+                  ><i className="fa-solid fa-chevron-left text-[10px] sm:text-xs"></i></button>
+                )}
+              <div className="relative overflow-hidden w-full">
                 <div 
                   className="flex transition-transform duration-500 ease-in-out"
                   style={{ transform: `translateX(-${kpiPage * 100}%)` }}
                 >
                   {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
-                    <div key={pageIdx} className="grid grid-cols-4 gap-3 w-full shrink-0">
-                      {kpiCards.slice(pageIdx * 4, pageIdx * 4 + 4).map((c, cardIdx) => (
-                        <KPICard key={c.label || cardIdx} variant="detailed" {...c} />
+                    <div key={pageIdx} className="flex gap-3 w-full shrink-0">
+                      {kpiCards.slice(pageIdx * cardsPerPage, pageIdx * cardsPerPage + cardsPerPage).map((c, cardIdx) => (
+                        <div key={c.label || cardIdx} className="flex-1 min-w-0">
+                          <KPICard variant="detailed" {...c} />
+                        </div>
                       ))}
                     </div>
                   ))}
                 </div>
               </div>
-              {kpiTotalPages > 1 && (
-                <>
-                  <button type="button" onClick={() => setKpiPage((p) => Math.max(p - 1, 0))} disabled={kpiPage === 0}
-                    className="absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200 z-10"
-                    aria-label="Previous KPI page"
-                  ><i className="fa-solid fa-chevron-left text-[10px]"></i></button>
+                {kpiTotalPages > 1 && (
                   <button type="button" onClick={() => setKpiPage((p) => Math.min(p + 1, kpiTotalPages - 1))} disabled={kpiPage === kpiTotalPages - 1}
-                    className="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200 z-10"
+                    className="w-7 sm:w-8 flex items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200 shrink-0"
                     aria-label="Next KPI page"
-                  ><i className="fa-solid fa-chevron-right text-[10px]"></i></button>
-                </>
-              )}
+                  ><i className="fa-solid fa-chevron-right text-[10px] sm:text-xs"></i></button>
+                )}
             </div>
             {kpiTotalPages > 1 && (
               <div className="flex items-center justify-center gap-1.5">
@@ -131,9 +187,9 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                 return slice;
               });
               return (
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center font-sans">
-                  <div className="md:col-span-6 flex justify-center relative select-none">
-                    <svg width="280" height="280" viewBox="0 0 280 280" className="drop-shadow-sm">
+                <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8 font-sans">
+                  <div className="w-full max-w-[280px] lg:w-[280px] shrink-0 flex justify-center relative select-none">
+                    <svg viewBox="0 0 280 280" className="w-full h-auto drop-shadow-sm" style={{ maxWidth: 280 }}>
                       {slices.map((slice) => {
                         const isHovered = supplierHover?.label === slice.label;
                         const opacity = supplierHover ? (isHovered ? 1 : 0.42) : 0.95;
@@ -157,18 +213,18 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                             {supplierHover.label.length > 18 ? `${supplierHover.label.slice(0, 15)}...` : supplierHover.label}
                           </text>
                           <text x={cx} y={cy + 8} textAnchor="middle" fontSize="22" fontWeight="800" fill="#181C1E">{supplierHover.value}%</text>
-                          <text x={cx} y={cy + 25} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="#404849" className="font-mono">${formatAmount(supplierHover.amount)}</text>
+                          <text x={cx} y={cy + 25} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="#404849" className="font-mono">{formatAmount(supplierHover.amount)} ETB</text>
                         </g>
                       ) : (
                         <g className="text-center">
                           <text x={cx} y={cy - 14} textAnchor="middle" fontSize="11" fontWeight="700" fill="#707979" className="uppercase tracking-wider">Total Contracts</text>
-                          <text x={cx} y={cy + 8} textAnchor="middle" fontSize="22" fontWeight="800" fill="#0B4F54" className="font-mono">${formatAmount(totalContracts)}</text>
+                          <text x={cx} y={cy + 8} textAnchor="middle" fontSize="22" fontWeight="800" fill="#0B4F54" className="font-mono">{formatAmount(totalContracts)} ETB</text>
                           <text x={cx} y={cy + 25} textAnchor="middle" fontSize="11" fontWeight="600" fill="#707979">{data.supplierShare.length} Suppliers</text>
                         </g>
                       )}
                     </svg>
                   </div>
-                  <div className="md:col-span-6 space-y-1.5">
+                  <div className="w-full space-y-1.5">
                     {slices.map((slice) => {
                       const isHovered = supplierHover?.label === slice.label;
                       return (
@@ -179,7 +235,7 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                           <span className="w-3 h-3 rounded-full shrink-0 border border-black/5" style={{ backgroundColor: slice.color }} />
                           <span className="text-body-sm font-semibold text-on-surface flex-1 truncate" title={slice.label}>{slice.label}</span>
                           <span className="inline-block px-2 py-0.5 text-[10.5px] font-bold rounded-md bg-surface-container text-on-surface-variant shrink-0">{slice.value}%</span>
-                          <span className="text-body-sm font-mono font-semibold text-on-surface-variant w-24 text-right shrink-0">${formatAmount(slice.amount)}</span>
+                          <span className="text-body-sm font-mono font-semibold text-on-surface-variant w-24 text-right shrink-0">{formatAmount(slice.amount)} ETB</span>
                         </div>
                       );
                     })}
@@ -192,32 +248,68 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
       )}
 
       {(activeSections.includes('ppc-funding') || activeSections.includes('ppc-local-intl')) && (
-        <div className="grid grid-cols-12 gap-5">
+        <div className="flex flex-col lg:flex-row gap-5">
           {activeSections.includes('ppc-funding') && (
-            <section id="ppc-funding" className="col-span-7">
+            <section id="ppc-funding" className="w-full lg:w-[58.333%]">
         <SectionPanel title="Procurement by Funding Source" subtitle="Total procurement value by fund and year" action={
-          <div className="flex bg-surface-container rounded-lg p-0.5 gap-0.5">
-            {fundingYears.map((yr: string) => (
-              <button
-                key={yr}
-                onClick={() => setFundingYear(yr)}
-                className={`px-3 py-1.5 text-[12px] font-bold rounded-md transition-all duration-150 ${
-                  fundingYear === yr
-                    ? 'bg-white text-primary shadow-sm'
-                    : 'text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                {yr}
-              </button>
-            ))}
+          <div className="relative">
+            <select value={fundingYear} onChange={e => setFundingYear(e.target.value)}
+              className="appearance-none h-8 min-w-[90px] rounded-md border border-outline-variant bg-white pl-2.5 pr-7 text-body-sm text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
+              {fundingYears.map((yr: string) => (
+                <option key={yr} value={yr}>{yr}</option>
+              ))}
+            </select>
+            <i className="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary pointer-events-none" />
           </div>
         }>
-          <FundingSourceChart data={data.fundingSources} selectedYear={fundingYear} />
+          {isTrendMobile ? (() => {
+            const yearEntry = data.fundingSources.find(d => d.name === fundingYear) || data.fundingSources[0];
+            const children = yearEntry?.children || [];
+            const total = children.reduce((s, c) => s + c.value, 0);
+            const FUND_COLORS = ['#0B4F54', '#D97706', '#216E6A', '#4A9598', '#515F74', '#86BFC5', '#059669', '#BA1A1A', '#4A8EA5'];
+            const funds = children.map((c, i) => ({ ...c, percent: total > 0 ? (c.value / total) * 100 : 0, color: FUND_COLORS[i % FUND_COLORS.length] }))
+              .sort((a, b) => b.value - a.value);
+            if (!funds.length) return <div className="text-center py-10 text-body-sm text-on-surface-variant">No data for {fundingYear}.</div>;
+            return (
+              <div className="space-y-1">
+                {funds.map((fund, i) => {
+                  const isOpen = fundOpenIdx === i;
+                  return (
+                    <div key={fund.name} className="rounded-xl border border-outline-variant bg-white overflow-hidden">
+                      <button onClick={() => setFundOpenIdx(prev => prev === i ? -1 : i)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-container-low"
+                      >
+                        <span className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: fund.color }} />
+                        <span className="flex-1 min-w-0 text-sm font-semibold text-on-surface truncate">{fund.name}</span>
+                        <span className="text-xs font-bold text-on-surface-variant tabular-nums">{formatAmount(fund.value)}</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-primary/10 text-primary">{fund.percent.toFixed(1)}%</span>
+                        <i className={`fa-solid fa-chevron-down text-[10px] text-on-surface-variant transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                      {isOpen && (
+                        <div className="px-4 pb-4 pt-0">
+                          <div className="h-px bg-outline-variant/50 mb-3" />
+                          <div className="bg-surface-container-low rounded-lg p-4 space-y-2 text-body-sm">
+                            <DetailRow label="Procurement Value" value={`${formatAmount(fund.value)} ETB`} />
+                            <DetailRow label="Share of Year" value={`${fund.percent.toFixed(1)}%`} />
+                            {fund.poCount != null && <DetailRow label="Purchase Orders" value={fund.poCount.toLocaleString()} />}
+                            {fund.supplierCount != null && <DetailRow label="Distinct Suppliers" value={fund.supplierCount.toLocaleString()} />}
+                            {fund.materialCount != null && <DetailRow label="Distinct Materials" value={fund.materialCount.toLocaleString()} />}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })() : (
+            <FundingSourceChart data={data.fundingSources} selectedYear={fundingYear} />
+          )}
         </SectionPanel>
             </section>
           )}
           {activeSections.includes('ppc-local-intl') && (
-            <section id="ppc-local-intl" className="col-span-5">
+            <section id="ppc-local-intl" className="w-full lg:w-[41.666%]">
               <SectionPanel title="Local vs International Procurement" subtitle="Breakdown by procurement origin" action={<div className="flex items-center gap-1"><ExpandButton data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount }))} title="Local vs International Procurement" /><InfoButton contentId="procurement-local-intl" /></div>}>
                 <div className="max-w-sm mx-auto h-[310px] flex flex-col justify-center">
                   <PieChart data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount }))} totalLabel="Procurement origin" />
@@ -256,8 +348,68 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
               const barGap = (chartW - barWidth * dataLen) / Math.max(dataLen - 1, 1);
               const yTicks = [0, Math.round(maxVal * 0.25), Math.round(maxVal * 0.5), Math.round(maxVal * 0.75), maxVal];
 
-              return (
-                <div className="flex items-stretch gap-6">
+              const renderDetail = (idx) => {
+                if (idx === null || idx < 0) return null;
+                const t = filteredTrend[idx];
+                const prev = filteredTrend[idx - 1];
+                const change = prev ? ((t.amount - prev.amount) / prev.amount) * 100 : null;
+                return (
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-label-sm text-on-surface-variant uppercase tracking-wider">{formatMonth(t)} {trendYear}</p>
+                      <p className="text-[28px] font-extrabold text-on-surface mt-1 leading-tight font-mono tracking-tight">
+                        {formatAmount(t.amount)} <span className="text-[11px] text-on-surface-variant font-bold">ETB</span>
+                      </p>
+                    </div>
+                    {change !== null && (
+                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-bold ${change >= 0 ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
+                        <i className={`fa-solid ${change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'} text-[10px]`} />
+                        {Math.abs(change).toFixed(1)}% vs prev month
+                      </div>
+                    )}
+                    <div className="h-px bg-outline-variant/50" />
+                  </div>
+                );
+              };
+
+              const detailPlaceholder = (type) => (
+                <div className="text-center space-y-3">
+                  <div className="w-12 h-12 rounded-xl bg-primary/5 mx-auto flex items-center justify-center">
+                    <i className="fa-solid fa-chart-line text-xl text-primary/40" />
+                  </div>
+                  <p className="text-body-sm text-on-surface-variant leading-relaxed">{type === 'mobile' ? 'Tap' : 'Hover'} a bar for details and month-over-month comparison.</p>
+                </div>
+              );
+
+              return isTrendMobile ? (
+                <div className="space-y-1" role="listbox" aria-label="Select a month">
+                    {filteredTrend.map((t, i) => {
+                      const prev = filteredTrend[i - 1];
+                      const change = prev ? ((t.amount - prev.amount) / prev.amount) * 100 : null;
+                      const isSel = selectedTrendIdx === i;
+                      return (
+                        <button key={t.monthLabel} role="option" aria-selected={isSel}
+                          onClick={() => setSelectedTrendIdx(prev => prev === i ? -1 : i)}
+                          className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-colors text-left ${
+                            isSel ? 'bg-primary/5 border-primary/20' : 'bg-white border-outline-variant hover:bg-surface-low'
+                          }`}
+                        >
+                          <span className="w-10 text-center text-xs font-bold text-on-surface-variant uppercase">{formatMonth(t)}</span>
+                          <span className="flex-1 text-right font-mono font-bold text-sm text-on-surface">{formatAmount(t.amount)} <span className="text-[10px] text-on-surface-variant font-semibold">ETB</span></span>
+                          {change !== null && (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold shrink-0 ${
+                              change >= 0 ? 'bg-success/10 text-success' : 'bg-error/10 text-error'
+                            }`}>
+                              <i className={`fa-solid ${change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'} text-[8px]`} />
+                              {Math.abs(change).toFixed(1)}%
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                <div className="flex flex-col lg:flex-row items-stretch gap-6">
                   <div className="flex-1 min-w-0">
                     <svg width="100%" height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} role="img" aria-label="Procurement amount trend chart" className="font-sans">
                       {yTicks.map((tick) => (
@@ -272,15 +424,19 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                         const x = pad.left + i * (barWidth + barGap);
                         const y = pad.top + chartH - (t.amount / range) * chartH;
                         const h = chartH - (y - pad.top);
-                        const isHovered = trendHover === i;
+                        const isActive = trendHover === i;
                         return (
                           <g key={t.monthLabel}>
                              <rect x={x} y={y} width={barWidth} height={h} rx="3" fill={i % 2 === 0 ? '#0B4F54' : '#D97706'}
-                              opacity={trendHover === null || isHovered ? 1 : 0.25}
+                              stroke={isActive ? '#ffffff' : 'none'} strokeWidth={isActive ? 2.5 : 0}
+                              opacity={trendHover === null || isActive ? 1 : 0.25}
                               onMouseEnter={() => setTrendHover(i)} onMouseLeave={() => setTrendHover(null)}
+                              tabIndex={0}
+                              role="button"
+                              aria-label={`${formatMonth(t)} ${trendYear}: ${formatAmount(t.amount)} ETB`}
                               style={{ cursor: 'pointer', transition: 'all 0.3s ease-in-out' }}
                             />
-                            {isHovered && (
+                            {isActive && (
                               <text x={x + barWidth / 2} y={y - 10} textAnchor="middle" fontSize="12" fontWeight="800" fill="#D97706">
                                 {formatAmount(t.amount)}
                               </text>
@@ -293,36 +449,8 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                       })}
                     </svg>
                   </div>
-                  <div className="w-72 shrink-0 bg-surface-container-low rounded-xl p-5 flex flex-col justify-center min-h-[200px]">
-                    {trendHover !== null ? (() => {
-                      const t = filteredTrend[trendHover];
-                      const prev = filteredTrend[trendHover - 1];
-                      const change = prev ? ((t.amount - prev.amount) / prev.amount) * 100 : null;
-                      return (
-                        <div className="space-y-4">
-                          <div>
-                            <p className="text-label-sm text-on-surface-variant uppercase tracking-wider">{formatMonth(t)} {trendYear}</p>
-                            <p className="text-[28px] font-extrabold text-on-surface mt-1 leading-tight font-mono tracking-tight">
-                              {formatAmount(t.amount)} <span className="text-[11px] text-on-surface-variant font-bold">ETB</span>
-                            </p>
-                          </div>
-                          {change !== null && (
-                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-bold ${change >= 0 ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
-                              <i className={`fa-solid ${change >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'} text-[10px]`} />
-                              {Math.abs(change).toFixed(1)}% vs prev month
-                            </div>
-                          )}
-                          <div className="h-px bg-outline-variant/50" />
-                        </div>
-                      );
-                    })() : (
-                      <div className="text-center space-y-3">
-                        <div className="w-12 h-12 rounded-xl bg-primary/5 mx-auto flex items-center justify-center">
-                          <i className="fa-solid fa-chart-line text-xl text-primary/40" />
-                        </div>
-                        <p className="text-body-sm text-on-surface-variant leading-relaxed">Hover a bar for details and month-over-month comparison.</p>
-                      </div>
-                    )}
+                  <div className="w-full lg:w-72 lg:shrink-0 bg-surface-container-low rounded-xl p-5 flex flex-col justify-center min-h-[200px]">
+                    {renderDetail(trendHover) ?? detailPlaceholder('desktop')}
                   </div>
                 </div>
               );
@@ -339,6 +467,8 @@ const OPEN_TYPE_LABEL = { 'ZHP1': 'Health Program', 'ZRDL': 'RDF Local', 'ZRDI':
 function MergedBreakdownSection({ data }: any) {
   const [view, setView] = useState('material');
   const [hover, setHover] = useState(null);
+  const [openIndex, setOpenIndex] = useState(0);
+  const isMobile = useMediaQuery('(max-width: 767px)');
   const totalAllPO = data.poByType.reduce((s, t) => s + t.totalAmount, 0);
   const totalOpen = data.openPOByType.data.reduce((s, d) => s + d.totalOpenAmount, 0);
   const openMapped = data.openPOByType.data.map(d => ({ ...d, label: OPEN_TYPE_LABEL[d.sourceCategoryCode] || d.sourceCategoryCode }));
@@ -357,47 +487,92 @@ function MergedBreakdownSection({ data }: any) {
   ];
 
   const active = views.find(v => v.key === view) || views[0];
+  const sorted = [...active.data].sort((a, b) => b[active.amountKey] - a[active.amountKey]);
+  const maxAmount = sorted[0]?.[active.amountKey] || 1;
+  const labelMap = {
+    'Laboratory commodity': 'Lab Commodity',
+    'Medical Supply': 'Med Supply',
+    'By Health Program': 'Health Program',
+    'RDF International': 'RDF Intl.',
+    'RDF  local': 'RDF Local',
+  };
+
+  const toggleRow = useCallback((index: number) => {
+    setOpenIndex(prev => prev === index ? -1 : index);
+  }, []);
+
+  const handleRowKeyDown = useCallback((e: KeyboardEvent, index: number) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleRow(index);
+    }
+  }, [toggleRow]);
 
   return (
     <section id="ppc-procurement-breakdown">
       <SectionPanel title="Procurement Breakdown" subtitle={active.subtitle} action={<InfoButton contentId="po-procurement-breakdown" />}>
-        <div className="flex items-center gap-1 mb-5 bg-surface-container-low rounded-lg p-1 w-fit">
-          {views.map(v => (
-            <button key={v.key} onClick={() => { setView(v.key); setHover(null); }}
-              className={`px-3 py-1.5 text-[12px] font-bold rounded-md transition-all duration-150 ${
-                view === v.key ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >{v.label}</button>
-          ))}
+        <div className="relative mb-5 w-fit">
+          <select value={view} onChange={(e) => { setView(e.target.value); setHover(null); }}
+            className="appearance-none h-8 rounded-md border border-outline-variant bg-white pl-2.5 pr-7 text-xs font-semibold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
+            {views.map(v => (
+              <option key={v.key} value={v.key}>{v.label}</option>
+            ))}
+          </select>
+          <i className="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[8px] text-primary pointer-events-none" />
         </div>
-        <div className="grid grid-cols-12 gap-4">
-          <div className="col-span-7">
-            <BarChart data={active.data} labelKey={active.labelKey} amountKey={active.amountKey} shareKey={active.shareKey} colors={PO_TYPE_COLORS} setHover={setHover} activeHover={hover} />
+        {isMobile ? (
+          /* Mobile: accordion list */
+          <div className="space-y-2">
+            {sorted.map((t, i) => {
+              const barW = Math.max(10, (t[active.amountKey] / maxAmount) * 100);
+              const label = labelMap[t[active.labelKey]] || t[active.labelKey];
+              const isOpen = openIndex === i;
+              return (
+                <div key={i} className="rounded-xl border border-outline-variant bg-white overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => toggleRow(i)}
+                    onKeyDown={(e) => handleRowKeyDown(e, i)}
+                    aria-expanded={isOpen}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-container-low"
+                  >
+                    <span className="w-3 h-3 shrink-0 rounded-sm" style={{ backgroundColor: PO_TYPE_COLORS[i % PO_TYPE_COLORS.length] }} />
+                    <span className="flex-1 min-w-0 text-sm font-semibold text-on-surface truncate">{label}</span>
+                    <span className="text-xs font-bold text-on-surface-variant tabular-nums">{formatAmount(t[active.amountKey])}</span>
+                    <i className={`fa-solid fa-chevron-down text-[10px] text-on-surface-variant transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-4 pt-0">
+                      <div className="h-px bg-outline-variant/50 mb-3" />
+                      <div className="bg-surface-container-low rounded-lg p-4">
+                        <DetailContent active={active} hover={t} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          <div className="col-span-5 bg-surface-container-low rounded-xl p-6 flex flex-col justify-center min-h-[200px]">
-            {hover ? (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-label-sm text-on-surface-variant uppercase tracking-wider">{active.label}</p>
-                  <p className="text-[20px] font-extrabold text-on-surface mt-1">{hover[active.tooltipKeys.name]}</p>
+        ) : (
+          /* Desktop: bars + side panel */
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="w-full lg:w-[58.333%]">
+              <BarChart data={active.data} labelKey={active.labelKey} amountKey={active.amountKey} shareKey={active.shareKey} colors={PO_TYPE_COLORS} setHover={setHover} activeHover={hover} />
+            </div>
+            <div className="w-full lg:w-[41.666%] bg-surface-container-low rounded-xl p-6 flex flex-col justify-center min-h-[200px]">
+              {hover ? (
+                <DetailContent active={active} hover={hover} />
+              ) : (
+                <div className="text-center space-y-3">
+                  <div className="w-12 h-12 rounded-xl bg-primary/5 mx-auto flex items-center justify-center">
+                    <i className="fa-solid fa-chart-bar text-xl text-primary/40" />
+                  </div>
+                  <p className="text-body-sm text-on-surface-variant leading-relaxed">Hover over a bar to view category-specific details.</p>
                 </div>
-                <div className="space-y-2 text-body-sm">
-                  <div className="flex justify-between"><span className="text-on-surface-variant">Amount</span><span className="font-bold text-on-surface">{formatAmount(hover[active.tooltipKeys.amount])} ETB</span></div>
-                  <div className="flex justify-between"><span className="text-on-surface-variant">Share</span><span className="font-bold text-on-surface">{hover[active.tooltipKeys.share].toFixed(1)}%</span></div>
-                  <div className="flex justify-between"><span className="text-on-surface-variant">POs</span><span className="font-bold text-on-surface">{hover.purchaseOrderCount}</span></div>
-                  <div className="flex justify-between"><span className="text-on-surface-variant">Lines</span><span className="font-bold text-on-surface">{hover[active.tooltipKeys.lines]}</span></div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-primary/5 mx-auto flex items-center justify-center">
-                  <i className="fa-solid fa-chart-bar text-xl text-primary/40" />
-                </div>
-                <p className="text-body-sm text-on-surface-variant leading-relaxed">Hover over a bar to view category-specific details.</p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </SectionPanel>
     </section>
   );

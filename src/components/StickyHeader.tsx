@@ -17,7 +17,7 @@ function StickyHeader({ children, className = '' }: any) {
     <>
       <div ref={sentinelRef} />
       <div
-        className={`flex items-center justify-between sticky top-0 z-30 bg-surface py-3 -mx-lg px-lg ${className}`}
+        className={`flex flex-wrap items-center justify-between gap-2 sticky top-0 z-30 bg-surface py-3 -mx-lg px-lg ${className}`}
       >
         {children}
       </div>

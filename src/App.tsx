@@ -47,7 +47,7 @@ function Placeholder({ title }: any) {
 function AppContent() {
   const { loggedIn, validating, logout } = useAuth();
   const [activeSection, setActiveSection] = useState('Program');
-  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [sidebarVisible, setSidebarVisible] = useState(() => window.innerWidth >= 1280);
   const mainRef = useRef(null);
 
   useEffect(() => {
@@ -55,6 +55,14 @@ function AppContent() {
       mainRef.current.scrollTop = 0;
     }
   }, [activeSection]);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth < 1280) setSidebarVisible(false);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   if (validating) {
     return (

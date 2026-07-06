@@ -46,6 +46,12 @@ export default function PoPerformanceCompliance() {
       mainEl.scrollTop = 0;
     }
   }, [activeTab]);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
   const [trendHover, setTrendHover] = useState(null);
   const [supplierHover, setSupplierHover] = useState(null);
   const [procurementStatusFilter, setProcurementStatusFilter] = useState('All');
@@ -135,12 +141,12 @@ export default function PoPerformanceCompliance() {
 
   return (
     <div className="space-y-5">
-      <SectionNavigator sections={navigatorSections} />
+      {!isMobile && <SectionNavigator sections={navigatorSections} />}
       <StickyHeader>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
           {TABS.map((tab) => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 ${
+              className={`px-2 sm:px-4 py-2 text-sm font-semibold whitespace-nowrap rounded-lg transition-all duration-150 ${
                 activeTab === tab.key
                   ? 'bg-primary text-white shadow-sm'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'

@@ -122,8 +122,8 @@ export function SectionPanel({ title, subtitle, action, children }: any) {
     <div className="bg-white rounded-xl border border-outline-variant shadow-level-1">
       <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-outline-variant/50">
         <div className="min-w-0 shrink">
-          <h3 className="text-title-sm font-bold text-on-surface truncate">{title}</h3>
-          {subtitle && <p className="text-body-sm text-on-surface-variant mt-0.5 truncate">{subtitle}</p>}
+          <h3 className="text-title-sm font-bold text-on-surface lg:truncate">{title}</h3>
+          {subtitle && <p className="text-body-sm text-on-surface-variant mt-0.5 lg:truncate">{subtitle}</p>}
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </div>
