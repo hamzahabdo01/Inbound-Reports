@@ -83,7 +83,7 @@ export default function Login() {
       {/* Brand Panel */}
       <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] relative flex-col bg-[#00373B] p-12 overflow-hidden">
         <div className="relative z-10 -ml-12">
-          <img src="/epss-logo.png" alt="EPSS" className="h-28 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
+          <img src="/epss-logo-primary.svg" alt="EPSS" className="h-28 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
         </div>
         <img src="/gemini-svg.svg" alt="" className="absolute -top-12 -right-40 w-[800px] pointer-events-none select-none brightness-0 invert" />
         <div className="relative z-10 mt-8">
@@ -121,22 +121,19 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Mobile Brand Panel */}
-      <div className="lg:hidden flex flex-col items-center justify-center bg-primary pt-16 pb-12 px-6">
-        <div className="w-48 h-24 mb-4" style={{ backgroundColor: 'white', WebkitMask: 'url(/gemini-svg.svg) no-repeat center / contain', mask: 'url(/gemini-svg.svg) no-repeat center / contain' }} />
-        <h1 className="text-2xl font-bold text-white tracking-tight">Fanos Dashboard</h1>
-      </div>
-
       {/* Form Panel */}
-      <div className="flex-1 relative overflow-hidden flex flex-col items-center pt-6 px-6 bg-transparent lg:pt-0 lg:flex-row lg:items-center lg:justify-center">
+      <div className="flex-1 relative overflow-hidden flex flex-col items-center justify-center px-6 bg-gray-50 lg:bg-transparent lg:flex-row lg:items-center lg:justify-center">
         <div className="hidden lg:block absolute inset-0">
           <LoginCanvasAnimation />
         </div>
 
         <div className="w-full max-w-[420px] animate-slide-up relative z-10">
-          <div className="hidden lg:block mb-8 text-center lg:text-left">
-            <h2 className="text-2xl sm:text-[30px] font-bold text-on-surface tracking-tight">Welcome back</h2>
-            <p className="mt-1.5 text-body-md text-[#6B7280]">Sign in to access the dashboard</p>
+          <div className="mb-8 text-center lg:text-left">
+            <div className="inline-flex items-center justify-center w-[72px] h-[72px] rounded-2xl bg-white shadow-md mx-auto lg:mx-0 mb-5">
+              <img src="/epss-logo-primary.svg" alt="EPSS" className="h-10 w-auto" />
+            </div>
+            <h2 className="text-[26px] sm:text-[30px] font-bold text-on-surface tracking-tight">Welcome back</h2>
+            <p className="mt-1.5 text-body-md text-[#6B7280]">Sign in to access your Fanos Dashboard</p>
           </div>
 
           <div className="space-y-5">
