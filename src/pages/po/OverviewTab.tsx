@@ -358,9 +358,9 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
           )}
           {activeSections.includes('ppc-local-intl') && (
             <section id="ppc-local-intl" className="col-span-5">
-              <SectionPanel title="Local vs International Procurement" subtitle="Breakdown by procurement origin" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount }))} title="Local vs International Procurement" /><IconButton variant="info" contentId="procurement-local-intl" /></div>}>
+              <SectionPanel title="Local vs International Procurement" subtitle="Breakdown by procurement origin" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount, color: l.type?.toLowerCase().includes('international') ? '#D97706' : undefined }))} title="Local vs International Procurement" /><IconButton variant="info" contentId="procurement-local-intl" /></div>}>
                 <div className="max-w-sm mx-auto h-[310px] flex flex-col justify-center">
-                  <PieChart data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount }))} totalLabel="Procurement origin" />
+                  <PieChart data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount, color: l.type?.toLowerCase().includes('international') ? '#D97706' : undefined }))} totalLabel="Procurement origin" />
                 </div>
               </SectionPanel>
             </section>
@@ -559,14 +559,14 @@ function MergedBreakdownSection({ data }: any) {
   return (
     <section id="ppc-procurement-breakdown">
       <SectionPanel title="Procurement Breakdown" subtitle={active.subtitle} action={<IconButton variant="info" contentId="po-procurement-breakdown" />}>
-        <div className="flex items-center gap-1 mb-5 bg-surface-container-low rounded-lg p-1 w-fit">
-          {views.map(v => (
-            <button key={v.key} onClick={() => { setView(v.key); setHover(null); }}
-              className={`px-3 py-1.5 text-[12px] font-bold rounded-md transition-all duration-150 ${
-                view === v.key ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >{v.label}</button>
-          ))}
+        <div className="relative mb-5 w-fit">
+          <select value={view} onChange={(e) => { setView(e.target.value); setHover(null); }}
+            className="appearance-none h-8 rounded-md border border-outline-variant bg-white pl-2.5 pr-7 text-xs font-semibold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
+            {views.map(v => (
+              <option key={v.key} value={v.key}>{v.label}</option>
+            ))}
+          </select>
+          <i className="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[8px] text-primary pointer-events-none" />
         </div>
         {isMobile ? (
           /* Mobile: accordion list */
