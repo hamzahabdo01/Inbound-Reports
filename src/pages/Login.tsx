@@ -122,16 +122,13 @@ export default function Login() {
       </div>
 
       {/* Form Panel */}
-      <div className="flex-1 relative overflow-y-auto flex flex-col items-center justify-center px-6 bg-transparent lg:overflow-hidden lg:flex-row lg:items-center lg:justify-center">
-        <div className="hidden lg:block absolute inset-0">
+<div className="flex-1 relative overflow-hidden flex flex-col items-center justify-start pt-10 pb-10 px-6 lg:flex-row lg:items-center lg:justify-center lg:pt-0 lg:pb-0">        <div className="hidden lg:block absolute inset-0">
           <LoginCanvasAnimation />
         </div>
         
         <div className="w-full max-w-[420px] animate-slide-up relative z-10">
           <div className="mb-6 lg:mb-8 text-center lg:text-left">
-            <div className="lg:hidden inline-flex items-center justify-center rounded-xl bg-primary mx-auto mb-5">
-              <img className="h-20 w-auto" src="/epss-logo.png" alt="EPSS" style={{ filter: 'brightness(0) invert(1)' }} />
-            </div>
+            <div className="lg:hidden mx-auto mb-5" style={{ width: '160px', height: '80px', backgroundColor: '#0B4F54', WebkitMask: 'url(/gemini-svg.svg) no-repeat center / contain', mask: 'url(/gemini-svg.svg) no-repeat center / contain' }}></div>
             <h2 className="hidden lg:block text-2xl sm:text-[30px] font-bold text-on-surface tracking-tight">Welcome back</h2>
             <p className="mt-1.5 text-body-md text-[#6B7280]">Sign in to access the dashboard</p>
           </div>
@@ -225,9 +222,9 @@ export default function Login() {
 
       {/* Site Panel */}
       {showEnvPanel && (
-        <div className="fixed inset-0 z-50 flex flex-col lg:flex-row">
+        <div className="fixed inset-0 z-50 flex flex-row">
           <div className={`flex-1 bg-black/20 backdrop-blur-sm animate-fade-in ${envPanelClosing ? 'animate-fade-out' : ''}`} onClick={closeEnvPanel} />
-          <div className={`w-full lg:w-[400px] bg-[#0B4F54] shadow-2xl flex flex-col rounded-t-2xl lg:rounded-none ${envPanelClosing ? 'animate-slide-to-bottom lg:animate-slide-to-right' : 'animate-slide-from-bottom lg:animate-slide-from-right'}`}>
+          <div className={`w-[300px] lg:w-[400px] bg-[#0B4F54] shadow-2xl flex flex-col rounded-none ${envPanelClosing ? 'animate-slide-to-right' : 'animate-slide-from-right'}`}>
             <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
               <h3 className="text-lg font-semibold text-white tracking-tight">Select Site</h3>
               <button onClick={closeEnvPanel} className="w-11 h-11 lg:w-8 lg:h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-white/60">
