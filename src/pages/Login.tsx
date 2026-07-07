@@ -15,7 +15,6 @@ export default function Login() {
   const [selectedEnv, setSelectedEnv] = useState(null)
   const [showEnvPanel, setShowEnvPanel] = useState(false)
   const [envPanelClosing, setEnvPanelClosing] = useState(false)
-  const [showTooltip, setShowTooltip] = useState(false)
 
   const closeEnvPanel = () => {
     setEnvPanelClosing(true)
@@ -123,25 +122,23 @@ export default function Login() {
       </div>
 
       {/* Form Panel */}
-      <div className="flex-1 relative overflow-hidden flex items-center justify-center px-6">
-        <LoginCanvasAnimation />
+      <div className="flex-1 relative overflow-y-auto flex flex-col items-center justify-center px-6 bg-transparent lg:overflow-hidden lg:flex-row lg:items-center lg:justify-center">
+        <div className="hidden lg:block absolute inset-0">
+          <LoginCanvasAnimation />
+        </div>
         
         <div className="w-full max-w-[420px] animate-slide-up relative z-10">
-          {/* Mobile logo */}
-          <div className="lg:hidden mb-10">
-            <img src="/epss-logo.png" alt="EPSS" className="h-10 w-auto" />
-          </div>
-
-          <div className="mb-8 text-center lg:text-left">
-            <h2 className="text-[30px] font-bold text-on-surface tracking-tight">Welcome back</h2>
+          <div className="mb-6 lg:mb-8 text-center lg:text-left">
+            <div className="lg:hidden inline-flex items-center justify-center rounded-xl bg-primary mx-auto mb-5">
+              <img className="h-20 w-auto" src="/epss-logo.png" alt="EPSS" style={{ filter: 'brightness(0) invert(1)' }} />
+            </div>
+            <h2 className="hidden lg:block text-2xl sm:text-[30px] font-bold text-on-surface tracking-tight">Welcome back</h2>
             <p className="mt-1.5 text-body-md text-[#6B7280]">Sign in to access the dashboard</p>
           </div>
 
-          <div className="bg-white border border-[#CFD8DC] rounded-xl p-8">
             <div className="space-y-5">
               <div>
-                <label htmlFor="username" className="block text-label-sm text-gray-900 mb-1.5">Username</label>
-                <div className={`relative rounded-lg border transition-all duration-200 ${error && !username.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'username' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
+                <div className={`relative rounded-lg border transition-all duration-200 bg-white ${error && !username.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'username' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#B8C4CA] lg:border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                     <i className={`fa-solid fa-user text-sm ${focusedField === 'username' ? 'text-[#1a4a47]' : 'text-[#9CA3AF]'}`} />
                   </div>
@@ -152,7 +149,7 @@ export default function Login() {
                     onChange={(e) => { setUsername(e.target.value); setError(''); }}
                     onFocus={() => setFocusedField('username')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="Enter your username"
+                    placeholder="Username"
                     autoComplete="off"
                     className="w-full h-12 pl-10 pr-4 bg-white text-body-md text-on-surface placeholder:text-[#9CA3AF] focus:outline-none"
                   />
@@ -160,8 +157,7 @@ export default function Login() {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-label-sm text-gray-900 mb-1.5">Password</label>
-                <div className={`relative rounded-lg border transition-all duration-200 ${error && !password.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'password' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
+                <div className={`relative rounded-lg border transition-all duration-200 bg-white ${error && !password.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'password' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#B8C4CA] lg:border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                     <i className={`fa-solid fa-lock text-sm ${focusedField === 'password' ? 'text-[#1a4a47]' : 'text-[#9CA3AF]'}`} />
                   </div>
@@ -172,7 +168,7 @@ export default function Login() {
                     onChange={(e) => { setPassword(e.target.value); setError(''); }}
                     onFocus={() => setFocusedField('password')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="Enter your password"
+                    placeholder="Password"
                     autoComplete="off"
                     className="w-full h-12 pl-10 pr-10 bg-white text-body-md text-on-surface placeholder:text-[#9CA3AF] focus:outline-none"
                   />
@@ -188,32 +184,10 @@ export default function Login() {
               </div>
 
               <div>
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <label className="block text-label-sm text-gray-900">Region / Site</label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onMouseEnter={() => setShowTooltip(true)}
-                      onMouseLeave={() => setShowTooltip(false)}
-                      onFocus={() => setShowTooltip(true)}
-                      onBlur={() => setShowTooltip(false)}
-                      className="w-4 h-4 rounded-full bg-[#9CA3AF] text-white text-[9px] font-bold flex items-center justify-center hover:bg-[#1a4a47] transition-colors"
-                      aria-label="Help"
-                    >
-                      ?
-                    </button>
-                    {showTooltip && (
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#1a4a47] text-white text-[11px] font-medium rounded-lg shadow-lg whitespace-nowrap z-50 pointer-events-none">
-                        Select the distribution site closest to you.
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1a4a47] rotate-45 -mt-1" />
-                      </div>
-                    )}
-                  </div>
-                </div>
                 <button
                   type="button"
                   onClick={() => setShowEnvPanel(true)}
-                  className={`w-full h-12 flex items-center gap-3 px-3.5 rounded-lg border transition-all duration-200 text-left ${selectedEnv ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}
+                   className={`w-full h-12 flex items-center gap-3 px-3.5 rounded-lg border transition-all duration-200 text-left bg-white ${selectedEnv ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}
                 >
                   <i className="fa-solid fa-location-dot text-sm text-[#1a4a47]" />
                   <span className="flex-1 text-body-md text-on-surface font-medium">{selectedEnv?.Environment || 'Select site'}</span>
@@ -244,7 +218,6 @@ export default function Login() {
                   'Sign in'
                 )}
               </button>
-            </div>
           </div>
 
         </div>
@@ -252,12 +225,12 @@ export default function Login() {
 
       {/* Site Panel */}
       {showEnvPanel && (
-        <div className="fixed inset-0 z-50 flex flex-col-reverse lg:flex-row">
+        <div className="fixed inset-0 z-50 flex flex-col lg:flex-row">
           <div className={`flex-1 bg-black/20 backdrop-blur-sm animate-fade-in ${envPanelClosing ? 'animate-fade-out' : ''}`} onClick={closeEnvPanel} />
           <div className={`w-full lg:w-[400px] bg-[#0B4F54] shadow-2xl flex flex-col rounded-t-2xl lg:rounded-none ${envPanelClosing ? 'animate-slide-to-bottom lg:animate-slide-to-right' : 'animate-slide-from-bottom lg:animate-slide-from-right'}`}>
             <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
               <h3 className="text-lg font-semibold text-white tracking-tight">Select Site</h3>
-              <button onClick={closeEnvPanel} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-white/60">
+              <button onClick={closeEnvPanel} className="w-11 h-11 lg:w-8 lg:h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-white/60">
                 <i className="fa-solid fa-xmark text-lg" />
               </button>
             </div>
