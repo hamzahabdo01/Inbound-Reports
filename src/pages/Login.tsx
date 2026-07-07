@@ -79,7 +79,7 @@ export default function Login() {
           transition: background-color 5000s ease-in-out 0s;
         }
       `}</style>
-    <div className="min-h-screen flex-col lg:flex-row flex">
+    <div className="min-h-screen flex-col lg:flex-row flex overflow-hidden">
       {/* Brand Panel */}
       <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] relative flex-col bg-[#00373B] p-12 overflow-hidden">
         <div className="relative z-10 -ml-12">
