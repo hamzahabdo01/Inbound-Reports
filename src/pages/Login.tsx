@@ -79,7 +79,7 @@ export default function Login() {
           transition: background-color 5000s ease-in-out 0s;
         }
       `}</style>
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex-col lg:flex-row flex">
       {/* Brand Panel */}
       <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] relative flex-col bg-[#00373B] p-12 overflow-hidden">
         <div className="relative z-10 -ml-12">
@@ -121,16 +121,21 @@ export default function Login() {
         </div>
       </div>
 
+      {/* Mobile Brand Panel */}
+      <div className="lg:hidden flex flex-col items-center justify-center bg-primary pt-16 pb-12 px-6">
+        <div className="w-48 h-24 mb-4" style={{ backgroundColor: 'white', WebkitMask: 'url(/gemini-svg.svg) no-repeat center / contain', mask: 'url(/gemini-svg.svg) no-repeat center / contain' }} />
+        <h1 className="text-2xl font-bold text-white tracking-tight">Fanos Dashboard</h1>
+      </div>
+
       {/* Form Panel */}
-      <div className="flex-1 relative overflow-hidden flex flex-col items-center mt-24 px-6 bg-transparent lg:overflow-hidden lg:flex-row lg:items-center lg:justify-center">
+      <div className="flex-1 relative overflow-hidden flex flex-col items-center pt-6 px-6 bg-transparent lg:pt-0 lg:flex-row lg:items-center lg:justify-center">
         <div className="hidden lg:block absolute inset-0">
           <LoginCanvasAnimation />
         </div>
 
         <div className="w-full max-w-[420px] animate-slide-up relative z-10">
-          <div className="mb-6 lg:mb-8 text-center lg:text-left">
-            <div className="lg:hidden mx-auto mb-5" style={{ width: '160px', height: '80px', backgroundColor: '#0B4F54', WebkitMask: 'url(/gemini-svg.svg) no-repeat center / contain', mask: 'url(/gemini-svg.svg) no-repeat center / contain' }}></div>
-            <h2 className="hidden lg:block text-2xl sm:text-[30px] font-bold text-on-surface tracking-tight">Welcome back</h2>
+          <div className="hidden lg:block mb-8 text-center lg:text-left">
+            <h2 className="text-2xl sm:text-[30px] font-bold text-on-surface tracking-tight">Welcome back</h2>
             <p className="mt-1.5 text-body-md text-[#6B7280]">Sign in to access the dashboard</p>
           </div>
 
@@ -217,18 +222,18 @@ export default function Login() {
               )}
             </button>
           </div>
-        </div>
 
-        {/* Mobile footer */}
-        <div className="lg:hidden absolute bottom-4 left-0 right-0 px-6 text-center space-y-3">
-          <div className="flex items-center justify-center gap-4 text-[#9CA3AF] text-[8px] font-medium">
-            <span>HIPAA Compliant</span>
-            <span className="w-px h-3 bg-[#CFD8DC]" />
-            <span>ISO 27001</span>
-            <span className="w-px h-3 bg-[#CFD8DC]" />
-            <span>SSL Encrypted</span>
+          {/* Mobile footer */}
+          <div className="lg:hidden mt-8 text-center space-y-3">
+            <div className="flex items-center justify-center gap-4 text-[#9CA3AF] text-[8px] font-medium">
+              <span>HIPAA Compliant</span>
+              <span className="w-px h-3 bg-[#CFD8DC]" />
+              <span>ISO 27001</span>
+              <span className="w-px h-3 bg-[#CFD8DC]" />
+              <span>SSL Encrypted</span>
+            </div>
+            <p className="text-[9px] text-[#9CA3AF]/60">&copy; 2026 Ethiopian Pharmaceuticals Supply Service. All rights reserved.</p>
           </div>
-          <p className="text-[9px] text-[#9CA3AF]/60">&copy; 2026 Ethiopian Pharmaceuticals Supply Service. All rights reserved.</p>
         </div>
       </div>
 
