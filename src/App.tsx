@@ -48,6 +48,7 @@ function AppContent() {
   const { loggedIn, validating, logout } = useAuth();
   const [activeSection, setActiveSection] = useState('Program');
   const [sidebarVisible, setSidebarVisible] = useState(() => window.innerWidth >= 1280);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const mainRef = useRef(null);
 
   useEffect(() => {
@@ -58,7 +59,9 @@ function AppContent() {
 
   useEffect(() => {
     const onResize = () => {
-      if (window.innerWidth < 1280) setSidebarVisible(false);
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile && window.innerWidth < 1280) setSidebarVisible(false);
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
@@ -102,12 +105,33 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-surface flex">
-      <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={logout} />
-      <main ref={mainRef} className="flex-1 max-h-screen overflow-auto">
-        <div className="max-w-container mx-auto px-lg pb-lg">
-          {renderPage({ sidebarVisible, toggleSidebar })}
+      {isMobile ? (
+        <div className="overflow-hidden w-full">
+          <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={logout} isMobile onClose={() => setSidebarVisible(false)} />
+          <div className="flex-1 flex flex-col min-h-screen min-w-0">
+            <header className="fixed top-0 z-40 flex items-center gap-3 px-4 py-3 bg-surface border-b border-outline-variant/50 w-full">
+              <button onClick={toggleSidebar} className="w-9 h-9 flex items-center justify-center rounded-lg bg-sidebar-accent text-primary hover:brightness-110 transition-all shrink-0" aria-label="Toggle sidebar">
+                <i className="fa-solid fa-bars text-sm"></i>
+              </button>
+              <span className="text-sm font-bold text-on-surface truncate">Fanos Dashboard</span>
+            </header>
+            <main ref={mainRef} className="flex-1 overflow-auto pt-[56px]">
+              <div className="max-w-container mx-auto px-lg pb-lg">
+                {renderPage({ sidebarVisible, toggleSidebar })}
+              </div>
+            </main>
+          </div>
         </div>
-      </main>
+      ) : (
+        <>
+          <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={logout} />
+          <main ref={mainRef} className="flex-1 max-h-screen overflow-auto">
+            <div className="max-w-container mx-auto px-lg pb-lg">
+              {renderPage({ sidebarVisible, toggleSidebar })}
+            </div>
+          </main>
+        </>
+      )}
     </div>
   );
 }

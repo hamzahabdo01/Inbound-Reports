@@ -113,9 +113,6 @@ export default function PoPerformanceCompliance() {
     ];
   }, [data.poSummary, data.contractVsPO, data.procurementStatus, data.kpis]);
 
-  const kpiTotalPages = Math.ceil(kpiCards.length / 4);
-  const visibleKpiCards = kpiCards.slice(kpiPage * 4, kpiPage * 4 + 4);
-
   const filteredOpenOverduePOs = useMemo(() => {
     return data.openOverduePOs.filter((po) => {
       const matchSearch = po.poNo.toLowerCase().includes(overviewSearch.toLowerCase()) ||
@@ -160,7 +157,7 @@ export default function PoPerformanceCompliance() {
         <OverviewTab
           data={data} activeSections={activeSections}
           kpiPage={kpiPage} setKpiPage={setKpiPage}
-          kpiCards={kpiCards} kpiTotalPages={kpiTotalPages}
+          kpiCards={kpiCards}
           supplierHover={supplierHover} setSupplierHover={setSupplierHover}
           trendYears={trendYears} trendYear={trendYear} setTrendYear={setTrendYear}
           filteredTrend={filteredTrend} trendHover={trendHover} setTrendHover={setTrendHover}

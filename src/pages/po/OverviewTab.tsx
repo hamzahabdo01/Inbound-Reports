@@ -82,12 +82,13 @@ function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, b
   );
 }
 
-export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage, kpiCards = [], kpiTotalPages: _kpiTotalPages, supplierHover, setSupplierHover, trendYears, trendYear, setTrendYear, filteredTrend, trendHover, setTrendHover }: any) {
+export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage, kpiCards = [], supplierHover, setSupplierHover, trendYears, trendYear, setTrendYear, filteredTrend, trendHover, setTrendHover }: any) {
   const fundingYears = useMemo(() => data.fundingSources.map((d: any) => d.name), [data.fundingSources]);
   const [fundingYear, setFundingYear] = useState<string>(() => fundingYears[fundingYears.length - 1] || '');
   const [cardsPerPage, setCardsPerPage] = useState(() => window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1);
   const [selectedTrendIdx, setSelectedTrendIdx] = useState(-1);
   const [fundOpenIdx, setFundOpenIdx] = useState(-1);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
   const isTrendMobile = useMediaQuery('(max-width: 767px)');
 
   useEffect(() => {
@@ -124,9 +125,9 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                   style={{ transform: `translateX(-${kpiPage * 100}%)` }}
                 >
                   {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
-                    <div key={pageIdx} className="flex gap-3 w-full shrink-0">
+                    <div key={pageIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full shrink-0">
                       {kpiCards.slice(pageIdx * cardsPerPage, pageIdx * cardsPerPage + cardsPerPage).map((c, cardIdx) => (
-                        <div key={c.label || cardIdx} className="flex-1 min-w-0">
+                        <div key={c.label || cardIdx}>
                           <KPICard variant="detailed" {...c} />
                         </div>
                       ))}
@@ -182,11 +183,50 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
               let accumulatedAngle = -Math.PI / 2;
               const slices = data.supplierShare.map((s) => {
                 const angle = (s.amount / totalContracts) * Math.PI * 2;
-                const slice = { ...s, color: SUPPLIER_COLORS[s.label] || '#CFD8DC', startAngle: accumulatedAngle, endAngle: accumulatedAngle + angle };
+                const slice = { ...s, color: SUPPLIER_COLORS[s.label] || '#CFD8DC', percent: totalContracts > 0 ? (s.amount / totalContracts) * 100 : 0, startAngle: accumulatedAngle, endAngle: accumulatedAngle + angle };
                 accumulatedAngle += angle;
                 return slice;
               });
-              return (
+              return isTrendMobile ? (
+                <div className="flex flex-col items-center gap-4 font-sans">
+                  <div className="w-full max-w-[280px] shrink-0 flex justify-center relative select-none">
+                    <svg viewBox="0 0 280 280" className="w-full h-auto drop-shadow-sm" style={{ maxWidth: 280 }}>
+                      {slices.map((slice) => {
+                        const isSelected = selectedSupplier?.label === slice.label;
+                        const opacity = selectedSupplier ? (isSelected ? 1 : 0.42) : 0.95;
+                        const offset = isSelected ? 5 : 0;
+                        const midAngle = (slice.startAngle + slice.endAngle) / 2;
+                        const ox = offset * Math.cos(midAngle);
+                        const oy = offset * Math.sin(midAngle);
+                        return (
+                          <path key={slice.label}
+                            d={describeSlice(cx + ox, cy + oy, r, slice.startAngle, slice.endAngle)}
+                            fill={slice.color} stroke="#ffffff" strokeWidth="2.5"
+                            className="cursor-pointer transition-all duration-200" style={{ opacity }}
+                            onClick={() => setSelectedSupplier(prev => prev?.label === slice.label ? null : slice)}
+                          />
+                        );
+                      })}
+                      <circle cx={cx} cy={cy} r={r * 0.65} fill="#ffffff" />
+                      {selectedSupplier ? (
+                        <g className="animate-fade-in text-center">
+                          <text x={cx} y={cy - 14} textAnchor="middle" fontSize="11" fontWeight="700" fill="#707979" className="uppercase tracking-wider">
+                            {selectedSupplier.label.length > 18 ? `${selectedSupplier.label.slice(0, 15)}...` : selectedSupplier.label}
+                          </text>
+                          <text x={cx} y={cy + 8} textAnchor="middle" fontSize="22" fontWeight="800" fill="#181C1E">{selectedSupplier.value}%</text>
+                          <text x={cx} y={cy + 25} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="#404849" className="font-mono">{formatAmount(selectedSupplier.amount)} ETB</text>
+                        </g>
+                      ) : (
+                        <g className="text-center">
+                          <text x={cx} y={cy - 14} textAnchor="middle" fontSize="11" fontWeight="700" fill="#707979" className="uppercase tracking-wider">Total Contracts</text>
+                          <text x={cx} y={cy + 8} textAnchor="middle" fontSize="22" fontWeight="800" fill="#0B4F54" className="font-mono">{formatAmount(totalContracts)} ETB</text>
+                          <text x={cx} y={cy + 25} textAnchor="middle" fontSize="11" fontWeight="600" fill="#707979">{data.supplierShare.length} Suppliers</text>
+                        </g>
+                      )}
+                    </svg>
+                  </div>
+                </div>
+              ) : (
                 <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8 font-sans">
                   <div className="w-full max-w-[280px] lg:w-[280px] shrink-0 flex justify-center relative select-none">
                     <svg viewBox="0 0 280 280" className="w-full h-auto drop-shadow-sm" style={{ maxWidth: 280 }}>
@@ -277,14 +317,11 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
                   return (
                     <div key={fund.name} className="rounded-xl border border-outline-variant bg-white overflow-hidden">
                       <button onClick={() => setFundOpenIdx(prev => prev === i ? -1 : i)}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-container-low"
-                      >
-                        <span className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: fund.color }} />
-                        <span className="flex-1 min-w-0 text-sm font-semibold text-on-surface truncate">{fund.name}</span>
-                        <span className="text-xs font-bold text-on-surface-variant tabular-nums">{formatAmount(fund.value)}</span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-primary/10 text-primary">{fund.percent.toFixed(1)}%</span>
-                        <i className={`fa-solid fa-chevron-down text-[10px] text-on-surface-variant transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} />
-                      </button>
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-container-low"
+                        >
+                          <span className="flex-1 text-sm font-semibold text-on-surface truncate">{fund.name}</span>
+                          <i className={`fa-solid fa-chevron-down text-[10px] text-on-surface-variant transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} />
+                        </button>
                       {isOpen && (
                         <div className="px-4 pb-4 pt-0">
                           <div className="h-px bg-outline-variant/50 mb-3" />
@@ -311,9 +348,9 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
           {activeSections.includes('ppc-local-intl') && (
             <section id="ppc-local-intl" className="w-full lg:w-[41.666%]">
               <SectionPanel title="Local vs International Procurement" subtitle="Breakdown by procurement origin" action={<div className="flex items-center gap-1"><ExpandButton data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount }))} title="Local vs International Procurement" /><InfoButton contentId="procurement-local-intl" /></div>}>
-                <div className="max-w-sm mx-auto h-[310px] flex flex-col justify-center">
-                  <PieChart data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount }))} totalLabel="Procurement origin" />
-                </div>
+              <div>
+                <PieChart data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount }))} totalLabel="Procurement origin" />
+              </div>
               </SectionPanel>
             </section>
           )}
