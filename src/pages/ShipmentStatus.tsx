@@ -1,11 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import StickyHeader from '../components/StickyHeader';
-import InfoButton from '../components/InfoButton';
-import ExpandButton from '../components/ExpandButton';
+import IconButton from '../components/IconButton';
 
 import { shipmentStatusHPRData, shipmentStatusRDFData } from '../data/shipmentStatusData';
 import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../data/purchaseOrderDetailData';
-import StatCard from '../components/StatCard';
 import KPICard from '../components/KPICard';
 import PieChart from '../components/PieChart';
 import HBarChart from '../components/HBarChart';
@@ -615,8 +613,8 @@ function ShipmentStatus() {
                   <p className="text-xs text-[#707979] mt-0.5">{activeOrg} — breakdown of receipt completion levels</p>
                 </div>
                 <div className="flex items-center gap-1">
-                  <ExpandButton data={donutData} title="GRNF Status Distribution" />
-                  <InfoButton contentId="shipment-grnf-distribution" />
+                  <IconButton variant="expand" data={donutData} title="GRNF Status Distribution" />
+                  <IconButton variant="info" contentId="shipment-grnf-distribution" />
                 </div>
               </div>
               <PieChart data={donutData} />
@@ -645,7 +643,7 @@ function ShipmentStatus() {
                 <p className="text-xs text-[#707979] mt-0.5 ml-3.5">{activeOrg} — Purchase order shipment tracking with GRNF/GRV completion</p>
               </div>
               <div className="flex items-center gap-2">
-                <InfoButton contentId="shipment-status-epss" />
+                <IconButton variant="info" contentId="shipment-status-epss" />
                 <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#CFD8DC] text-xs font-semibold text-[#404849] hover:bg-[#F0F4F6] transition-colors">
                   <i className="fa-solid fa-download text-[10px]" />
                   Export
@@ -668,7 +666,7 @@ function ShipmentStatus() {
                 <p className="text-xs text-[#707979] mt-0.5 ml-3.5">Detailed line-item view of purchase orders including supplier, funding, and pricing</p>
               </div>
               <div className="flex items-center gap-2">
-                <InfoButton contentId="po-detail-report" />
+                <IconButton variant="info" contentId="po-detail-report" />
                 <span className="text-xs font-medium text-[#707979] bg-[#F0F4F6] px-2.5 py-1 rounded-full">
                   {poRows.length} records
                 </span>

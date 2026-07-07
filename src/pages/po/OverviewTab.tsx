@@ -2,8 +2,7 @@ import { useState, useMemo } from 'react';
 import PieChart from '../../components/PieChart';
 import FundingSourceChart from '../../components/FundingSourceChart';
 import KPICard from '../../components/KPICard';
-import InfoButton from '../../components/InfoButton';
-import ExpandButton from '../../components/ExpandButton';
+import IconButton from '../../components/IconButton';
 import { SectionPanel, formatAmount } from './poShared';
 
 const PO_TYPE_COLORS = ['#0B4F54', '#D97706', '#216E6A', '#4A9598'];
@@ -218,7 +217,7 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
           )}
           {activeSections.includes('ppc-local-intl') && (
             <section id="ppc-local-intl" className="col-span-5">
-              <SectionPanel title="Local vs International Procurement" subtitle="Breakdown by procurement origin" action={<div className="flex items-center gap-1"><ExpandButton data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount }))} title="Local vs International Procurement" /><InfoButton contentId="procurement-local-intl" /></div>}>
+              <SectionPanel title="Local vs International Procurement" subtitle="Breakdown by procurement origin" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount }))} title="Local vs International Procurement" /><IconButton variant="info" contentId="procurement-local-intl" /></div>}>
                 <div className="max-w-sm mx-auto h-[310px] flex flex-col justify-center">
                   <PieChart data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount }))} totalLabel="Procurement origin" />
                 </div>
@@ -360,7 +359,7 @@ function MergedBreakdownSection({ data }: any) {
 
   return (
     <section id="ppc-procurement-breakdown">
-      <SectionPanel title="Procurement Breakdown" subtitle={active.subtitle} action={<InfoButton contentId="po-procurement-breakdown" />}>
+      <SectionPanel title="Procurement Breakdown" subtitle={active.subtitle} action={<IconButton variant="info" contentId="po-procurement-breakdown" />}>
         <div className="flex items-center gap-1 mb-5 bg-surface-container-low rounded-lg p-1 w-fit">
           {views.map(v => (
             <button key={v.key} onClick={() => { setView(v.key); setHover(null); }}

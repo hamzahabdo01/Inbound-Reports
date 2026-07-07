@@ -7,7 +7,7 @@ import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
 import SelectFilter from '../components/SelectFilter';
-import InfoButton from '../components/InfoButton';
+import IconButton from '../components/IconButton';
 
 
 const COLUMNS = [
@@ -206,7 +206,7 @@ function PurchaseOrderFollowUp() {
             allLabel="Activity: All"
           />
           <div className="ml-auto">
-            <InfoButton contentId="purchase-order-follow-up" />
+            <IconButton variant="info" contentId="purchase-order-follow-up" />
           </div>
         </div>
       </div>

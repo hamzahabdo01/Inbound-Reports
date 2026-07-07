@@ -10,8 +10,7 @@ import EmptyState from '../components/EmptyState';
 import SelectFilter from '../components/SelectFilter';
 import KPICard from '../components/KPICard';
 import StickyHeader from '../components/StickyHeader';
-import InfoButton from '../components/InfoButton';
-import ExpandButton from '../components/ExpandButton';
+import IconButton from '../components/IconButton';
 
 
 const TENDER_STAGES = [
@@ -306,7 +305,7 @@ function Procurement() {
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <InfoButton contentId={activeTab === 'tender' ? 'procurement-tender-process' : 'procurement-contract-process'} />
+            <IconButton variant="info" contentId={activeTab === 'tender' ? 'procurement-tender-process' : 'procurement-contract-process'} />
           </div>
         </div>
       </StickyHeader>
@@ -368,9 +367,9 @@ function Procurement() {
             <h3 className="text-header-sm font-bold text-on-surface">Stage Visualizer</h3>
             <div className="flex items-center gap-2">
               {visMode === 'chart' && (
-                <ExpandButton data={pieData} title="Stage Visualizer" />
+                <IconButton variant="expand" data={pieData} title="Stage Visualizer" />
               )}
-              <InfoButton contentId="procurement-stage-visualizer" />
+              <IconButton variant="info" contentId="procurement-stage-visualizer" />
               <div className="flex items-center gap-1 bg-surface-container-low p-0.5 rounded-lg border border-outline-variant/30">
               <button
                 onClick={() => setVisMode('pipeline')}

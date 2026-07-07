@@ -1,16 +1,5 @@
 import { useMemo, useState } from 'react';
-
-const COLORS = [
-  '#0B4F54', '#D97706', '#216E6A', '#4A9598',
-  '#515F74', '#86BFC5', '#059669', '#BA1A1A', '#4A8EA5',
-];
-
-function fmt(v: number): string {
-  if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(1)}B`;
-  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(0)}M`;
-  if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
-  return String(Math.round(v));
-}
+import { getChartColor, formatCompactNumber } from '../utils/chartUtils';
 
 interface FundChild {
   name: string;
@@ -46,7 +35,7 @@ export default function FundingSourceChart({ data, selectedYear }: FundingSource
       .map((c, i) => ({
         ...c,
         percent: total > 0 ? (c.value / total) * 100 : 0,
-        color: COLORS[i % COLORS.length],
+        color: getChartColor(i),
       }))
       .sort((a: any, b: any) => b.value - a.value);
   }, [yearData]);
@@ -95,7 +84,7 @@ export default function FundingSourceChart({ data, selectedYear }: FundingSource
               <span className="text-[11px] text-on-surface-variant ml-1">{selectedYear}</span>
             </div>
             <div className="space-y-1 text-on-surface-variant">
-              <div className="flex justify-between gap-6"><span>Procurement Value</span><span className="font-semibold text-on-surface tabular-nums">{fmt(f.value)} ETB</span></div>
+              <div className="flex justify-between gap-6"><span>Procurement Value</span><span className="font-semibold text-on-surface tabular-nums">{formatCompactNumber(f.value)} ETB</span></div>
               <div className="flex justify-between gap-6"><span>Share of Year</span><span className="font-semibold text-on-surface">{f.percent.toFixed(1)}%</span></div>
               {f.poCount != null && <div className="flex justify-between gap-6"><span>Purchase Orders</span><span className="font-semibold text-on-surface tabular-nums">{f.poCount.toLocaleString()}</span></div>}
               {f.supplierCount != null && <div className="flex justify-between gap-6"><span>Distinct Suppliers</span><span className="font-semibold text-on-surface tabular-nums">{f.supplierCount.toLocaleString()}</span></div>}

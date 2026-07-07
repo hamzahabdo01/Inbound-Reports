@@ -9,7 +9,7 @@ import EmptyState from '../components/EmptyState';
 import SelectFilter from '../components/SelectFilter';
 import ExportButton from '../components/ExportButton';
 import StickyHeader from '../components/StickyHeader';
-import InfoButton from '../components/InfoButton';
+import IconButton from '../components/IconButton';
 
 
 // Status styling & logic helper
@@ -319,7 +319,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
         </div>
         
         <div className="flex items-center gap-2">
-          <InfoButton contentId={activeTab === 'stock-report' ? 'main-stock-report' : 'national-amc-report'} />
+          <IconButton variant="info" contentId={activeTab === 'stock-report' ? 'main-stock-report' : 'national-amc-report'} />
           <ExportButton onClick={handleExportCSV} label="Export Excel Data" icon="fa-file-excel" className="border-outline bg-white hover:bg-surface-low font-semibold text-body-sm shadow-sm" />
         </div>
       </StickyHeader>

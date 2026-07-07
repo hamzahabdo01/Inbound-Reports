@@ -8,12 +8,11 @@ import NationalStockTable from '../../components/program/NationalStockTable';
 import HubHeatmap from '../../components/program/HubHeatmap';
 import ProgramBarChart from '../../components/program/ProgramBarChart';
 import ProgramStackedBarChart from '../../components/program/ProgramStackedBarChart';
-import ProgramMiniTable from '../../components/program/ProgramMiniTable';
+import BaseTable from '../../components/BaseTable';
 import IssuedItemsTable from '../../components/program/IssuedItemsTable';
 import PurchaseOrderTable from '../../components/program/PurchaseOrderTable';
 import RecentReceivesTable from '../../components/program/RecentReceivesTable';
-import InfoButton from '../../components/InfoButton';
-import RefreshButton from '../../components/program/RefreshButton';
+import IconButton from '../../components/IconButton';
 import ProgramItemDetail from '../../components/program/ProgramItemDetail';
 import { SS_WebApi, OIH_WebApi, POD_WebApi, POHRIHRCH_WebApi, RCD_WebApi, MainDashboard_WebApi, IUBVIUI_WebApi, FR_WebApi } from '../../api/fanos.ts';
 
@@ -1062,7 +1061,7 @@ function ChildHealth() {
         <ProgramPanel
           title="Stock Status National"
           subtitle={pageReady ? `${filteredStock.length} of ${stockRows.length} products` : ''}
-          action={pageReady ? <div className="flex items-center gap-2"><InfoButton contentId="program-national-stock" /><RefreshButton onClick={refreshStock} loading={refreshing['stock']} /></div> : undefined}
+          action={pageReady ? <div className="flex items-center gap-2"><IconButton variant="info" contentId="program-national-stock" /><IconButton variant="refresh" onClick={refreshStock} loading={refreshing['stock']} /></div> : undefined}
         >
           {pageReady ? <NationalStockTable rows={filteredStock} onSelectItem={setSelectedProduct} /> : <PanelSkeleton rows={6} height="h-56" />}
         </ProgramPanel>
@@ -1080,8 +1079,8 @@ function ChildHealth() {
           }
           action={(
             <div className="flex items-center gap-2">
-              <RefreshButton onClick={refreshHub} loading={refreshing['hub']} />
-              <InfoButton contentId="program-hub-heatmap" />
+              <IconButton variant="refresh" onClick={refreshHub} loading={refreshing['hub']} />
+              <IconButton variant="info" contentId="program-hub-heatmap" />
               <div className="relative">
                 <select
                   value={siteFilter}
@@ -1118,13 +1117,13 @@ function ChildHealth() {
         <ProgramChartRow
           leftTitle="Item Procurement By Agent"
           leftSubtitle="PO line count by funding source per product"
-          leftAction={<RefreshButton onClick={refreshProcurer} loading={refreshing['procurer']} />}
+          leftAction={<IconButton variant="refresh" onClick={refreshProcurer} loading={refreshing['procurer']} />}
           leftChart={<ProgramStackedBarChart data={procurementByAgent} normalized yLabel="Count" />}
           rightTitle="Procurement Agents"
           rightSubtitle={`Birr value share (${yearFilter})`}
           rightData={donorChart}
           rightLoading={loadingProcurer}
-          rightAction={<><RefreshButton onClick={refreshProcurerChart} loading={refreshing['procurerChart']} /><InfoButton contentId="program-procurement-agents" /></>}
+          rightAction={<><IconButton variant="refresh" onClick={refreshProcurerChart} loading={refreshing['procurerChart']} /><IconButton variant="info" contentId="program-procurement-agents" /></>}
           rightExtra={(
             <div className="flex items-center gap-2">
               <label className="text-caption text-on-surface-variant whitespace-nowrap">Year:</label>
@@ -1152,8 +1151,8 @@ function ChildHealth() {
           subtitle={`${filteredPOs.length} open delivery records`}
           action={(
             <div className="flex items-center gap-1.5">
-              <RefreshButton onClick={() => refreshPurchaseOrders(poTab)} loading={refreshing['purchaseOrders']} />
-              <InfoButton contentId="program-purchase-order" />
+              <IconButton variant="refresh" onClick={() => refreshPurchaseOrders(poTab)} loading={refreshing['purchaseOrders']} />
+              <IconButton variant="info" contentId="program-purchase-order" />
             </div>
           )}
         >
@@ -1184,7 +1183,7 @@ function ChildHealth() {
         <ProgramPanel
           title="Recent Receives"
           subtitle={`${filteredReceives.length} receipt records · ${formatNumber(kpis.receivedValue)} ETB`}
-          action={<div className="flex items-center gap-2"><InfoButton contentId="program-recent-receives" /><RefreshButton onClick={refreshReceives} loading={refreshing['receives']} /></div>}
+          action={<div className="flex items-center gap-2"><IconButton variant="info" contentId="program-recent-receives" /><IconButton variant="refresh" onClick={refreshReceives} loading={refreshing['receives']} /></div>}
         >
           <RecentReceivesTable rows={filteredReceives.slice(0, 10)} />
         </ProgramPanel>
@@ -1197,7 +1196,7 @@ function ChildHealth() {
         <ProgramChartRow
           leftTitle="Item Distribution by Facility Type"
           leftSubtitle="Products distributed across health center, hospital, woreda, and other facilities"
-          leftAction={<RefreshButton onClick={refreshDistribution} loading={refreshing['distribution']} />}
+          leftAction={<IconButton variant="refresh" onClick={refreshDistribution} loading={refreshing['distribution']} />}
           leftChart={<ProgramStackedBarChart data={itemDistribution} />}
           rightTitle="Distribution by Facility Type"
           rightSubtitle="Share by facility type"
@@ -1209,7 +1208,7 @@ function ChildHealth() {
             }));
             return totals.filter((t) => t.value > 0);
           })()}
-          rightAction={<InfoButton contentId="program-facility-distribution" />}
+          rightAction={<IconButton variant="info" contentId="program-facility-distribution" />}
         />
         )}
       </section>
@@ -1217,7 +1216,7 @@ function ChildHealth() {
       {/* ── Issued Items ─────────────────────────────────────────────────── */}
       <section id="ch-issued">
         {!sectionLoaded['issued'] ? <PanelSkeleton rows={3} /> : (
-        <ProgramPanel title="Issued — Facility" subtitle="Issued items by flow type and month" action={<div className="flex items-center gap-2"><InfoButton contentId="program-issued-items" /><RefreshButton onClick={refreshIssuedItems} loading={refreshing['issued']} /></div>}>
+        <ProgramPanel title="Issued — Facility" subtitle="Issued items by flow type and month" action={<div className="flex items-center gap-2"><IconButton variant="info" contentId="program-issued-items" /><IconButton variant="refresh" onClick={refreshIssuedItems} loading={refreshing['issued']} /></div>}>
           <IssuedItemsTable rows={apiIssuedItems} fromDate={issuedFromDate} toDate={issuedToDate} onFromChange={setIssuedFromDate} onToChange={setIssuedToDate} />
         </ProgramPanel>
         )}
@@ -1230,13 +1229,13 @@ function ChildHealth() {
         <ProgramChartRow
           leftTitle="Pipeline Incoming Shipment"
           leftSubtitle="Center pipeline by product — PurchaseOrdered, BelowMax, AboveMax, ProjectedDaysOutOfStock, InvoicedM"
-          leftAction={<RefreshButton onClick={refreshPipeline} loading={refreshing['pipeline']} />}
+          leftAction={<IconButton variant="refresh" onClick={refreshPipeline} loading={refreshing['pipeline']} />}
           leftChart={<ProgramStackedBarChart data={pipelineByDonor} />}
           rightTitle="Distribution by Ownership Type"
           rightSubtitle={`Ownership share (${ownershipYear})`}
           rightData={ownershipChart}
           rightLoading={loadingOwnership}
-          rightAction={<><RefreshButton onClick={refreshOwnershipChart} loading={refreshing['ownership']} /><InfoButton contentId="program-ownership-distribution" /></>}
+          rightAction={<><IconButton variant="refresh" onClick={refreshOwnershipChart} loading={refreshing['ownership']} /><IconButton variant="info" contentId="program-ownership-distribution" /></>}
           rightExtra={(
             <div className="flex items-center gap-2">
               <label className="text-caption text-on-surface-variant whitespace-nowrap">Year:</label>
@@ -1256,13 +1255,13 @@ function ChildHealth() {
         <ProgramChartRow
           leftTitle="Order Fill Rate"
           leftSubtitle="COFR (Customer) and HOFR (Hub) fill rates by product"
-          leftAction={<div className="flex items-center gap-2"><InfoButton contentId="program-order-fill-rate" /><RefreshButton onClick={refreshOrderFillRate} loading={refreshing['orderFillRate']} /></div>}
+          leftAction={<div className="flex items-center gap-2"><IconButton variant="info" contentId="program-order-fill-rate" /><IconButton variant="refresh" onClick={refreshOrderFillRate} loading={refreshing['orderFillRate']} /></div>}
           leftChart={leftChart}
           rightTitle="Funding Source"
           rightSubtitle={`Donor share (${fundingYear})`}
           rightData={fundingChart}
           rightLoading={loadingFunding}
-          rightAction={<><RefreshButton onClick={refreshFundingChart} loading={refreshing['funding']} /><InfoButton contentId="program-funding-source" /></>}
+          rightAction={<><IconButton variant="refresh" onClick={refreshFundingChart} loading={refreshing['funding']} /><IconButton variant="info" contentId="program-funding-source" /></>}
           rightExtra={(
             <div className="flex items-center gap-2">
               <label className="text-caption text-on-surface-variant whitespace-nowrap">Year:</label>
@@ -1286,7 +1285,7 @@ function ChildHealth() {
       {/* ── Stock Utilization ─────────────────────────────────────────────── */}
       <section id="ch-utilization">
         {!sectionLoaded['stockUtilization'] ? <PanelSkeleton /> : (
-        <ProgramPanel title="Stock Utilization National" subtitle="SOHAmtBirr, IssuedAmtBirr, and ExpiredAmtBirr by product" action={<RefreshButton onClick={refreshStockUtilization} loading={refreshing['stockUtilization']} />}>
+        <ProgramPanel title="Stock Utilization National" subtitle="SOHAmtBirr, IssuedAmtBirr, and ExpiredAmtBirr by product" action={<IconButton variant="refresh" onClick={refreshStockUtilization} loading={refreshing['stockUtilization']} />}>
           <ProgramStackedBarChart data={stockUtilization} height={260} />
         </ProgramPanel>
         )}
@@ -1295,7 +1294,7 @@ function ChildHealth() {
       {/* ── National MOS ─────────────────────────────────────────────────── */}
       <section id="ch-mos">
         {!sectionLoaded['mos'] ? <PanelSkeleton /> : (
-        <ProgramPanel title="National MOS" subtitle={`MOS by site — ${mosSiteLabels[mosSite?.toUpperCase()] || mosSite || 'select a site'}`} action={<RefreshButton onClick={refreshMos} loading={refreshing['mos']} />}>
+        <ProgramPanel title="National MOS" subtitle={`MOS by site — ${mosSiteLabels[mosSite?.toUpperCase()] || mosSite || 'select a site'}`} action={<IconButton variant="refresh" onClick={refreshMos} loading={refreshing['mos']} />}>
           <div className="flex items-center gap-3 px-5 pt-3 pb-1">
             <label className="text-label-sm text-on-surface-variant whitespace-nowrap">Site:</label>
             <select
@@ -1318,14 +1317,18 @@ function ChildHealth() {
       {/* ── Manufacturers ─────────────────────────────────────────────────── */}
       <section id="ch-manufacturers">
         {!sectionLoaded['manufacturers'] ? <PanelSkeleton /> : (
-        <ProgramPanel title="Manufacturers" subtitle="Recent received value by manufacturer" action={<div className="flex items-center gap-2"><InfoButton contentId="program-mini-table" /><RefreshButton onClick={refreshManufacturers} loading={refreshing['manufacturers']} /></div>}>
-          <ProgramMiniTable
+        <ProgramPanel title="Manufacturers" subtitle="Recent received value by manufacturer" action={<div className="flex items-center gap-2"><IconButton variant="info" contentId="program-mini-table" /><IconButton variant="refresh" onClick={refreshManufacturers} loading={refreshing['manufacturers']} /></div>}>
+          <BaseTable
             columns={[
               { key: 'label', label: 'Manufacturer' },
               { key: 'value', label: 'Value (ETB)', render: (row) => formatNumber(row.value) },
               { key: 'share', label: 'Share' },
             ]}
             rows={manufacturerRows}
+            headerBg="bg-[#CFD8DC]"
+            minWidth="520px"
+            rowKey={(row, index) => row.id || index}
+            rowClassName="hover:bg-surface-container-low"
           />
         </ProgramPanel>
         )}
@@ -1334,14 +1337,18 @@ function ChildHealth() {
       {/* ── Countries ─────────────────────────────────────────────────────── */}
       <section id="ch-countries">
         {!sectionLoaded['countries'] ? <PanelSkeleton /> : (
-        <ProgramPanel title="Countries" subtitle="Recent received value by country" action={<div className="flex items-center gap-2"><InfoButton contentId="program-mini-table" /><RefreshButton onClick={refreshCountries} loading={refreshing['countries']} /></div>}>
-          <ProgramMiniTable
+        <ProgramPanel title="Countries" subtitle="Recent received value by country" action={<div className="flex items-center gap-2"><IconButton variant="info" contentId="program-mini-table" /><IconButton variant="refresh" onClick={refreshCountries} loading={refreshing['countries']} /></div>}>
+          <BaseTable
             columns={[
               { key: 'label', label: 'Country' },
               { key: 'value', label: 'Value (ETB)', render: (row) => formatNumber(row.value) },
               { key: 'share', label: 'Share' },
             ]}
             rows={countryRows}
+            headerBg="bg-[#CFD8DC]"
+            minWidth="520px"
+            rowKey={(row, index) => row.id || index}
+            rowClassName="hover:bg-surface-container-low"
           />
         </ProgramPanel>
         )}

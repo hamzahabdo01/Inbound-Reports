@@ -55,15 +55,15 @@ export function useClinicalChemistry(programType = 'HPR') {
         .filter((r) => r.label);
     });
 
-  const manufacturers = useAsyncData(
+  const manufacturers = useAsyncData<any[]>(
     () => fetchMiniTable(RCD_WebApi.getItemByManufacturer.bind(RCD_WebApi), { ...params, FiscalYear: String(DEFAULT_YEAR), OrderBy: 'Manufacturer' }),
     [programType],
   );
-  const suppliers = useAsyncData(
+  const suppliers = useAsyncData<any[]>(
     () => fetchMiniTable(RCD_WebApi.getItemBySupplier.bind(RCD_WebApi), { ...params, FiscalYear: String(DEFAULT_YEAR) }),
     [programType],
   );
-  const countries = useAsyncData(
+  const countries = useAsyncData<any[]>(
     () => fetchMiniTable(RCD_WebApi.getItemCountry.bind(RCD_WebApi), { ...params, FiscalYear: String(DEFAULT_YEAR) }),
     [programType],
   );

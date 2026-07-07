@@ -1,13 +1,6 @@
 import { useEffect, useState } from 'react';
 import PieChart from './PieChart';
-
-const formatValue = (value) => {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}K`;
-  return new Intl.NumberFormat('en').format(value);
-};
-
-const formatFull = (value) => new Intl.NumberFormat('en').format(value);
+import { formatCompactNumber } from '../utils/chartUtils';
 
 /**
  * ExpandModal — two-tab modal for every pie chart.
@@ -161,7 +154,7 @@ export default function ExpandModal({ isOpen, onClose, data = [], title = 'Chart
                           </div>
                         </td>
                         <td className="px-5 py-3.5 text-right font-mono text-[#181C1E] text-sm">
-                          {formatFull(row.value)}
+                          {new Intl.NumberFormat('en').format(row.value)}
                         </td>
                         <td className="px-5 py-3.5 text-right text-[#515F74] text-sm font-semibold">
                           {pct}%

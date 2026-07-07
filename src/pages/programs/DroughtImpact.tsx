@@ -8,12 +8,12 @@ import NationalStockTable from '../../components/program/NationalStockTable';
 import HubHeatmap from '../../components/program/HubHeatmap';
 import ProgramBarChart from '../../components/program/ProgramBarChart';
 import ProgramStackedBarChart from '../../components/program/ProgramStackedBarChart';
-import ProgramMiniTable from '../../components/program/ProgramMiniTable';
+import BaseTable from '../../components/BaseTable';
 import IssuedItemsTable from '../../components/program/IssuedItemsTable';
 import PurchaseOrderTable from '../../components/program/PurchaseOrderTable';
 import RecentReceivesTable from '../../components/program/RecentReceivesTable';
 import PieChart from '../../components/PieChart';
-import InfoButton from '../../components/InfoButton';
+import IconButton from '../../components/IconButton';
 import ProgramItemDetail from '../../components/program/ProgramItemDetail';
 import { parseCSV, parseQuantity } from '../../utils/csvParser';
 import stockStatusCsv from '../../data/drought/Stock Status_National.csv?raw';
@@ -354,7 +354,7 @@ function DroughtImpact() {
         <ProgramPanel
           title="Stock Status National — Drought Relief"
           subtitle={`${filteredStock.length} of ${stockRows.length} products`}
-          action={<InfoButton contentId="program-national-stock" />}
+          action={<IconButton variant="info" contentId="program-national-stock" />}
         >
           <NationalStockTable rows={filteredStock} onSelectItem={setSelectedProduct} />
         </ProgramPanel>
@@ -371,7 +371,7 @@ function DroughtImpact() {
           }
           action={(
             <div className="flex items-center gap-2">
-              <InfoButton contentId="program-hub-heatmap" />
+              <IconButton variant="info" contentId="program-hub-heatmap" />
               <div className="relative">
                 <select
                   value={siteFilter}
@@ -410,7 +410,7 @@ function DroughtImpact() {
           rightTitle="Procurement Agents"
           rightSubtitle="PO line share"
           rightData={donorChart}
-          rightAction={<InfoButton contentId="program-procurement-agents" />}
+          rightAction={<IconButton variant="info" contentId="program-procurement-agents" />}
         />
       </section>
 
@@ -419,7 +419,7 @@ function DroughtImpact() {
         <ProgramPanel
           title="Purchase Order — Drought Relief Supplies"
           subtitle={`${filteredPOs.length} open delivery records`}
-          action={<InfoButton contentId="program-purchase-order" />}
+          action={<IconButton variant="info" contentId="program-purchase-order" />}
         >
           <PurchaseOrderTable rows={filteredPOs.slice(0, 12)} />
         </ProgramPanel>
@@ -430,7 +430,7 @@ function DroughtImpact() {
         <ProgramPanel
           title="Recent Receives"
           subtitle={`${filteredReceives.length} receipt records · ${formatNumber(kpis.receivedValue)} ETB`}
-          action={<InfoButton contentId="program-recent-receives" />}
+          action={<IconButton variant="info" contentId="program-recent-receives" />}
         >
           <RecentReceivesTable rows={filteredReceives.slice(0, 10)} />
         </ProgramPanel>
@@ -445,13 +445,13 @@ function DroughtImpact() {
           rightTitle="Distribution by Source Country"
           rightSubtitle="Receipt country share"
           rightData={groupBy(filteredReceives, 'Country')}
-          rightAction={<InfoButton contentId="program-facility-distribution" />}
+          rightAction={<IconButton variant="info" contentId="program-facility-distribution" />}
         />
       </section>
 
       {/* ── Issued Items ─────────────────────────────────────────────────── */}
       <section id="di-issued">
-        <ProgramPanel title="Issued — Center to Zone" subtitle="Issued items by flow type and month" action={<InfoButton contentId="program-issued-items" />}>
+        <ProgramPanel title="Issued — Center to Zone" subtitle="Issued items by flow type and month" action={<IconButton variant="info" contentId="program-issued-items" />}>
           <IssuedItemsTable rows={DI_ISSUED_ROWS} />
         </ProgramPanel>
       </section>
@@ -465,7 +465,7 @@ function DroughtImpact() {
           rightTitle="Distribution by Ownership Type"
           rightSubtitle="Availability accountability"
           rightData={ownershipChart}
-          rightAction={<InfoButton contentId="program-ownership-distribution" />}
+          rightAction={<IconButton variant="info" contentId="program-ownership-distribution" />}
         />
         <ProgramChartRow
           leftTitle="Pipeline Quantity by Item"
@@ -479,7 +479,7 @@ function DroughtImpact() {
           rightTitle="Funding Source"
           rightSubtitle="Incoming shipment funder share"
           rightData={donorChart}
-          rightAction={<InfoButton contentId="program-funding-source" />}
+          rightAction={<IconButton variant="info" contentId="program-funding-source" />}
         />
       </section>
 
@@ -504,28 +504,36 @@ function DroughtImpact() {
 
       {/* ── Manufacturers ─────────────────────────────────────────────────── */}
       <section id="di-manufacturers">
-        <ProgramPanel title="Manufacturers" subtitle="Recent received value by manufacturer" action={<InfoButton contentId="program-mini-table" />}>
-          <ProgramMiniTable
+        <ProgramPanel title="Manufacturers" subtitle="Recent received value by manufacturer" action={<IconButton variant="info" contentId="program-mini-table" />}>
+          <BaseTable
             columns={[
               { key: 'label', label: 'Manufacturer' },
               { key: 'value', label: 'Value (ETB)', render: (row) => formatNumber(row.value) },
               { key: 'share', label: 'Share' },
             ]}
             rows={manufacturerRows}
+            headerBg="bg-[#CFD8DC]"
+            minWidth="520px"
+            rowKey={(row, index) => row.id || index}
+            rowClassName="hover:bg-surface-container-low"
           />
         </ProgramPanel>
       </section>
 
       {/* ── Countries ─────────────────────────────────────────────────────── */}
       <section id="di-countries">
-        <ProgramPanel title="Countries" subtitle="Recent received value by country" action={<InfoButton contentId="program-mini-table" />}>
-          <ProgramMiniTable
+        <ProgramPanel title="Countries" subtitle="Recent received value by country" action={<IconButton variant="info" contentId="program-mini-table" />}>
+          <BaseTable
             columns={[
               { key: 'label', label: 'Country' },
               { key: 'value', label: 'Value (ETB)', render: (row) => formatNumber(row.value) },
               { key: 'share', label: 'Share' },
             ]}
             rows={countryRows}
+            headerBg="bg-[#CFD8DC]"
+            minWidth="520px"
+            rowKey={(row, index) => row.id || index}
+            rowClassName="hover:bg-surface-container-low"
           />
         </ProgramPanel>
       </section>

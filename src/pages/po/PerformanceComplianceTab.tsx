@@ -1,5 +1,5 @@
 import KPICard from '../../components/KPICard';
-import InfoButton from '../../components/InfoButton';
+import IconButton from '../../components/IconButton';
 import LeadtimeMilestoneTracker from '../../components/LeadtimeMilestoneTracker';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 
@@ -30,7 +30,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
     <>
       {activeSections.includes('ppc-leadtime') && (
         <section id="ppc-leadtime">
-          <SectionPanel title="Leadtime Analysis" subtitle="Average processing times across procurement stages" action={<InfoButton contentId="po-leadtime" />}>
+          <SectionPanel title="Leadtime Analysis" subtitle="Average processing times across procurement stages" action={<IconButton variant="info" contentId="po-leadtime" />}>
             {data.leadtime.milestone && (
               <LeadtimeMilestoneTracker
                 counts={data.leadtime.milestone.counts}
@@ -79,7 +79,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
           {(() => {
             const s = data.supplierPerformanceSummary;
             return (
-              <SectionPanel title="Supplier Performance Tracking" subtitle="Delivery performance leaderboard based on evaluated delivery records" action={<InfoButton contentId="po-supplier-perf" />}>
+              <SectionPanel title="Supplier Performance Tracking" subtitle="Delivery performance leaderboard based on evaluated delivery records" action={<IconButton variant="info" contentId="po-supplier-perf" />}>
                 {s && (
                   <div className="grid grid-cols-4 gap-4 mb-6">
                     <KPICard variant="detailed" icon="fa-building" iconBg="bg-primary/10" iconColor="text-primary" label="Suppliers" value={s.supplierCount.toLocaleString()} subtitle={`${s.purchaseOrderCount.toLocaleString()} POs`} />
@@ -135,7 +135,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
           {(() => {
             const risk = data.supplierRiskRanking || [];
             return (
-              <SectionPanel title="Supplier Risk Ranking" subtitle="Risk assessment based on overdue amounts, delivery rates, and max days overdue" action={<InfoButton contentId="po-supplier-risk" />}>
+              <SectionPanel title="Supplier Risk Ranking" subtitle="Risk assessment based on overdue amounts, delivery rates, and max days overdue" action={<IconButton variant="info" contentId="po-supplier-risk" />}>
                 <Table page={tp('supplier-risk')} setPage={sp('supplier-risk')}
                   headers={[
                     { key: 'rank', label: 'Rank', className: 'text-center w-12' },
@@ -181,7 +181,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
 
       {activeSections.includes('ppc-bond') && (
         <section id="ppc-bond">
-          <SectionPanel title="Performance Bond Report" subtitle="Received, Verified, Expiry, Confiscated, Extended" action={<InfoButton contentId="po-bond" />}>
+          <SectionPanel title="Performance Bond Report" subtitle="Received, Verified, Expiry, Confiscated, Extended" action={<IconButton variant="info" contentId="po-bond" />}>
             {(() => {
               const bonds = data.performanceBonds;
               const totalAmount = bonds.reduce((s, b) => s + b.amount, 0);

@@ -22,7 +22,19 @@ const parseValue = (val) => {
   return val;
 };
 
-function KPICard({ icon, iconBg, iconColor, label, value, valueColor, subtitle, trend, trendIcon, variant, className, children }: any) {
+const formatTrend = (t: any) => {
+  if (typeof t === 'number') {
+    const isUp = t >= 0;
+    return (
+      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isUp ? 'bg-[#059669]/10 text-[#059669]' : 'bg-[#BA1A1A]/10 text-[#BA1A1A]'}`}>
+        {isUp ? '\u2191' : '\u2193'} {Math.abs(t)}%
+      </span>
+    );
+  }
+  return t;
+};
+
+function KPICard({ icon, iconBg, iconColor, label, value, valueColor, subtitle, trend, trendIcon, trendLabel, variant, className, children }: any) {
   const iconColorClass = iconColor || 'text-on-surface-variant';
   const valueColorClass = valueColor || 'text-on-surface';
 
@@ -37,6 +49,7 @@ function KPICard({ icon, iconBg, iconColor, label, value, valueColor, subtitle, 
         </div>
         <div className={`text-display-kpi leading-none ${valueColorClass || 'text-slate-900'}`}>{parseValue(value)}</div>
         {subtitle && <p className={`text-xs font-semibold mt-2 ${trendIcon || 'text-on-surface-variant'}`}>{subtitle}</p>}
+        {trendLabel && <p className="text-xs text-on-surface-variant mt-1">{trendLabel}</p>}
         {children}
       </div>
     );
@@ -52,11 +65,12 @@ function KPICard({ icon, iconBg, iconColor, label, value, valueColor, subtitle, 
         <div className={`text-display-kpi font-extrabold ${valueColorClass}`}>{parseValue(value)}</div>
         {trend && (
           <span className={`flex items-center text-body-sm ${trendIcon ? trendIcon : ''}`}>
-            {trend}
+            {formatTrend(trend)}
           </span>
         )}
       </div>
       {subtitle && !trend && <p className="text-xs text-on-surface-variant mt-2">{subtitle}</p>}
+      {trendLabel && <p className="text-xs text-on-surface-variant mt-2">{trendLabel}</p>}
       {children}
     </div>
   );

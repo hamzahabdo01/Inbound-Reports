@@ -4,11 +4,10 @@ import ProgramPanel from '../../components/program/ProgramPanel';
 import SectionNavigator from '../../components/SectionNavigator';
 import ProgramStackedBarChart from '../../components/program/ProgramStackedBarChart';
 import ProgramBarChart from '../../components/program/ProgramBarChart';
-import ProgramMiniTable from '../../components/program/ProgramMiniTable';
+import BaseTable from '../../components/BaseTable';
 import IssuedItemsTable from '../../components/program/IssuedItemsTable';
 import PieChart from '../../components/PieChart';
-import InfoButton from '../../components/InfoButton';
-import ExpandButton from '../../components/ExpandButton';
+import IconButton from '../../components/IconButton';
 import { MainDashboard_WebApi } from '../../api/fanos.ts';
 const postApiStockStatusGetStockStatus: any = (window as any).postApiStockStatusGetStockStatus || (() => Promise.resolve({ data: { model: [] } }));
 
@@ -259,51 +258,67 @@ function LlinProgram() {
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3">
-          <ProgramPanel title="Account Breakdown" action={<InfoButton contentId="program-mini-table" />}>
-            <ProgramMiniTable
-              columns={[
-                { key: 'label', label: 'Account' },
-                { key: 'value', label: 'Quantity', render: (row) => formatNumber(row.value) },
-                { key: 'share', label: 'Share', render: (row) => `${((row.value / accountData.reduce((s, r) => s + r.value, 0)) * 100).toFixed(1)}%` },
-              ]}
-              rows={accountData}
-            />
+          <ProgramPanel title="Account Breakdown" action={<IconButton variant="info" contentId="program-mini-table" />}>
+          <BaseTable
+            columns={[
+              { key: 'label', label: 'Account' },
+              { key: 'value', label: 'Quantity', render: (row) => formatNumber(row.value) },
+              { key: 'share', label: 'Share', render: (row) => `${((row.value / accountData.reduce((s, r) => s + r.value, 0)) * 100).toFixed(1)}%` },
+            ]}
+            rows={accountData}
+            headerBg="bg-[#CFD8DC]"
+            minWidth="520px"
+            rowKey={(row, index) => row.id || index}
+            rowClassName="hover:bg-surface-container-low"
+          />
           </ProgramPanel>
-          <ProgramPanel title="Activity SOH" action={<InfoButton contentId="program-mini-table" />}>
-            <ProgramMiniTable
-              columns={[
-                { key: 'label', label: 'Activity' },
-                { key: 'value', label: 'Quantity', render: (row) => formatNumber(row.value) },
-              ]}
-              rows={activityData}
-            />
+          <ProgramPanel title="Activity SOH" action={<IconButton variant="info" contentId="program-mini-table" />}>
+            <BaseTable
+            columns={[
+              { key: 'label', label: 'Activity' },
+              { key: 'value', label: 'Quantity', render: (row) => formatNumber(row.value) },
+            ]}
+            rows={activityData}
+            headerBg="bg-[#CFD8DC]"
+            minWidth="520px"
+            rowKey={(row, index) => row.id || index}
+            rowClassName="hover:bg-surface-container-low"
+          />
           </ProgramPanel>
-          <ProgramPanel title="Unit SOH" action={<InfoButton contentId="program-mini-table" />}>
-            <ProgramMiniTable
-              columns={[
-                { key: 'label', label: 'Unit' },
-                { key: 'value', label: 'Quantity', render: (row) => formatNumber(row.value) },
-              ]}
-              rows={unitData}
-            />
+          <ProgramPanel title="Unit SOH" action={<IconButton variant="info" contentId="program-mini-table" />}>
+            <BaseTable
+            columns={[
+              { key: 'label', label: 'Unit' },
+              { key: 'value', label: 'Quantity', render: (row) => formatNumber(row.value) },
+            ]}
+            rows={unitData}
+            headerBg="bg-[#CFD8DC]"
+            minWidth="520px"
+            rowKey={(row, index) => row.id || index}
+            rowClassName="hover:bg-surface-container-low"
+          />
           </ProgramPanel>
-          <ProgramPanel title="Manufacturer Summary" action={<InfoButton contentId="program-mini-table" />}>
-            <ProgramMiniTable
-              columns={[
-                { key: 'label', label: 'Manufacturer' },
-                { key: 'value', label: 'Quantity', render: (row) => formatNumber(row.value) },
-                { key: 'share', label: 'Share', render: (row) => `${((row.value / manufacturers.reduce((s, r) => s + r.value, 0)) * 100).toFixed(1)}%` },
-              ]}
-              rows={manufacturers}
-            />
+          <ProgramPanel title="Manufacturer Summary" action={<IconButton variant="info" contentId="program-mini-table" />}>
+            <BaseTable
+            columns={[
+              { key: 'label', label: 'Manufacturer' },
+              { key: 'value', label: 'Quantity', render: (row) => formatNumber(row.value) },
+              { key: 'share', label: 'Share', render: (row) => `${((row.value / manufacturers.reduce((s, r) => s + r.value, 0)) * 100).toFixed(1)}%` },
+            ]}
+            rows={manufacturers}
+            headerBg="bg-[#CFD8DC]"
+            minWidth="520px"
+            rowKey={(row, index) => row.id || index}
+            rowClassName="hover:bg-surface-container-low"
+          />
           </ProgramPanel>
         </div>
       </section>
 
       {/* ── Stock Status ────────────────────────────────────────────────── */}
       <section id="llin-stock">
-        <ProgramPanel title="Stock Status" subtitle="LLIN national stock levels" action={<InfoButton contentId="program-mini-table" />}>
-          <ProgramMiniTable
+        <ProgramPanel title="Stock Status" subtitle="LLIN national stock levels" action={<IconButton variant="info" contentId="program-mini-table" />}>
+          <BaseTable
             columns={[
               { key: 'item', label: 'Item' },
               { key: 'status', label: 'Status', render: (row) => (
@@ -318,6 +333,10 @@ function LlinProgram() {
               { key: 'git', label: 'GIT' },
             ]}
             rows={stockRows}
+            headerBg="bg-[#CFD8DC]"
+            minWidth="520px"
+            rowKey={(row, index) => row.id || index}
+            rowClassName="hover:bg-surface-container-low"
           />
         </ProgramPanel>
       </section>
@@ -325,14 +344,14 @@ function LlinProgram() {
       {/* ── Procurement ─────────────────────────────────────────────────── */}
       <section id="llin-procurement">
         <div className="grid grid-cols-2 gap-5">
-          <ProgramPanel title="Funding Source" subtitle="Procurement funding share" action={<div className="flex items-center gap-1"><ExpandButton data={fundingSourceChart} title="Funding Source" /><InfoButton contentId="program-funding-source" /></div>}>
+          <ProgramPanel title="Funding Source" subtitle="Procurement funding share" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={fundingSourceChart} title="Funding Source" /><IconButton variant="info" contentId="program-funding-source" /></div>}>
             <div className="flex h-64 items-center justify-center">
               <div className="w-[320px]">
                 <PieChart data={fundingSourceChart} totalLabel="Funding source" />
               </div>
             </div>
           </ProgramPanel>
-          <ProgramPanel title="Distribution by Facility Type" subtitle="Receipt facility share" action={<div className="flex items-center gap-1"><ExpandButton data={facilityTypeChart} title="Distribution by Facility Type" /><InfoButton contentId="program-facility-distribution" /></div>}>
+          <ProgramPanel title="Distribution by Facility Type" subtitle="Receipt facility share" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={facilityTypeChart} title="Distribution by Facility Type" /><IconButton variant="info" contentId="program-facility-distribution" /></div>}>
             <div className="flex h-64 items-center justify-center">
               <div className="w-[320px]">
                 <PieChart data={facilityTypeChart} totalLabel="Facility distribution" />
@@ -347,9 +366,9 @@ function LlinProgram() {
         <ProgramPanel
           title="Purchase Orders"
           subtitle={`${purchaseOrders.length} PO records`}
-          action={<InfoButton contentId="program-mini-table" />}
+          action={<IconButton variant="info" contentId="program-mini-table" />}
         >
-          <ProgramMiniTable
+          <BaseTable
             columns={[
               { key: 'po', label: 'PO Number' },
               { key: 'donor', label: 'Donor' },
@@ -365,6 +384,10 @@ function LlinProgram() {
               )},
             ]}
             rows={purchaseOrders}
+            headerBg="bg-[#CFD8DC]"
+            minWidth="520px"
+            rowKey={(row, index) => row.id || index}
+            rowClassName="hover:bg-surface-container-low"
           />
         </ProgramPanel>
       </section>
@@ -378,7 +401,7 @@ function LlinProgram() {
           <ProgramStackedBarChart data={plannedVsActualChart} height={240} />
         </ProgramPanel>
         <div className="mt-5">
-          <ProgramMiniTable
+          <BaseTable
             columns={[
               { key: 'region', label: 'Region' },
               { key: 'zone', label: 'Zone' },
@@ -388,13 +411,17 @@ function LlinProgram() {
               { key: 'fillRate', label: 'Fill rate' },
             ]}
             rows={distributionRows}
+            headerBg="bg-[#CFD8DC]"
+            minWidth="520px"
+            rowKey={(row, index) => row.id || index}
+            rowClassName="hover:bg-surface-container-low"
           />
         </div>
       </section>
 
       {/* ── Issued ──────────────────────────────────────────────────────── */}
       <section id="llin-issued">
-        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month" action={<InfoButton contentId="program-issued-items" />}>
+        <ProgramPanel title="Issued — Center to Hub" subtitle="Issued items by flow type and month" action={<IconButton variant="info" contentId="program-issued-items" />}>
           <IssuedItemsTable rows={[]} />
         </ProgramPanel>
       </section>
@@ -411,7 +438,7 @@ function LlinProgram() {
               valueFormatter={(v) => formatNumber(v)}
             />
           </ProgramPanel>
-          <ProgramPanel title="Account Distribution" subtitle="Quantity by funding account" action={<div className="flex items-center gap-1"><ExpandButton data={accountData.map((a, i) => ({ ...a, color: ['#0B4F54', '#86BFC5'][i] }))} title="Account Distribution" /><InfoButton contentId="program-account-distribution" /></div>}>
+          <ProgramPanel title="Account Distribution" subtitle="Quantity by funding account" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={accountData.map((a, i) => ({ ...a, color: ['#0B4F54', '#86BFC5'][i] }))} title="Account Distribution" /><IconButton variant="info" contentId="program-account-distribution" /></div>}>
             <div className="flex items-center justify-center py-4">
               <div className="w-[280px]">
                 <PieChart

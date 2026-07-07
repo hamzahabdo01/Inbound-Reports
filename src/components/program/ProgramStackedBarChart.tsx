@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
-
-const palette = ['#4A9598', '#216E6A', '#86BFC5', '#D97706', '#515F74', '#0B4F54', '#059669', '#00373B'];
+import { getChartColor } from '../../utils/chartUtils';
 
 // Y-axis grid lines config
 const Y_TICKS = [0, 20, 40, 60, 80, 100];
@@ -117,7 +116,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
                             key={seg.label}
                             style={{
                               height: `${segPct}%`,
-                              backgroundColor: palette[labels.indexOf(seg.label) % palette.length],
+                              backgroundColor: getChartColor(labels.indexOf(seg.label)),
                               minHeight: segPct > 0 ? 2 : 0,
                             }}
                           />
@@ -167,7 +166,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
             >
               <div className="font-bold text-[#86BFC5] mb-1.5 truncate max-w-[200px]">{tooltip.barLabel}</div>
               {tooltip.segments.map((seg) => {
-                const color = palette[labels.indexOf(seg.label) % palette.length];
+                const color = getChartColor(labels.indexOf(seg.label));
                 return (
                   <div key={seg.label} className="flex items-center gap-1.5 mt-1 first:mt-0">
                     <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: color }} />
@@ -186,7 +185,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
       <div className="flex flex-wrap justify-center gap-x-5 gap-y-1.5 mt-3">
         {labels.map((label, index) => (
           <span key={label} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-on-surface-variant">
-            <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: palette[index % palette.length] }} />
+            <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: getChartColor(index) }} />
             {label}
           </span>
         ))}

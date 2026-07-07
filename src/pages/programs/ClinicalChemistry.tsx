@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import KPICard from '../../components/KPICard';
 import ProgramPanel from '../../components/program/ProgramPanel';
 import SectionNavigator from '../../components/SectionNavigator';
-import ProgramMiniTable from '../../components/program/ProgramMiniTable';
+import BaseTable from '../../components/BaseTable';
 import NationalStockTable from '../../components/program/NationalStockTable';
 import IssuedItemsTable from '../../components/program/IssuedItemsTable';
 import PieChart from '../../components/PieChart';
-import InfoButton from '../../components/InfoButton';
-import ExpandButton from '../../components/ExpandButton';
+import IconButton from '../../components/IconButton';
 import { LookUp, POD_WebApi } from '../../api/fanos';
 import { useClinicalChemistry, useCCIssuedItems, useCCFacilityDistribution, useCCOwnershipDistribution, useCCProcurementAgents, useCCFundingSource } from '../../data/useClinicalChemistry';
 
@@ -215,7 +214,7 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
       {/* ── Procurement Agents + Funding Source ──────────────────────────── */}
       <section id="cc-agents" className="grid grid-cols-2 gap-5">
         <ProgramPanel title="Procurement Agents" subtitle="PO line count by product and funding source"
-          action={<div className="flex items-center gap-2"><YearSelect label="" value={procurerYear} onChange={setProcurerYear} /><ExpandButton data={agents.data || []} title="Procurement Agents" /><InfoButton contentId="program-procurement-agents" /></div>}>
+          action={<div className="flex items-center gap-2"><YearSelect label="" value={procurerYear} onChange={setProcurerYear} /><IconButton variant="expand" data={agents.data || []} title="Procurement Agents" /><IconButton variant="info" contentId="program-procurement-agents" /></div>}>
           <div className="-mt-3 px-5 pb-5">
             {agents.loading ? (
               <div className="flex h-48 items-center justify-center"><i className="fa-solid fa-spinner fa-spin text-primary" /></div>
@@ -227,7 +226,7 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
           </div>
         </ProgramPanel>
         <ProgramPanel title="Funding Source" subtitle="Incoming shipment funder share"
-          action={<div className="flex items-center gap-2"><YearSelect label="" value={fundingYear} onChange={setFundingYear} /><ExpandButton data={funding.data || []} title="Funding Source" /><InfoButton contentId="program-funding-source" /></div>}>
+          action={<div className="flex items-center gap-2"><YearSelect label="" value={fundingYear} onChange={setFundingYear} /><IconButton variant="expand" data={funding.data || []} title="Funding Source" /><IconButton variant="info" contentId="program-funding-source" /></div>}>
           <div className="-mt-3 px-5 pb-5">
             {funding.loading ? (
               <div className="flex h-48 items-center justify-center"><i className="fa-solid fa-spinner fa-spin text-primary" /></div>
@@ -245,7 +244,7 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
         {loading ? (
           <PanelSkeleton rows={6} height="h-56" />
         ) : (
-          <ProgramPanel title="Stock Status" subtitle={`${data?.stockRows?.length || 0} Clinical Chemistry products`} action={<InfoButton contentId="program-national-stock" />}>
+          <ProgramPanel title="Stock Status" subtitle={`${data?.stockRows?.length || 0} Clinical Chemistry products`} action={<IconButton variant="info" contentId="program-national-stock" />}>
             {data?.stockRows?.length ? (
               <NationalStockTable rows={data.stockRows} />
             ) : (
@@ -282,7 +281,7 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
                   <option value="centerToHub">Center to Hub</option>
                   <option value="hubToFacility">Hub to Facility</option>
                 </select>
-                <InfoButton contentId="program-issued-items" />
+                <IconButton variant="info" contentId="program-issued-items" />
               </div>
             }
           >
@@ -304,8 +303,8 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
         {loading ? (
           <PanelSkeleton />
         ) : (
-          <ProgramPanel title="Manufacturer" subtitle="Received value by manufacturer" action={<InfoButton contentId="program-mini-table" />}>
-            <ProgramMiniTable
+          <ProgramPanel title="Manufacturer" subtitle="Received value by manufacturer" action={<IconButton variant="info" contentId="program-mini-table" />}>
+            <BaseTable
               columns={[
                 { key: 'label', label: 'Manufacturer' },
                 { key: 'value', label: 'Value (ETB)', render: (row) => formatNumber(row.value) },
@@ -313,6 +312,10 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
               ]}
               rows={data?.manufacturers || []}
               emptyMessage="No manufacturer data available"
+              headerBg="bg-[#CFD8DC]"
+              minWidth="520px"
+              rowKey={(row, index) => row.id || index}
+              rowClassName="hover:bg-surface-container-low"
             />
           </ProgramPanel>
         )}
@@ -323,8 +326,8 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
         {loading ? (
           <PanelSkeleton />
         ) : (
-          <ProgramPanel title="Supplier" subtitle="Received value by supplier" action={<InfoButton contentId="program-mini-table" />}>
-            <ProgramMiniTable
+          <ProgramPanel title="Supplier" subtitle="Received value by supplier" action={<IconButton variant="info" contentId="program-mini-table" />}>
+            <BaseTable
               columns={[
                 { key: 'label', label: 'Supplier' },
                 { key: 'value', label: 'Value (ETB)', render: (row) => formatNumber(row.value) },
@@ -332,6 +335,10 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
               ]}
               rows={data?.suppliers || []}
               emptyMessage="No supplier data available"
+              headerBg="bg-[#CFD8DC]"
+              minWidth="520px"
+              rowKey={(row, index) => row.id || index}
+              rowClassName="hover:bg-surface-container-low"
             />
           </ProgramPanel>
         )}
@@ -342,8 +349,8 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
         {loading ? (
           <PanelSkeleton />
         ) : (
-          <ProgramPanel title="Country" subtitle="Received value by source country" action={<InfoButton contentId="program-mini-table" />}>
-            <ProgramMiniTable
+          <ProgramPanel title="Country" subtitle="Received value by source country" action={<IconButton variant="info" contentId="program-mini-table" />}>
+            <BaseTable
               columns={[
                 { key: 'label', label: 'Country' },
                 { key: 'value', label: 'Value (ETB)', render: (row) => formatNumber(row.value) },
@@ -351,6 +358,10 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
               ]}
               rows={data?.countries || []}
               emptyMessage="No country data available"
+              headerBg="bg-[#CFD8DC]"
+              minWidth="520px"
+              rowKey={(row, index) => row.id || index}
+              rowClassName="hover:bg-surface-container-low"
             />
           </ProgramPanel>
         )}

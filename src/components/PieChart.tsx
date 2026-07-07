@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-
-const palette = ['#00373B', '#D97706', '#0B4F54', '#216E6A', '#4A9598', '#86BFC5', '#515F74', '#059669'];
+import { getChartColor, formatCompactNumber } from '../utils/chartUtils';
 
 const polarToCartesian = (cx, cy, r, angle) => ({
   x: cx + r * Math.cos(angle),
@@ -18,11 +17,7 @@ const describeSlice = (cx, cy, r, startAngle, endAngle, offset = 0) => {
   return `M ${centerX} ${centerY} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y} Z`;
 };
 
-const formatValue = (value) => {
-  if (value >= 1000000) return `${(value / 1000000).toFixed(value >= 10000000 ? 0 : 1)}M`;
-  if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`;
-  return new Intl.NumberFormat('en').format(value);
-};
+
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -51,7 +46,7 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
         ...item,
         value,
         index,
-        color: item.color || palette[index % palette.length],
+        color: item.color || getChartColor(index),
         startAngle: cursor,
         endAngle: cursor + angle,
         percent: total > 0 ? (value / total) * 100 : 0,
@@ -153,7 +148,7 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
               }}
             >
               <p className={`${isCompact ? 'text-[12px]' : 'text-body-md'} font-semibold leading-snug whitespace-normal break-words`} style={{ color: active.color }}>
-                {active.label}: {formatValue(active.value)}
+                {active.label}: {formatCompactNumber(active.value)}
               </p>
               <p className="mt-1 text-[11px] font-bold text-on-surface-variant">
                 {active.percent.toFixed(1)}%

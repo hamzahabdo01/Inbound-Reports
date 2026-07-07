@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import KPICard from '../../components/KPICard';
-import InfoButton from '../../components/InfoButton';
+import IconButton from '../../components/IconButton';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 
 const FUNNEL_COLORS = ['#00373B', '#0B4F54', '#D97706', '#86BFC5'];
@@ -246,7 +246,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
     <>
       {activeSections.includes('ppc-pipeline') && (
         <section id="ppc-pipeline">
-          <SectionPanel title="Contract vs PO vs Inbound Delivery vs Received" subtitle="Full procurement pipeline per contract" action={<InfoButton contentId="po-pipeline" />}>
+          <SectionPanel title="Contract vs PO vs Inbound Delivery vs Received" subtitle="Full procurement pipeline per contract" action={<IconButton variant="info" contentId="po-pipeline" />}>
             {(() => {
               const totalPO = data.contractPipeline.reduce((s, c) => s + c.poAmount, 0);
               const totalInbound = data.contractPipeline.reduce((s, c) => s + c.inboundDelivery, 0);
@@ -337,7 +337,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
 
       {activeSections.includes('ppc-contract-vs-po') && (
         <section id="ppc-contract-vs-po">
-          <SectionPanel title="Contract vs PO - Consumption & Remaining" subtitle="Per contract with summary" action={<InfoButton contentId="po-contract-vs-po" />}>
+          <SectionPanel title="Contract vs PO - Consumption & Remaining" subtitle="Per contract with summary" action={<IconButton variant="info" contentId="po-contract-vs-po" />}>
             <div className="grid grid-cols-4 gap-4 mb-5">
               {(() => {
                 const totalPO = data.contractVsPO.reduce((s, c) => s + c.poAmount, 0);
@@ -397,7 +397,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
             return (
               <SectionPanel title="Contract-to-Receipt Status Tracking" subtitle={`${filteredCtr.length} of ${(data.contractToReceiveTracking || []).length} PO-level milestones`} action={
                 <div className="flex items-center gap-2">
-                  <InfoButton contentId="po-contract-to-receive" />
+                  <IconButton variant="info" contentId="po-contract-to-receive" />
                   <div className="relative">
                     <i className="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-on-surface-variant/60 text-[11px]"></i>
                     <input type="text" placeholder="Search..." value={ctrSearch}
@@ -604,7 +604,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
 
       {activeSections.includes('ppc-lc-cad') && (
         <section id="ppc-lc-cad">
-          <SectionPanel title="LC / CAD Expiry Report" subtitle="Letter of Credit expiry tracking" action={<InfoButton contentId="po-lc-cad" />}>
+          <SectionPanel title="LC / CAD Expiry Report" subtitle="Letter of Credit expiry tracking" action={<IconButton variant="info" contentId="po-lc-cad" />}>
             {data.lcCadExpirySummary && (() => {
               const s = data.lcCadExpirySummary;
               const expired = s.expiryBreakdownMetrics?.[0];

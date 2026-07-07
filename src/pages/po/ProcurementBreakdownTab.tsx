@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import KPICard from '../../components/KPICard';
 import PieChart from '../../components/PieChart';
-import InfoButton from '../../components/InfoButton';
-import ExpandButton from '../../components/ExpandButton';
+import IconButton from '../../components/IconButton';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 
 const fmtDuration = (days) => {
@@ -57,7 +56,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
             subtitle={`${filteredOpenOverduePOs.length} records requiring attention`}
             action={
               <div className="flex items-center gap-3">
-                <InfoButton contentId="po-overdue" />
+                <IconButton variant="info" contentId="po-overdue" />
                 <div className="relative">
                   <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
                   <input type="text" placeholder="Search PO, supplier, program..." value={overviewSearch}
@@ -125,7 +124,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
         <section id="ppc-open-po-items">
           <SectionPanel title="Open PO Item Details" subtitle={`${filteredOpenItems.length} of ${data.openPOItemDetail?.data?.length || 0} open line items`} action={
             <div className="flex items-center gap-3">
-              <InfoButton contentId="po-open-items" />
+              <IconButton variant="info" contentId="po-open-items" />
               <div className="relative">
                 <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
                 <input type="text" placeholder="Search PO, supplier, material..." value={itemSearch}
@@ -170,7 +169,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
         <section id="ppc-overdue-pos">
           <SectionPanel title="Overdue PO Schedule Lines" subtitle={`${filteredOverdueLines.length} of ${data.overduePOScheduleLine?.data?.length || 0} overdue schedule lines`} action={
             <div className="flex items-center gap-3">
-              <InfoButton contentId="po-overdue-schedule" />
+              <IconButton variant="info" contentId="po-overdue-schedule" />
               <div className="relative">
                 <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
                 <input type="text" placeholder="Search PO, supplier, material..." value={overdueSearch}
@@ -247,7 +246,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
 
       {activeSections.includes('ppc-status') && (
         <section id="ppc-status">
-          <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received" action={<div className="flex items-center gap-1"><ExpandButton data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} title="Procurement Status" /><InfoButton contentId="po-proc-status" /></div>}>
+          <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} title="Procurement Status" /><IconButton variant="info" contentId="po-proc-status" /></div>}>
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <PieChart data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} totalLabel="Procurement stages" />

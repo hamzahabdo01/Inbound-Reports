@@ -1,6 +1,6 @@
 import ProgramPanel from './ProgramPanel';
 import PieChart from '../PieChart';
-import ExpandButton from '../ExpandButton';
+import IconButton from '../IconButton';
 
 /**
  * Reusable 2/3 + 1/3 layout: stacked/bar chart on the left, pie chart on the right.
@@ -10,7 +10,7 @@ import ExpandButton from '../ExpandButton';
 function ProgramChartRow({ leftTitle, leftSubtitle, leftChart, leftAction, rightTitle, rightSubtitle, rightData, rightAction, rightExtra, rightLoading }: any) {
   const rightActions = (
     <div className="flex items-center gap-1">
-      <ExpandButton data={rightData} title={rightTitle} />
+      <IconButton variant="expand" data={rightData} title={rightTitle} />
       {rightAction}
     </div>
   );
