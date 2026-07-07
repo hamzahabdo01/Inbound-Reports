@@ -549,7 +549,7 @@ function MergedBreakdownSection({ data }: any) {
     setOpenIndex(prev => prev === index ? -1 : index);
   }, []);
 
-  const handleRowKeyDown = useCallback((e: KeyboardEvent, index: number) => {
+  const handleRowKeyDown = useCallback((e: React.KeyboardEvent, index: number) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       toggleRow(index);
