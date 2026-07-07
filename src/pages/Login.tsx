@@ -122,10 +122,11 @@ export default function Login() {
       </div>
 
       {/* Form Panel */}
-<div className="flex-1 relative overflow-hidden flex flex-col items-center justify-start pt-10 pb-10 px-6 lg:flex-row lg:items-center lg:justify-center lg:pt-0 lg:pb-0">        <div className="hidden lg:block absolute inset-0">
+      <div className="flex-1 relative overflow-hidden flex flex-col items-center justify-center px-6 bg-white lg:bg-transparent lg:overflow-hidden lg:flex-row lg:items-center lg:justify-center">
+        <div className="hidden lg:block absolute inset-0">
           <LoginCanvasAnimation />
         </div>
-        
+
         <div className="w-full max-w-[420px] animate-slide-up relative z-10">
           <div className="mb-6 lg:mb-8 text-center lg:text-left">
             <div className="lg:hidden mx-auto mb-5" style={{ width: '160px', height: '80px', backgroundColor: '#0B4F54', WebkitMask: 'url(/gemini-svg.svg) no-repeat center / contain', mask: 'url(/gemini-svg.svg) no-repeat center / contain' }}></div>
@@ -133,90 +134,101 @@ export default function Login() {
             <p className="mt-1.5 text-body-md text-[#6B7280]">Sign in to access the dashboard</p>
           </div>
 
-            <div className="space-y-5">
-              <div>
-                <div className={`relative rounded-lg border transition-all duration-200 bg-white ${error && !username.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'username' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#B8C4CA] lg:border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <i className={`fa-solid fa-user text-sm ${focusedField === 'username' ? 'text-[#1a4a47]' : 'text-[#9CA3AF]'}`} />
-                  </div>
-                  <input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => { setUsername(e.target.value); setError(''); }}
-                    onFocus={() => setFocusedField('username')}
-                    onBlur={() => setFocusedField(null)}
-                    placeholder="Username"
-                    autoComplete="off"
-                    className="w-full h-12 pl-10 pr-4 bg-white text-body-md text-on-surface placeholder:text-[#9CA3AF] focus:outline-none"
-                  />
+          <div className="space-y-5">
+            <div>
+              <div className={`relative rounded-lg border transition-all duration-200 bg-white ${error && !username.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'username' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#B8C4CA] lg:border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <i className={`fa-solid fa-user text-sm ${focusedField === 'username' ? 'text-[#1a4a47]' : 'text-[#9CA3AF]'}`} />
                 </div>
+                <input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => { setUsername(e.target.value); setError(''); }}
+                  onFocus={() => setFocusedField('username')}
+                  onBlur={() => setFocusedField(null)}
+                  placeholder="Username"
+                  autoComplete="off"
+                  className="w-full h-12 pl-10 pr-4 bg-white text-body-md text-on-surface placeholder:text-[#9CA3AF] focus:outline-none"
+                />
               </div>
+            </div>
 
-              <div>
-                <div className={`relative rounded-lg border transition-all duration-200 bg-white ${error && !password.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'password' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#B8C4CA] lg:border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <i className={`fa-solid fa-lock text-sm ${focusedField === 'password' ? 'text-[#1a4a47]' : 'text-[#9CA3AF]'}`} />
-                  </div>
-                  <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                    onFocus={() => setFocusedField('password')}
-                    onBlur={() => setFocusedField(null)}
-                    placeholder="Password"
-                    autoComplete="off"
-                    className="w-full h-12 pl-10 pr-10 bg-white text-body-md text-on-surface placeholder:text-[#9CA3AF] focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#9CA3AF] hover:text-on-surface-variant transition-colors"
-                    tabIndex={-1}
-                  >
-                    <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-sm`} />
-                  </button>
+            <div>
+              <div className={`relative rounded-lg border transition-all duration-200 bg-white ${error && !password.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'password' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#B8C4CA] lg:border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <i className={`fa-solid fa-lock text-sm ${focusedField === 'password' ? 'text-[#1a4a47]' : 'text-[#9CA3AF]'}`} />
                 </div>
-              </div>
-
-              <div>
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                  placeholder="Password"
+                  autoComplete="off"
+                  className="w-full h-12 pl-10 pr-10 bg-white text-body-md text-on-surface placeholder:text-[#9CA3AF] focus:outline-none"
+                />
                 <button
                   type="button"
-                  onClick={() => setShowEnvPanel(true)}
-                   className={`w-full h-12 flex items-center gap-3 px-3.5 rounded-lg border transition-all duration-200 text-left bg-white ${selectedEnv ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#9CA3AF] hover:text-on-surface-variant transition-colors"
+                  tabIndex={-1}
                 >
-                  <i className="fa-solid fa-location-dot text-sm text-[#1a4a47]" />
-                  <span className="flex-1 text-body-md text-on-surface font-medium">{selectedEnv?.Environment || 'Select site'}</span>
-                  <i className="fa-solid fa-chevron-right text-xs text-[#9CA3AF]" />
+                  <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'} text-sm`} />
                 </button>
               </div>
+            </div>
 
-              {error && (
-                <div className="flex items-center gap-2 text-body-sm text-error bg-error/5 rounded-lg px-4 py-3 animate-fade-in">
-                  <i className="fa-solid fa-circle-exclamation text-sm" />
-                  <span>{error}</span>
-                </div>
-              )}
-
+            <div>
               <button
                 type="button"
-                onClick={handleLogin}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
-                disabled={loading}
-                className="relative w-full h-12 rounded-lg bg-[#1a4a47] text-white text-label-sm hover:bg-[#1f5a56] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150 overflow-hidden"
+                onClick={() => setShowEnvPanel(true)}
+                 className={`w-full h-12 flex items-center gap-3 px-3.5 rounded-lg border transition-all duration-200 text-left bg-white ${selectedEnv ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}
               >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <i className="fa-solid fa-spinner text-sm animate-spin" />
-                    Signing in...
-                  </span>
-                ) : (
-                  'Sign in'
-                )}
+                <i className="fa-solid fa-location-dot text-sm text-[#1a4a47]" />
+                <span className="flex-1 text-body-md text-on-surface font-medium">{selectedEnv?.Environment || 'Select site'}</span>
+                <i className="fa-solid fa-chevron-right text-xs text-[#9CA3AF]" />
               </button>
-          </div>
+            </div>
 
+            {error && (
+              <div className="flex items-center gap-2 text-body-sm text-error bg-error/5 rounded-lg px-4 py-3 animate-fade-in">
+                <i className="fa-solid fa-circle-exclamation text-sm" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleLogin}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
+              disabled={loading}
+              className="relative w-full h-12 rounded-lg bg-[#1a4a47] text-white text-label-sm hover:bg-[#1f5a56] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150 overflow-hidden"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <i className="fa-solid fa-spinner text-sm animate-spin" />
+                  Signing in...
+                </span>
+              ) : (
+                'Sign in'
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile footer */}
+        <div className="lg:hidden absolute bottom-4 left-0 right-0 px-6 text-center space-y-3">
+          <div className="flex items-center justify-center gap-4 text-[#9CA3AF] text-[11px] font-medium">
+            <span>HIPAA Compliant</span>
+            <span className="w-px h-3 bg-[#CFD8DC]" />
+            <span>ISO 27001</span>
+            <span className="w-px h-3 bg-[#CFD8DC]" />
+            <span>SSL Encrypted</span>
+          </div>
+          <p className="text-xs text-[#9CA3AF]/60">&copy; 2026 Ethiopian Pharmaceuticals Supply Service. All rights reserved.</p>
         </div>
       </div>
 
