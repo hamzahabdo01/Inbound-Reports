@@ -122,7 +122,7 @@ export default function Login() {
       </div>
 
       {/* Form Panel */}
-      <div className="flex-1 relative overflow-hidden flex flex-col items-center justify-center px-6 bg-white lg:bg-transparent lg:overflow-hidden lg:flex-row lg:items-center lg:justify-center">
+      <div className="flex-1 relative overflow-hidden flex flex-col items-center mt-24 px-6 bg-transparent lg:overflow-hidden lg:flex-row lg:items-center lg:justify-center">
         <div className="hidden lg:block absolute inset-0">
           <LoginCanvasAnimation />
         </div>
@@ -221,14 +221,14 @@ export default function Login() {
 
         {/* Mobile footer */}
         <div className="lg:hidden absolute bottom-4 left-0 right-0 px-6 text-center space-y-3">
-          <div className="flex items-center justify-center gap-4 text-[#9CA3AF] text-[11px] font-medium">
+          <div className="flex items-center justify-center gap-4 text-[#9CA3AF] text-[8px] font-medium">
             <span>HIPAA Compliant</span>
             <span className="w-px h-3 bg-[#CFD8DC]" />
             <span>ISO 27001</span>
             <span className="w-px h-3 bg-[#CFD8DC]" />
             <span>SSL Encrypted</span>
           </div>
-          <p className="text-xs text-[#9CA3AF]/60">&copy; 2026 Ethiopian Pharmaceuticals Supply Service. All rights reserved.</p>
+          <p className="text-[9px] text-[#9CA3AF]/60">&copy; 2026 Ethiopian Pharmaceuticals Supply Service. All rights reserved.</p>
         </div>
       </div>
 
