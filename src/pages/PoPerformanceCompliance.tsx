@@ -46,6 +46,12 @@ export default function PoPerformanceCompliance() {
       mainEl.scrollTop = 0;
     }
   }, [activeTab]);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
   const [trendHover, setTrendHover] = useState(null);
   const [supplierHover, setSupplierHover] = useState(null);
   const [procurementStatusFilter, setProcurementStatusFilter] = useState('All');
@@ -107,9 +113,6 @@ export default function PoPerformanceCompliance() {
     ];
   }, [data.poSummary, data.contractVsPO, data.procurementStatus, data.kpis]);
 
-  const kpiTotalPages = Math.ceil(kpiCards.length / 4);
-  const visibleKpiCards = kpiCards.slice(kpiPage * 4, kpiPage * 4 + 4);
-
   const filteredOpenOverduePOs = useMemo(() => {
     return data.openOverduePOs.filter((po) => {
       const matchSearch = po.poNo.toLowerCase().includes(overviewSearch.toLowerCase()) ||
@@ -135,12 +138,12 @@ export default function PoPerformanceCompliance() {
 
   return (
     <div className="space-y-5">
-      <SectionNavigator sections={navigatorSections} />
+      {!isMobile && <SectionNavigator sections={navigatorSections} />}
       <StickyHeader>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
           {TABS.map((tab) => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 ${
+              className={`px-2 sm:px-4 py-2 text-sm font-semibold whitespace-nowrap rounded-lg transition-all duration-150 ${
                 activeTab === tab.key
                   ? 'bg-primary text-white shadow-sm'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
@@ -154,7 +157,7 @@ export default function PoPerformanceCompliance() {
         <OverviewTab
           data={data} activeSections={activeSections}
           kpiPage={kpiPage} setKpiPage={setKpiPage}
-          kpiCards={kpiCards} kpiTotalPages={kpiTotalPages}
+          kpiCards={kpiCards}
           supplierHover={supplierHover} setSupplierHover={setSupplierHover}
           trendYears={trendYears} trendYear={trendYear} setTrendYear={setTrendYear}
           filteredTrend={filteredTrend} trendHover={trendHover} setTrendHover={setTrendHover}

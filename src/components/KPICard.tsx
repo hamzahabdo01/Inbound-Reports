@@ -47,7 +47,7 @@ function KPICard({ icon, iconBg, iconColor, label, value, valueColor, subtitle, 
             <i className={`fa-solid ${icon}`}></i>
           </div>
         </div>
-        <div className={`text-display-kpi leading-none ${valueColorClass || 'text-slate-900'}`}>{parseValue(value)}</div>
+        <div className={`text-display-kpi leading-none truncate ${valueColorClass || 'text-slate-900'}`}>{parseValue(value)}</div>
         {subtitle && <p className={`text-xs font-semibold mt-2 ${trendIcon || 'text-on-surface-variant'}`}>{subtitle}</p>}
         {trendLabel && <p className="text-xs text-on-surface-variant mt-1">{trendLabel}</p>}
         {children}
@@ -62,7 +62,7 @@ function KPICard({ icon, iconBg, iconColor, label, value, valueColor, subtitle, 
         <div className="text-label-caps text-on-surface-variant uppercase text-[11px]">{label}</div>
       </div>
       <div className="flex items-baseline gap-3">
-        <div className={`text-display-kpi font-extrabold ${valueColorClass}`}>{parseValue(value)}</div>
+        <div className={`text-display-kpi font-extrabold truncate ${valueColorClass}`}>{parseValue(value)}</div>
         {trend && (
           <span className={`flex items-center text-body-sm ${trendIcon ? trendIcon : ''}`}>
             {formatTrend(trend)}

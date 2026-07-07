@@ -58,7 +58,7 @@ const config: Config = {
         sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
       },
       fontSize: {
-        'display-kpi': ['36px', { lineHeight: '44px', fontWeight: '800', letterSpacing: '-0.02em' }],
+        'display-kpi': ['clamp(1.125rem,4.5vw,2.25rem)', { lineHeight: '1.2', fontWeight: '800', letterSpacing: '-0.02em' }],
         'headline-lg': ['24px', { lineHeight: '32px', fontWeight: '700' }],
         'headline-md': ['20px', { lineHeight: '28px', fontWeight: '700' }],
         'header-sm': ['16px', { lineHeight: '24px', fontWeight: '600' }],
