@@ -1200,6 +1200,39 @@ export const SS_WebApi = {
   }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
     return fanosClient.get('/api/SS_WebApi/EnvironmentSOHByDate', { params })
   },
+
+  getPoRiRcByDP(params?: {
+    ModeCode?: string
+    ProgramCode?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/SS_WebApi/PoRiRcByDP', { params })
+  },
+
+  getSS_UnitSOH(params?: {
+    ModeCode?: string
+    ProgramCode?: string
+    ProductSN?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/SS_WebApi/SS_UnitSOH', { params })
+  },
+
+  getSOHbyIWACC(params?: {
+    ModeCode?: string
+    ProductSN?: string
+    OrderBy?: string
+    ProgramCode?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/SS_WebApi/SOHbyIWACC', { params })
+  },
+
+  getSOHbyIWAct(params?: {
+    ModeCode?: string
+    ProductSN?: string
+    OrderBy?: string
+    ProgramCode?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/SS_WebApi/SOHbyIWAct', { params })
+  },
 }
 
 // ─── OIH_WebApi ─────────────────────────────────────────────────────────────
@@ -1269,6 +1302,15 @@ export const OIH_WebApi = {
     EnvironmentCode?: string
   }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
     return fanosClient.get('/api/OIH_WebApi/ItemDistributionCenterToHubByProgram', { params })
+  },
+
+  getDPlanVsIssued(params?: {
+    ModeCode?: string
+    Year?: string
+    ProgramCode?: string
+    FiscalYear?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/OIH_WebApi/DPlanVsIssued', { params })
   },
 }
 
@@ -1344,6 +1386,19 @@ export const POHRIHRCH_WebApi = {
     OrderBy?: string
   }): Promise<AxiosResponse<CenterPipeline3Result>> {
     return fanosClient.get('/api/POHRIHRCH_WebApi/CenterPipeline3', { params })
+  },
+}
+
+// ─── BinCard_WebApi ────────────────────────────────────────────────────────────
+
+export const BinCard_WebApi = {
+  getManufacturerSOH(params?: {
+    ModeCode?: string
+    ProgramCode?: string
+    ProductSN?: string
+    OrderBy?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/BinCard_WebApi/ManufacturerSOH', { params })
   },
 }
 
