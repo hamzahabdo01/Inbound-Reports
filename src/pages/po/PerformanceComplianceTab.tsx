@@ -1,4 +1,5 @@
 import KPICard from '../../components/KPICard';
+import KpiCarousel from '../../components/KpiCarousel';
 import IconButton from '../../components/IconButton';
 import LeadtimeMilestoneTracker from '../../components/LeadtimeMilestoneTracker';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
@@ -38,13 +39,13 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                 totalCount={data.leadtime.milestone.totalCount}
               />
             )}
-            <div className="grid grid-cols-5 gap-4 mb-6">
+            <KpiCarousel>
               <KPICard variant="detailed" icon="fa-file-signature" iconBg="bg-primary/10" iconColor="text-primary" label="Contract → PO" value={fmtDuration(data.leadtime.summary.contractToPO)} subtitle="Tender process" />
               <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="PO → LC Opening" value={fmtDuration(data.leadtime.summary.poToLCOpening)} subtitle="Contract management" />
               <KPICard variant="detailed" icon="fa-ship" iconBg="bg-warning/10" iconColor="text-warning" label="LC → Port Arrival" value={fmtDuration(data.leadtime.summary.lcToPortArrival)} subtitle="Supplier lead" />
               <KPICard variant="detailed" icon="fa-check-circle" iconBg="bg-success/10" iconColor="text-success" label="Port → Cleared" value={fmtDuration(data.leadtime.summary.portToCleared)} subtitle="Customs & clearance" />
               <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-success/10" iconColor="text-success" label="Cleared → Received" value={fmtDuration(data.leadtime.summary.clearedToReceive)} subtitle="Inbound delivery" />
-            </div>
+            </KpiCarousel>
             <Table page={tp('leadtime')} setPage={sp('leadtime')}
               headers={[
                 { key: 'poNo', label: 'PO No' },
@@ -81,12 +82,12 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
             return (
               <SectionPanel title="Supplier Performance Tracking" subtitle="Delivery performance leaderboard based on evaluated delivery records" action={<IconButton variant="info" contentId="po-supplier-perf" />}>
                 {s && (
-                  <div className="grid grid-cols-4 gap-4 mb-6">
+                  <KpiCarousel>
                     <KPICard variant="detailed" icon="fa-building" iconBg="bg-primary/10" iconColor="text-primary" label="Suppliers" value={s.supplierCount.toLocaleString()} subtitle={`${s.purchaseOrderCount.toLocaleString()} POs`} />
                     <KPICard variant="detailed" icon="fa-truck" iconBg="bg-success/10" iconColor="text-success" label="Favorable Rate" value={`${s.performanceRatesPercent.favorableRate}%`} subtitle={`${s.performanceMeasurementCounts.favorableRecordCount.toLocaleString()} of ${s.performanceMeasurementCounts.evaluatedRecordCount.toLocaleString()}`} />
                     <KPICard variant="detailed" icon="fa-exclamation-circle" iconBg="bg-warning/10" iconColor="text-warning" label="Overdue Schedule" value={s.overdueScheduleLineCount.toLocaleString()} subtitle={`${s.overdueOpenAmountPercent}% overdue amount`} />
                     <KPICard variant="detailed" icon="fa-clock" iconBg="bg-error/10" iconColor="text-error" label="Open Amount" value={`${formatAmount(s.totalOpenAmount)} ETB`} subtitle={`${formatAmount(s.totalOverdueOpenAmount)} overdue`} />
-                  </div>
+                  </KpiCarousel>
                 )}
                 <Table page={tp('supplier-perf')} setPage={sp('supplier-perf')}
                   headers={[
@@ -110,7 +111,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                     return (
                       <>
                         <Td className="text-center font-bold text-on-surface-variant">#{row.rank}</Td>
-                        <Td className="font-bold max-w-[220px] truncate" title={row.supplierName}>{row.supplierName}</Td>
+                        <Td className="font-bold max-w-[120px] sm:max-w-[220px] truncate" title={row.supplierName}>{row.supplierName}</Td>
                         <Td className="text-center">
                           <span className="inline-block px-2 py-0.5 text-[10px] font-bold bg-surface-container rounded">{row.supplierCountryCode}</span>
                         </Td>
@@ -155,7 +156,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                     return (
                       <>
                         <Td className="text-center font-bold text-on-surface-variant">#{row.rank}</Td>
-                        <Td className="font-bold max-w-[240px] truncate" title={row.supplierName}>{row.supplierName}</Td>
+                        <Td className="font-bold max-w-[120px] sm:max-w-[240px] truncate" title={row.supplierName}>{row.supplierName}</Td>
                         <Td className="text-center">
                           <span className="inline-block px-2 py-0.5 text-[10px] font-bold bg-surface-container rounded">{flag}</span>
                         </Td>
@@ -194,12 +195,12 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
               const expiredCount = (statusGroups['Expired']?.count || 0) + (statusGroups['Confiscated']?.count || 0);
               return (
                 <>
-                  <div className="grid grid-cols-4 gap-4 mb-6">
+                  <KpiCarousel>
                     <KPICard variant="detailed" icon="fa-file-contract" iconBg="bg-primary/10" iconColor="text-primary" label="Total Bonds" value={bonds.length.toLocaleString()} subtitle={`Value: $${formatAmount(totalAmount)}`} />
                     <KPICard variant="detailed" icon="fa-check-circle" iconBg="bg-success/10" iconColor="text-success" label="Verified / Active" value={((statusGroups['Verified']?.count || 0) + (statusGroups['Received']?.count || 0)).toLocaleString()} subtitle="in good standing" />
                     <KPICard variant="detailed" icon="fa-clock" iconBg="bg-warning/10" iconColor="text-warning" label="Extended" value={(statusGroups['Extended']?.count || 0).toLocaleString()} subtitle="term extended" />
                     <KPICard variant="detailed" icon="fa-exclamation-triangle" iconBg="bg-error/10" iconColor="text-error" label="Expired / Confiscated" value={expiredCount.toLocaleString()} subtitle="requires action" />
-                  </div>
+                  </KpiCarousel>
                   <Table page={tp('bond')} setPage={sp('bond')}
                     headers={[
                       { key: 'bondNo', label: 'Bond No' },
