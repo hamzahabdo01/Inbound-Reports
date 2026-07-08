@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import KPICard from '../../components/KPICard';
+import KpiCarousel from '../../components/KpiCarousel';
 import PieChart from '../../components/PieChart';
 import IconButton from '../../components/IconButton';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
@@ -54,14 +55,14 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
           <SectionPanel
             title="Open & Overdue Purchase Orders"
             subtitle={`${filteredOpenOverduePOs.length} records requiring attention`}
-            action={
-              <div className="flex items-center gap-3">
-                <IconButton variant="info" contentId="po-overdue" />
+            action={<IconButton variant="info" contentId="po-overdue" />}
+            searchBar={
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="relative">
                   <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
                   <input type="text" placeholder="Search PO, supplier, program..." value={overviewSearch}
                     onChange={(e) => setOverviewSearch(e.target.value)}
-                    className="pl-8 pr-3 py-1.5 h-9 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64 transition-all"
+                    className="pl-8 pr-3 py-1.5 h-9 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-full sm:w-64 transition-all"
                   />
                 </div>
                 <select value={overviewStatus} onChange={(e) => setOverviewStatus(e.target.value)}
@@ -82,12 +83,12 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
               const avgDays = overduePOs.length ? Math.round(overduePOs.reduce((s, p) => s + p.daysOverdue, 0) / overduePOs.length) : 0;
               return (
                 <>
-                  <div className="grid grid-cols-4 gap-3 mb-5">
-                    <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-primary/10" iconColor="text-primary" label="Total Open POs" value={openCount.toLocaleString()} subtitle="awaiting action" />
-                    <KPICard variant="detailed" icon="fa-exclamation-triangle" iconBg="bg-error/10" iconColor="text-error" label="Total Overdue POs" value={overdueCount.toLocaleString()} subtitle="past due date" />
-                    <KPICard variant="detailed" icon="fa-coins" iconBg="bg-warning/10" iconColor="text-warning" label="Total Amount" value={`${totalAmt >= 1e9 ? (totalAmt / 1e9).toFixed(1) + 'B' : totalAmt >= 1e6 ? (totalAmt / 1e6).toFixed(1) + 'M' : totalAmt >= 1e3 ? (totalAmt / 1e3).toFixed(1) + 'K' : totalAmt.toLocaleString()} ETB`} subtitle="combined value" />
-                    <KPICard variant="detailed" icon="fa-clock" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Avg Overdue Duration" value={avgDays ? fmtDuration(avgDays) : '0d'} subtitle="overdue POs only" />
-                  </div>
+                <KpiCarousel>
+                  <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-primary/10" iconColor="text-primary" label="Total Open POs" value={openCount.toLocaleString()} subtitle="awaiting action" />
+                  <KPICard variant="detailed" icon="fa-exclamation-triangle" iconBg="bg-error/10" iconColor="text-error" label="Total Overdue POs" value={overdueCount.toLocaleString()} subtitle="past due date" />
+                  <KPICard variant="detailed" icon="fa-coins" iconBg="bg-warning/10" iconColor="text-warning" label="Total Amount" value={`${totalAmt >= 1e9 ? (totalAmt / 1e9).toFixed(1) + 'B' : totalAmt >= 1e6 ? (totalAmt / 1e6).toFixed(1) + 'M' : totalAmt >= 1e3 ? (totalAmt / 1e3).toFixed(1) + 'K' : totalAmt.toLocaleString()} ETB`} subtitle="combined value" />
+                  <KPICard variant="detailed" icon="fa-clock" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Avg Overdue Duration" value={avgDays ? fmtDuration(avgDays) : '0d'} subtitle="overdue POs only" />
+                </KpiCarousel>
                   <Table page={tp('open-pos')} setPage={sp('open-pos')}
                     headers={[
                       { key: 'poNo', label: 'PO No' },
@@ -122,18 +123,18 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
 
       {activeSections.includes('ppc-open-po-items') && (
         <section id="ppc-open-po-items">
-          <SectionPanel title="Open PO Item Details" subtitle={`${filteredOpenItems.length} of ${data.openPOItemDetail?.data?.length || 0} open line items`} action={
-            <div className="flex items-center gap-3">
-              <IconButton variant="info" contentId="po-open-items" />
-              <div className="relative">
-                <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
-                <input type="text" placeholder="Search PO, supplier, material..." value={itemSearch}
-                  onChange={(e) => setItemSearch(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 h-9 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64 transition-all"
-                />
+          <SectionPanel title="Open PO Item Details" subtitle={`${filteredOpenItems.length} of ${data.openPOItemDetail?.data?.length || 0} open line items`} action={<IconButton variant="info" contentId="po-open-items" />}
+            searchBar={
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative">
+                  <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
+                  <input type="text" placeholder="Search PO, supplier, material..." value={itemSearch}
+                    onChange={(e) => setItemSearch(e.target.value)}
+                    className="pl-8 pr-3 py-1.5 h-9 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-full sm:w-64 transition-all"
+                  />
+                </div>
               </div>
-            </div>
-          }>
+            }>
             <Table page={tp('open-po-items')} setPage={sp('open-po-items')} rowsPerPage={10}
               headers={[
                 { key: 'po', label: 'PO No' },
@@ -167,28 +168,28 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
 
       {activeSections.includes('ppc-overdue-pos') && (
         <section id="ppc-overdue-pos">
-          <SectionPanel title="Overdue PO Schedule Lines" subtitle={`${filteredOverdueLines.length} of ${data.overduePOScheduleLine?.data?.length || 0} overdue schedule lines`} action={
-            <div className="flex items-center gap-3">
-              <IconButton variant="info" contentId="po-overdue-schedule" />
-              <div className="relative">
-                <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
-                <input type="text" placeholder="Search PO, supplier, material..." value={overdueSearch}
-                  onChange={(e) => setOverdueSearch(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 h-9 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64 transition-all"
-                />
+          <SectionPanel title="Overdue PO Schedule Lines" subtitle={`${filteredOverdueLines.length} of ${data.overduePOScheduleLine?.data?.length || 0} overdue schedule lines`} action={<IconButton variant="info" contentId="po-overdue-schedule" />}
+            searchBar={
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative">
+                  <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
+                  <input type="text" placeholder="Search PO, supplier, material..." value={overdueSearch}
+                    onChange={(e) => setOverdueSearch(e.target.value)}
+                    className="pl-8 pr-3 py-1.5 h-9 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-full sm:w-64 transition-all"
+                  />
+                </div>
               </div>
-            </div>
-          }>
+            }>
             {(() => {
               const s = data.overduePOSummary.data;
               const fmtAmt = (v) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(1)}K` : v.toLocaleString();
               return (
-                <div className="grid grid-cols-4 gap-3 mb-5">
+                <KpiCarousel>
                   <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-error/10" iconColor="text-error" label="Overdue POs" value={s.overduePurchaseOrderCount.toLocaleString()} subtitle={`${s.supplierCount} suppliers`} />
                   <KPICard variant="detailed" icon="fa-list" iconBg="bg-warning/10" iconColor="text-warning" label="Schedule Lines" value={s.overdueScheduleLineCount.toLocaleString()} subtitle="overdue items" />
                   <KPICard variant="detailed" icon="fa-building" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Suppliers" value={s.supplierCount.toLocaleString()} subtitle="with overdue POs" />
                   <KPICard variant="detailed" icon="fa-coins" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total Overdue Amount" value={`${fmtAmt(s.totalOverdueOpenAmount)} ETB`} subtitle="open balance" />
-                </div>
+                </KpiCarousel>
               );
             })()}
             <Table page={tp('overdue-pos')} setPage={sp('overdue-pos')} rowsPerPage={10}
@@ -247,7 +248,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
       {activeSections.includes('ppc-status') && (
         <section id="ppc-status">
           <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} title="Procurement Status" /><IconButton variant="info" contentId="po-proc-status" /></div>}>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
                 <PieChart data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} totalLabel="Procurement stages" />
               </div>

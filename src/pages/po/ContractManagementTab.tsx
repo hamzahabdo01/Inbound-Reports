@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import KPICard from '../../components/KPICard';
+import KpiCarousel from '../../components/KpiCarousel';
 import IconButton from '../../components/IconButton';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 
@@ -17,6 +18,16 @@ function FunnelChart({ data }: any) {
   const barW = Math.max(6, groupW * 0.1);
   const gap = (groupW - barW * 4) / 5;
   const [tooltip, setTooltip] = useState(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerW, setContainerW] = useState(w);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => setContainerW(entry.contentRect.width || w));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   function fmt(v) {
     if (!v) return '—';
@@ -26,7 +37,7 @@ function FunnelChart({ data }: any) {
   }
 
   return (
-    <div className="relative w-full max-w-[720px]">
+    <div ref={containerRef} className="relative w-full">
       <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         {rows.map((r, gi) => {
           const gx = padL + gi * groupW;
@@ -65,7 +76,7 @@ function FunnelChart({ data }: any) {
         const inbVsPO = r.purchaseOrderAmount > 0 ? Math.round((r.inboundAmount / r.purchaseOrderAmount) * 100) : 0;
         const recVsInb = r.inboundAmount > 0 ? Math.round((r.receivedAmount / r.inboundAmount) * 100) : 0;
         return (
-          <div className="absolute pointer-events-none bg-white rounded-xl shadow-lg border border-outline-variant px-4 py-3 text-xs z-50" style={{ left: Math.min(tooltip.x + 12, w - 220), top: Math.max(tooltip.y - 100, 0) }}>
+          <div className="absolute pointer-events-none bg-white rounded-xl shadow-lg border border-outline-variant px-4 py-3 text-xs z-50" style={{ left: Math.min(tooltip.x + 12, containerW - 220), top: Math.max(tooltip.y - 100, 0) }}>
             <div className="font-bold text-on-surface mb-1.5">{tooltip.year} — {tooltip.stageLabel}</div>
             <div className="space-y-1 text-on-surface-variant">
               <div className="flex justify-between gap-6"><span>Amount</span><span className="font-semibold text-on-surface">{fmt(tooltip.v)} ETB</span></div>
@@ -86,10 +97,10 @@ function FunnelChart({ data }: any) {
 
 function FunnelPercentRow({ data }: any) {
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex flex-nowrap items-center justify-center gap-2 sm:gap-3">
       {FUNNEL_LABELS.map((label, i) => (
-        <div key={label} className="flex items-center gap-2 text-xs font-semibold text-on-surface-variant">
-          <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: FUNNEL_COLORS[i] }} />
+        <div key={label} className="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant whitespace-nowrap">
+          <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: FUNNEL_COLORS[i] }} />
           <span>{label}</span>
         </div>
       ))}
@@ -216,7 +227,49 @@ function MilestoneTracker({ row }: any) {
   );
 }
 
+function PipelineExpandedContent({ row }: any) {
+  const bars = [
+    { label: 'Contract Amount', amount: row.contractAmount, color: '#00373B' },
+    { label: 'PO Amount', amount: row.poAmount, color: '#0B4F54' },
+    { label: 'Invoiced', amount: row.inboundDelivery, color: '#D97706' },
+    { label: 'Received', amount: row.received, color: '#86BFC5' },
+  ];
+  const maxAmount = Math.max(...bars.map(b => b.amount), 1);
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-xs text-on-surface-variant font-semibold mb-2">
+        <span className="w-32" />
+        <span className="flex-1">Amount (ETB)</span>
+        <span className="w-20 text-right">% of Contract</span>
+      </div>
+      {bars.map((b) => {
+        const pctOfContract = row.contractAmount > 0 ? Math.round((b.amount / row.contractAmount) * 100) : 0;
+        const barPct = Math.max(4, (b.amount / maxAmount) * 100);
+        return (
+          <div key={b.label} className="flex items-center gap-2">
+            <span className="w-32 text-xs font-semibold text-on-surface truncate shrink-0">{b.label}</span>
+            <div className="flex-1 h-7 bg-surface-container-low rounded-md overflow-hidden relative">
+              <div className="h-full rounded-md transition-all" style={{ width: `${barPct}%`, backgroundColor: b.color }} />
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-white drop-shadow-sm">{formatAmount(b.amount)}</span>
+            </div>
+            <span className="w-20 text-right text-xs font-bold text-on-surface-variant shrink-0">{pctOfContract}%</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ContractManagementTab({ data, activeSections, tp, sp }: any) {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  const [modalRow, setModalRow] = useState(null);
   const allYears = data.yearlyContractToReceipt?.data?.map(r => r.year).sort() || [];
   const [funnelYear, setFunnelYear] = useState(allYears.length ? String(allYears[allYears.length - 1]) : '2026');
   const funnelFiltered = { ...data.yearlyContractToReceipt, data: data.yearlyContractToReceipt.data.filter(r => r.year === Number(funnelYear)) };
@@ -253,15 +306,21 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
               const totalReceived = data.contractPipeline.reduce((s, c) => s + c.received, 0);
               return (
                 <>
-                  <div className="grid grid-cols-3 gap-4 mb-6">
+                  <KpiCarousel>
                     <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total PO Value" value={formatAmount(totalPO)} subtitle="ordered" />
                     <KPICard variant="detailed" icon="fa-truck-loading" iconBg="bg-warning/10" iconColor="text-warning" label="Inbound Delivery" value={formatAmount(totalInbound)} subtitle={`${totalPO ? Math.round((totalInbound / totalPO) * 100) : 0}% of PO`} />
                     <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-success/10" iconColor="text-success" label="Received" value={formatAmount(totalReceived)} subtitle={`${totalInbound ? Math.round((totalReceived / totalInbound) * 100) : 0}% of inbound`} />
-                  </div>
+                  </KpiCarousel>
                   <Table page={tp('pipeline')} setPage={sp('pipeline')}
-                    expandedRow={pipelineExpanded} rowKey="contractNo"
-                    onRowClick={(id) => setPipelineExpanded(pipelineExpanded === id ? null : id)}
-                    rowClassName="group hover:bg-primary" expandedRowClassName="bg-primary"
+                    expandedRow={isMobile ? undefined : pipelineExpanded} rowKey="contractNo"
+                    onRowClick={(id) => {
+                      if (isMobile) {
+                        setModalRow(data.contractPipeline.find(r => r.contractNo === id) || null);
+                      } else {
+                        setPipelineExpanded(pipelineExpanded === id ? null : id);
+                      }
+                    }}
+                    rowClassName={isMobile ? '' : 'group hover:bg-primary'} expandedRowClassName="bg-primary"
                     headers={[
                       { key: 'contract', label: 'Contract' },
                       { key: 'supplier', label: 'Supplier' },
@@ -274,7 +333,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
                     rows={data.contractPipeline}
                     renderRow={(row, i, isExpanded) => {
                       const fillPct = row.poAmount ? Math.round((row.received / row.poAmount) * 100) : 0;
-                      const tx = `group-hover:text-white transition-colors ${isExpanded ? 'text-white' : ''}`;
+                      const tx = isMobile ? '' : `group-hover:text-white transition-colors ${isExpanded ? 'text-white' : ''}`;
                       return (
                         <>
                           <Td className={`font-mono ${tx}`}>{row.contractNo}</Td>
@@ -295,39 +354,34 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
                         </>
                       );
                     }}
-                    renderExpanded={(row) => {
-                      const bars = [
-                        { label: 'Contract Amount', amount: row.contractAmount, color: '#00373B' },
-                        { label: 'PO Amount', amount: row.poAmount, color: '#0B4F54' },
-                        { label: 'Invoiced', amount: row.inboundDelivery, color: '#D97706' },
-                        { label: 'Received', amount: row.received, color: '#86BFC5' },
-                      ];
-                      const maxAmount = Math.max(...bars.map(b => b.amount), 1);
-                      return (
-                        <div className="px-6 py-5 space-y-3">
-                          <div className="flex items-center gap-2 text-xs text-on-surface-variant font-semibold mb-2">
-                            <span className="w-40" />
-                            <span className="flex-1">Amount (ETB)</span>
-                            <span className="w-24 text-right">% of Contract</span>
-                          </div>
-                          {bars.map((b) => {
-                            const pctOfContract = row.contractAmount > 0 ? Math.round((b.amount / row.contractAmount) * 100) : 0;
-                            const barPct = Math.max(4, (b.amount / maxAmount) * 100);
-                            return (
-                              <div key={b.label} className="flex items-center gap-2">
-                                <span className="w-40 text-xs font-semibold text-on-surface truncate shrink-0">{b.label}</span>
-                                <div className="flex-1 h-7 bg-surface-container-low rounded-md overflow-hidden relative">
-                                  <div className="h-full rounded-md transition-all" style={{ width: `${barPct}%`, backgroundColor: b.color }} />
-                                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-white drop-shadow-sm">{formatAmount(b.amount)}</span>
-                                </div>
-                                <span className="w-24 text-right text-xs font-bold text-on-surface-variant shrink-0">{pctOfContract}%</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    }}
+                    renderExpanded={(row) => <PipelineExpandedContent row={row} />}
                   />
+                  {isMobile && modalRow && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setModalRow(null)}>
+                      <div className="bg-white w-full max-w-xl rounded-2xl shadow-level-2 border border-outline-variant overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        <div className="px-5 py-3.5 border-b border-outline-variant bg-surface-low flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-on-surface">{modalRow.contractNo}</span>
+                            <span className="text-outline">·</span>
+                            <span className="text-body-sm text-on-surface-variant">{modalRow.supplier}</span>
+                          </div>
+                          <button onClick={() => setModalRow(null)} className="p-1.5 rounded-lg hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors" aria-label="Close">
+                            <i className="fa-solid fa-xmark text-lg" />
+                          </button>
+                        </div>
+                        <div className="px-5 py-4">
+                          <PipelineExpandedContent row={modalRow} />
+                        </div>
+                        <div className="px-5 py-3 border-t border-outline-variant bg-surface-low flex justify-end">
+                          <button onClick={() => setModalRow(null)}
+                            className="px-5 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               );
             })()}
@@ -338,22 +392,12 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
       {activeSections.includes('ppc-contract-vs-po') && (
         <section id="ppc-contract-vs-po">
           <SectionPanel title="Contract vs PO - Consumption & Remaining" subtitle="Per contract with summary" action={<IconButton variant="info" contentId="po-contract-vs-po" />}>
-            <div className="grid grid-cols-4 gap-4 mb-5">
-              {(() => {
-                const totalPO = data.contractVsPO.reduce((s, c) => s + c.poAmount, 0);
-                const totalConsumption = data.contractVsPO.reduce((s, c) => s + c.consumption, 0);
-                const totalRemaining = data.contractVsPO.reduce((s, c) => s + c.remaining, 0);
-                const avgPct = data.contractVsPO.length ? Math.round(data.contractVsPO.reduce((s, c) => s + c.pctConsumed, 0) / data.contractVsPO.length) : 0;
-                return (
-                  <>
-                    <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total PO Amount" value={formatAmount(totalPO)} subtitle="all contracts" />
-                    <KPICard variant="detailed" icon="fa-cart-shopping" iconBg="bg-success/10" iconColor="text-success" label="Total Consumption" value={formatAmount(totalConsumption)} subtitle={`${totalPO ? Math.round((totalConsumption / totalPO) * 100) : 0}% consumed`} />
-                    <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-warning/10" iconColor="text-warning" label="Total Remaining" value={formatAmount(totalRemaining)} subtitle="yet to consume" />
-                    <KPICard variant="detailed" icon="fa-file-contract" iconBg="bg-primary/10" iconColor="text-primary" label="Contracts" value={data.contractVsPO.length.toLocaleString()} subtitle={`avg ${avgPct}% consumed`} />
-                  </>
-                );
-              })()}
-            </div>
+            <KpiCarousel>
+              <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total PO Amount" value={formatAmount(data.contractVsPO.reduce((s, c) => s + c.poAmount, 0))} subtitle="all contracts" />
+              <KPICard variant="detailed" icon="fa-cart-shopping" iconBg="bg-success/10" iconColor="text-success" label="Total Consumption" value={formatAmount(data.contractVsPO.reduce((s, c) => s + c.consumption, 0))} subtitle={`${data.contractVsPO.reduce((s, c) => s + c.poAmount, 0) ? Math.round((data.contractVsPO.reduce((s, c) => s + c.consumption, 0) / data.contractVsPO.reduce((s, c) => s + c.poAmount, 0)) * 100) : 0}% consumed`} />
+              <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-warning/10" iconColor="text-warning" label="Total Remaining" value={formatAmount(data.contractVsPO.reduce((s, c) => s + c.remaining, 0))} subtitle="yet to consume" />
+              <KPICard variant="detailed" icon="fa-file-contract" iconBg="bg-primary/10" iconColor="text-primary" label="Contracts" value={data.contractVsPO.length.toLocaleString()} subtitle={`avg ${data.contractVsPO.length ? Math.round(data.contractVsPO.reduce((s, c) => s + c.pctConsumed, 0) / data.contractVsPO.length) : 0}% consumed`} />
+            </KpiCarousel>
             <Table page={tp('contract-po')} setPage={sp('contract-po')}
               headers={[
                 { key: 'contract', label: 'Contract' },
@@ -395,54 +439,57 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
             const routeColors = { DELAYED_BEYOND_DELIVERY_DEADLINE: 'bg-error/10 text-error', CLOSED: 'bg-success/10 text-success', PARTIALLY_RECEIVED_BUT_OVERDUE: 'bg-warning/10 text-warning', NO_ROUTE_DEADLINE_BREACH_DETECTED: 'bg-success/10 text-success', ROUTE_DATA_QUALITY_ISSUE: 'bg-warning/10 text-warning', ROUTE_NOT_CLASSIFIED: 'bg-surface-container text-on-surface-variant' };
             const phaseColors = { PLANNING: 'bg-[#4A8EA5]/10 text-[#4A8EA5]', EXECUTION: 'bg-primary/10 text-primary', COMPLETED: 'bg-success/10 text-success' };
             return (
-              <SectionPanel title="Contract-to-Receipt Status Tracking" subtitle={`${filteredCtr.length} of ${(data.contractToReceiveTracking || []).length} PO-level milestones`} action={
-                <div className="flex items-center gap-2">
-                  <IconButton variant="info" contentId="po-contract-to-receive" />
-                  <div className="relative">
-                    <i className="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-on-surface-variant/60 text-[11px]"></i>
-                    <input type="text" placeholder="Search..." value={ctrSearch}
-                      onChange={(e) => setCtrSearch(e.target.value)}
-                      className="pl-7 pr-2 py-1 h-8 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-44 transition-all"
-                    />
+              <SectionPanel title="Contract-to-Receipt Status Tracking" subtitle={`${filteredCtr.length} of ${(data.contractToReceiveTracking || []).length} PO-level milestones`}
+                action={<IconButton variant="info" contentId="po-contract-to-receive" />}
+                searchBar={
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="relative">
+                      <i className="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-on-surface-variant/60 text-[11px]"></i>
+                      <input type="text" placeholder="Search..." value={ctrSearch}
+                        onChange={(e) => setCtrSearch(e.target.value)}
+                        className="pl-7 pr-2 py-1 h-8 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-full sm:w-44 transition-all"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <select value={ctrProcessFilter} onChange={(e) => setCtrProcessFilter(e.target.value)}
+                        className="h-8 shrink-0 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[160px]"
+                      >
+                        <option value="">All Process Status</option>
+                        {(() => {
+                          const present = new Set((data.contractToReceiveTracking || []).map(r => r.currentProcessStatus));
+                          return PIPELINE_STEPS.map(step => {
+                            const opts = [...step.statuses].filter(s => present.has(s));
+                            if (!opts.length) return null;
+                            return (
+                              <optgroup key={step.label} label={`— ${step.label} —`}>
+                                {opts.map(s => (
+                                  <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                                ))}
+                              </optgroup>
+                            );
+                          });
+                        })()}
+                      </select>
+                      <select value={ctrRouteFilter} onChange={(e) => setCtrRouteFilter(e.target.value)}
+                        className="h-8 shrink-0 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[130px]"
+                      >
+                        <option value="">All Route Status</option>
+                        {[...new Set<string>((data.contractToReceiveTracking || []).map((r: any) => String(r.routeStatus)))].map(s => (
+                          <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                        ))}
+                      </select>
+                      {(ctrSearch || ctrProcessFilter || ctrRouteFilter) && (
+                        <button
+                          type="button"
+                          onClick={() => { setCtrSearch(''); setCtrProcessFilter(''); setCtrRouteFilter(''); }}
+                          className="h-8 shrink-0 px-3 flex items-center gap-1.5 rounded-md border border-error/40 bg-error/5 text-error text-xs font-semibold hover:bg-error/10 transition-colors"
+                        >
+                          <i className="fa-solid fa-xmark text-[10px]" /> Clear
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <select value={ctrProcessFilter} onChange={(e) => setCtrProcessFilter(e.target.value)}
-                    className="h-8 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[160px]"
-                  >
-                    <option value="">All Process Status</option>
-                    {(() => {
-                      const present = new Set((data.contractToReceiveTracking || []).map(r => r.currentProcessStatus));
-                      return PIPELINE_STEPS.map(step => {
-                        const opts = [...step.statuses].filter(s => present.has(s));
-                        if (!opts.length) return null;
-                        return (
-                          <optgroup key={step.label} label={`— ${step.label} —`}>
-                            {opts.map(s => (
-                              <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
-                            ))}
-                          </optgroup>
-                        );
-                      });
-                    })()}
-                  </select>
-                  <select value={ctrRouteFilter} onChange={(e) => setCtrRouteFilter(e.target.value)}
-                    className="h-8 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[130px]"
-                  >
-                    <option value="">All Route Status</option>
-                    {[...new Set<string>((data.contractToReceiveTracking || []).map((r: any) => String(r.routeStatus)))].map(s => (
-                      <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
-                    ))}
-                  </select>
-                  {(ctrSearch || ctrProcessFilter || ctrRouteFilter) && (
-                    <button
-                      type="button"
-                      onClick={() => { setCtrSearch(''); setCtrProcessFilter(''); setCtrRouteFilter(''); }}
-                      className="h-8 px-3 flex items-center gap-1.5 rounded-md border border-error/40 bg-error/5 text-error text-xs font-semibold hover:bg-error/10 transition-colors"
-                    >
-                      <i className="fa-solid fa-xmark text-[10px]" /> Clear
-                    </button>
-                  )}
-                </div>
-              }>
+                }>
                 <>
                   <div className="flex flex-wrap items-center gap-2 mb-4 bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/60">
                     <span className="text-xs font-bold text-on-surface-variant mr-2 flex items-center gap-1.5"><i className="fa-solid fa-table-columns text-primary"></i> Toggle Columns:</span>
@@ -537,14 +584,14 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
                 <i className="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary pointer-events-none" />
               </div>
             }>
-              <div className="flex items-start gap-6">
-                <div className="flex-1 min-w-0">
+              <div className="flex flex-col lg:flex-row items-start gap-6">
+                <div className="w-full lg:flex-1 lg:min-w-0">
                   <FunnelChart data={funnelFiltered} />
                   <div className="mt-4 flex justify-center">
                     <FunnelPercentRow />
                   </div>
                 </div>
-                <div className="w-full xl:w-[480px] shrink-0 grid grid-cols-2 gap-4">
+                <div className="w-full xl:w-[480px] shrink-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {funnelFiltered.data.map(row => {
                         const poVsContract = row.contractAmount && row.contractAmount > 0 ? Math.round((row.purchaseOrderAmount / row.contractAmount) * 100) : null;
                         const inboundVsPO = row.purchaseOrderAmount > 0 ? Math.round((row.inboundAmount / row.purchaseOrderAmount) * 100) : 0;
@@ -612,12 +659,12 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
               const warning = s.expiryBreakdownMetrics?.[2];
               const active = s.expiryBreakdownMetrics?.[3];
               return (
-                <div className="grid grid-cols-4 gap-4 mb-6">
+                <KpiCarousel>
                   <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-primary/10" iconColor="text-primary" label="Total POs" value={s.purchaseOrderCount?.toLocaleString() || '—'} subtitle={`${s.purchaseOrderLineCount?.toLocaleString() || '—'} lines`} />
                   <KPICard variant="detailed" icon="fa-building" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Suppliers" value={s.supplierCount?.toLocaleString() || '—'} subtitle="active suppliers" />
                   <KPICard variant="detailed" icon="fa-coins" iconBg="bg-warning/10" iconColor="text-warning" label="Total Amount" value={formatAmount(s.totalAmount)} subtitle={`${s.currency || 'ETB'}`} />
                   <KPICard variant="detailed" icon="fa-clock" iconBg="bg-error/10" iconColor="text-error" label="Expired" value={expired?.count?.toLocaleString() || '—'} subtitle={expired ? `${formatAmount(expired.amount)}` : '—'} />
-                </div>
+                </KpiCarousel>
               );
             })()}
             <Table page={tp('lc-cad')} setPage={sp('lc-cad')}
