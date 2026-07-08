@@ -15,6 +15,7 @@ export default function Login() {
   const [selectedEnv, setSelectedEnv] = useState(null)
   const [showEnvPanel, setShowEnvPanel] = useState(false)
   const [envPanelClosing, setEnvPanelClosing] = useState(false)
+  const [loadingEnvs, setLoadingEnvs] = useState(true)
 
   const closeEnvPanel = () => {
     setEnvPanelClosing(true)
@@ -31,6 +32,7 @@ export default function Login() {
         setEnvironments(list)
       })
       .catch(() => {})
+      .finally(() => setLoadingEnvs(false))
   }, [])
 
   const handleLogin = async () => {
@@ -82,8 +84,8 @@ export default function Login() {
     <div className="min-h-screen flex-col lg:flex-row flex overflow-hidden">
       {/* Brand Panel */}
       <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] relative flex-col bg-[#00373B] p-12 overflow-hidden">
-        <div className="relative z-10 -ml-12">
-          <img src="/epss-logo-primary.svg" alt="EPSS" className="h-28 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
+        <div className="relative z-10 right-6">
+          <img src="/epss-logo.png" alt="EPSS" className="h-24 w-auto" style={{ filter: 'brightness(0) invert(1)' }} />
         </div>
         <img src="/gemini-svg.svg" alt="" className="absolute -top-12 -right-40 w-[800px] pointer-events-none select-none brightness-0 invert" />
         <div className="relative z-10 mt-8">
@@ -129,11 +131,11 @@ export default function Login() {
 
         <div className="w-full max-w-[420px] animate-slide-up relative z-10">
           <div className="mb-8 text-center lg:text-left">
-            <div className="inline-flex items-center justify-center w-[72px] h-[72px] rounded-2xl bg-white shadow-md mx-auto lg:mx-0 mb-5">
+            <div className="inline-flex items-center justify-center w-[72px] h-[72px] rounded-2xl bg-white shadow-md mx-auto lg:mx-0 mb-5 lg:hidden">
               <img src="/epss-logo-primary.svg" alt="EPSS" className="h-10 w-auto" />
             </div>
             <h2 className="text-[26px] sm:text-[30px] font-bold text-on-surface tracking-tight">Welcome back</h2>
-            <p className="mt-1.5 text-body-md text-[#6B7280]">Sign in to access your Fanos Dashboard</p>
+            <p className="mt-1.5 text-body-md text-[#6B7280]">Sign in to access Fanos Dashboard</p>
           </div>
 
           <div className="space-y-5">
@@ -246,7 +248,18 @@ export default function Login() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto py-2">
-              {environments.length === 0 ? (
+              {loadingEnvs ? (
+                <div className="space-y-1 p-2">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 px-4 py-3">
+                      <div className="w-4 h-4 rounded-full bg-white/10 animate-pulse" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 bg-white/10 rounded animate-pulse" style={{ width: `${60 + Math.random() * 30}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : environments.length === 0 ? (
                 <div className="px-6 py-8 text-center text-white/50 text-body-sm">No sites available</div>
               ) : environments.map((env, i) => (
                 <button
