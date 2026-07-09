@@ -346,7 +346,7 @@ function MiscellaneousStockReport() {
   return (
     <div className="space-y-5 animate-fade-in">
       {/* Tab Navigation */}
-      <StickyHeader className="gap-md border-b border-outline-variant">
+      <StickyHeader className="gap-md">
         <div className="flex items-center gap-1">
           <button
             onClick={() => setActiveTab('stock-report')}

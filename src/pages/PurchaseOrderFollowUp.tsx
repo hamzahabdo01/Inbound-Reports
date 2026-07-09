@@ -8,6 +8,7 @@ import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
 import SelectFilter from '../components/SelectFilter';
 import IconButton from '../components/IconButton';
+import ExportDropdown from '../components/ExportDropdown';
 
 
 const COLUMNS = [
@@ -26,6 +27,13 @@ const COLUMNS = [
 
 const ROWS_PER_PAGE = 25;
 const MAX_DISPLAY = 50; // show at most 50 records in the table (25 per page, 2 pages)
+
+const exportHeaders: Record<string, string> = {
+  Item: 'Item', Unit: 'Unit', Activity: 'Activity',
+  ProcurementRequestNo: 'Procurement Request No', PurchaseOrderNumber: 'PO Number',
+  TenderNumber: 'Tender Number', RequestedQuantity: 'Requested Qty',
+  POQuantity: 'PO Qty', InvoicedQuantity: 'Invoiced Qty', Status: 'Status'
+};
 
 function StatusBadge({ status }: any) {
   if (!status || status.trim() === '') return null;
@@ -58,9 +66,24 @@ function PurchaseOrderFollowUp() {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [mobilePageSize, setMobilePageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState(null);
   const [activityFilter, setActivityFilter] = useState(null);
+
+  const useMediaQuery = (query: string) => {
+    const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+    useEffect(() => {
+      const mq = window.matchMedia(query);
+      const onChange = () => setMatches(mq.matches);
+      mq.addEventListener('change', onChange);
+      return () => mq.removeEventListener('change', onChange);
+    }, [query]);
+    return matches;
+  };
+
+  const isMobile = useMediaQuery('(max-width: 767px)');
+  const effectiveRowsPerPage = isMobile ? mobilePageSize : ROWS_PER_PAGE;
 
   useEffect(() => {
     setIsLoading(true);
@@ -81,6 +104,7 @@ function PurchaseOrderFollowUp() {
 
   // Reset page 1 when filters change
   useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter, activityFilter]);
+  useEffect(() => { setCurrentPage(1); }, [mobilePageSize]);
 
   // Get unique statuses for filter
   const statuses = useMemo(() => {
@@ -130,11 +154,11 @@ function PurchaseOrderFollowUp() {
   // Limit the table to the first `MAX_DISPLAY` records, then paginate those.
   const limitedDisplay = useMemo(() => displayData.slice(0, MAX_DISPLAY), [displayData]);
 
-  const totalPages = Math.ceil(limitedDisplay.length / ROWS_PER_PAGE);
+  const totalPages = Math.ceil(limitedDisplay.length / effectiveRowsPerPage);
   const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * ROWS_PER_PAGE;
-    return limitedDisplay.slice(start, start + ROWS_PER_PAGE);
-  }, [limitedDisplay, currentPage]);
+    const start = (currentPage - 1) * effectiveRowsPerPage;
+    return limitedDisplay.slice(start, start + effectiveRowsPerPage);
+  }, [limitedDisplay, currentPage, effectiveRowsPerPage]);
 
   // Ensure current page is within range when totalPages changes
   useEffect(() => {
@@ -161,6 +185,43 @@ function PurchaseOrderFollowUp() {
     };
   }, [data]);
 
+  // Mobile KPI carousel state
+  const [kpiPage, setKpiPage] = useState(0);
+  const [cardsPerPage, setCardsPerPage] = useState(() => window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1);
+
+  useEffect(() => {
+    const onResize = () => {
+      const next = window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1;
+      setCardsPerPage(prev => {
+        if (prev !== next) setKpiPage(0);
+        return next;
+      });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const touchStartX = useRef(0);
+  const touchDeltaX = useRef(0);
+  const handleTouchStart = (e: any) => { touchStartX.current = e.touches[0].clientX; touchDeltaX.current = 0; };
+  const handleTouchMove = (e: any) => { touchDeltaX.current = e.touches[0].clientX - touchStartX.current; };
+  const handleTouchEnd = () => {
+    const total = Math.ceil(4 / cardsPerPage);
+    if (Math.abs(touchDeltaX.current) > 50) {
+      if (touchDeltaX.current < 0 && kpiPage < total - 1) setKpiPage(p => p + 1);
+      else if (touchDeltaX.current > 0 && kpiPage > 0) setKpiPage(p => p - 1);
+    }
+  };
+
+  const kpiTotalPages = Math.ceil(4 / cardsPerPage);
+
+  const kpiCards = useMemo(() => [
+    { icon: 'fa-database', iconBg: 'bg-surface-container', iconColor: 'text-primary', label: 'Total Records', value: stats.total.toLocaleString(), subtitle: 'all entries' },
+    { icon: 'fa-file-lines', iconBg: 'bg-surface-container', iconColor: 'text-primary', label: 'With PO', value: stats.withPO.toLocaleString(), subtitle: 'has purchase order' },
+    { icon: 'fa-circle-check', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Cleared', value: stats.cleared.toLocaleString(), valueColor: 'text-success', subtitle: 'fully processed' },
+    { icon: 'fa-triangle-exclamation', iconBg: 'bg-error/10', iconColor: 'text-error', label: 'Stalled / At Risk', value: stats.critical.toLocaleString(), valueColor: 'text-error', subtitle: 'requires attention' },
+  ], [stats]);
+
   const mainRef = useRef(null);
   useEffect(() => {
     setTimeout(() => {
@@ -182,42 +243,95 @@ function PurchaseOrderFollowUp() {
   return (
     <div ref={mainRef}>
       {/* Stats cards */}
-      <div className="grid grid-cols-4 gap-4 mb-lg">
-        <KPICard variant="detailed" icon="fa-database" iconBg="bg-surface-container" iconColor="text-primary" label="Total Records" value={stats.total.toLocaleString()} subtitle="all entries" />
-        <KPICard variant="detailed" icon="fa-file-lines" iconBg="bg-surface-container" iconColor="text-primary" label="With PO" value={stats.withPO.toLocaleString()} subtitle="has purchase order" />
-        <KPICard variant="detailed" icon="fa-circle-check" iconBg="bg-success/10" iconColor="text-success" label="Cleared" value={stats.cleared.toLocaleString()} valueColor="text-success" subtitle="fully processed" />
-        <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg="bg-error/10" iconColor="text-error" label="Stalled / At Risk" value={stats.critical.toLocaleString()} valueColor="text-error" subtitle="requires attention" />
+      <div className="relative mt-md mb-lg">
+        <div className="relative overflow-hidden w-full" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+          <div
+            className="flex transition-transform duration-500 ease-in-out"
+            style={{ transform: `translateX(-${kpiPage * 100}%)` }}
+          >
+            {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
+              <div key={pageIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full shrink-0">
+                {kpiCards.slice(pageIdx * cardsPerPage, pageIdx * cardsPerPage + cardsPerPage).map((c, cardIdx) => (
+                  <div key={c.label || cardIdx}>
+                    <KPICard variant="detailed" {...c} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        {kpiTotalPages > 1 && (
+          <>
+            <button type="button" onClick={() => setKpiPage((p) => Math.max(p - 1, 0))} disabled={kpiPage === 0}
+              className="hidden lg:flex absolute left-0 top-0 bottom-0 w-8 items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
+              aria-label="Previous KPI page"
+            ><i className="fa-solid fa-chevron-left text-[10px]"></i></button>
+            <button type="button" onClick={() => setKpiPage((p) => Math.min(p + 1, kpiTotalPages - 1))} disabled={kpiPage === kpiTotalPages - 1}
+              className="hidden lg:flex absolute right-0 top-0 bottom-0 w-8 items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
+              aria-label="Next KPI page"
+            ><i className="fa-solid fa-chevron-right text-[10px]"></i></button>
+          </>
+        )}
+        {kpiTotalPages > 1 && (
+          <div className="flex flex-col items-center gap-1 mt-3">
+            <div className="flex items-center justify-center gap-1.5">
+              {Array.from({ length: kpiTotalPages }, (_, i) => (
+                <button key={i} type="button" onClick={() => setKpiPage(i)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${i === kpiPage ? 'bg-primary w-5' : 'bg-outline-variant hover:bg-outline'}`}
+                  aria-label={`Go to page ${i + 1}`}
+                />
+              ))}
+            </div>
+            {isMobile && (
+              <div className="flex items-center gap-2 text-[10px] text-on-surface-variant/50 font-semibold tracking-wider animate-pulse">
+                <i className="fa-solid fa-chevron-left text-[8px]" /> SWIPE <i className="fa-solid fa-chevron-right text-[8px]" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Search and filter */}
       <div className="bg-surface-container-lowest border border-[#D1D5DB] rounded-lg p-4 mb-md">
-        <div className="flex items-center gap-3">
-          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search Items, PO Number, Tender..." />
-          <SelectFilter
-            value={statusFilter || 'All'}
-            onChange={(v) => setStatusFilter(v === 'All' ? null : v)}
-            options={statuses.filter(s => s !== 'All')}
-            allLabel="Status: All"
-          />
-          <SelectFilter
-            value={activityFilter || 'All'}
-            onChange={(v) => setActivityFilter(v === 'All' ? null : v)}
-            options={activities.filter(a => a !== 'All')}
-            allLabel="Activity: All"
-          />
-          <div className="ml-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-md">
+          <div className="flex items-center gap-2 sm:hidden">
+            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search Items, PO Number, Tender..." className="flex-1" />
             <IconButton variant="info" contentId="purchase-order-follow-up" />
+            <ExportDropdown headers={exportHeaders} rows={filteredData} filename="purchase-order-follow-up" />
+          </div>
+          <div className="hidden sm:block flex-1">
+            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search Items, PO Number, Tender..." />
+          </div>
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+            <SelectFilter
+              value={statusFilter || 'All'}
+              onChange={(v) => setStatusFilter(v === 'All' ? null : v)}
+              options={statuses.filter(s => s !== 'All')}
+              allLabel="Status: All"
+            />
+            <SelectFilter
+              value={activityFilter || 'All'}
+              onChange={(v) => setActivityFilter(v === 'All' ? null : v)}
+              options={activities.filter(a => a !== 'All')}
+              allLabel="Activity: All"
+            />
+          </div>
+          <div className="hidden sm:flex items-center gap-2">
+            <IconButton variant="info" contentId="purchase-order-follow-up" />
+            <ExportDropdown headers={exportHeaders} rows={filteredData} filename="purchase-order-follow-up" />
           </div>
         </div>
       </div>
 
       {/* Table */}
       <div className="bg-surface-container-lowest border border-[#D1D5DB] rounded-lg overflow-hidden mb-md">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className={`${isMobile ? 'relative before:absolute before:top-0 before:right-0 before:bottom-0 before:w-8 before:bg-gradient-to-l before:from-surface-container-lowest before:to-transparent before:pointer-events-none before:z-10 after:absolute after:top-0 after:left-0 after:bottom-0 after:w-8 after:bg-gradient-to-r after:from-surface-container-lowest after:to-transparent after:pointer-events-none after:z-10 focus-within:ring-2 focus-within:ring-primary/20 rounded-lg' : ''}`}>
+        <div className={`${isMobile ? 'overflow-x-auto scroll-smooth -webkit-overflow-scrolling:touch' : 'overflow-x-auto'}`}>
+          <div className={isMobile ? 'min-w-[960px]' : ''}>
+          <table className={isMobile ? '' : 'w-full'}>
             <thead className="bg-surface-container border-b border-[#D1D5DB]">
               <tr>
-                <th className="px-4 py-3 text-center text-label-caps text-on-surface-variant uppercase w-12">#</th>
+                <th className="py-3 px-4 text-center text-label-caps text-on-surface-variant uppercase w-12 border-r border-outline-variant sticky left-0 bg-surface-container z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">#</th>
                 <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">Item</th>
                 <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">Unit</th>
                 <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">Activity</th>
@@ -235,8 +349,8 @@ function PurchaseOrderFollowUp() {
                 paginatedData.map((row, i) => {
                   const hasPO = row.PurchaseOrderNumber && row.PurchaseOrderNumber.trim() !== '';
                   return (
-                    <tr key={i} className="border-b border-[#D1D5DB] hover:bg-surface-container-low transition-colors">
-                      <td className="px-4 py-2 text-center text-body-sm text-on-surface-variant">{(currentPage - 1) * ROWS_PER_PAGE + i + 1}</td>
+                    <tr key={i} className="group border-b border-[#D1D5DB] hover:bg-surface-container-low transition-colors">
+                      <td className="py-4 px-4 text-center border-r border-outline-variant/60 text-body-sm text-on-surface-variant sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">{(currentPage - 1) * effectiveRowsPerPage + i + 1}</td>
                       <td className="px-4 py-2">
                         <div className="text-body-md font-semibold text-on-surface">{row.Item}</div>
                         {row.ProcurementRequestNo && (
@@ -263,16 +377,47 @@ function PurchaseOrderFollowUp() {
             </tbody>
           </table>
         </div>
+        </div>
+      </div>
       </div>
 
-      <SimplePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={limitedDisplay.length}
-        itemsPerPage={ROWS_PER_PAGE}
-        onPageChange={(p) => setCurrentPage(p)}
-        label="records"
-      />
+      {isMobile ? (
+        <div className="flex items-center justify-between gap-3 py-2 px-lg bg-surface border-t border-outline-variant">
+          <select value={mobilePageSize} onChange={(e) => { setMobilePageSize(Number(e.target.value)); setCurrentPage(1); }}
+            className="h-7 rounded border border-outline-variant bg-white px-1.5 text-xs text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+          </select>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}
+              className="p-2 rounded border border-outline-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+              aria-label="Previous page"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}
+              className="p-2 rounded border border-outline-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+              aria-label="Next page"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <SimplePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={limitedDisplay.length}
+          itemsPerPage={ROWS_PER_PAGE}
+          onPageChange={(p) => setCurrentPage(p)}
+          label="records"
+        />
+      )}
     </div>
   );
 }
