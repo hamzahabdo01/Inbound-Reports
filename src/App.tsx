@@ -55,6 +55,7 @@ function AppContent() {
     if (mainRef.current) {
       mainRef.current.scrollTop = 0;
     }
+    window.scrollTo(0, 0);
   }, [activeSection]);
 
   useEffect(() => {
@@ -109,13 +110,13 @@ function AppContent() {
         <div className="overflow-hidden w-full">
           <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={logout} isMobile onClose={() => setSidebarVisible(false)} />
           <div className="flex-1 flex flex-col min-h-screen min-w-0">
-            <header className="fixed top-0 z-40 flex items-center gap-3 px-4 py-3 bg-surface border-b border-outline-variant/50 w-full">
-              <button onClick={toggleSidebar} className="w-9 h-9 flex items-center justify-center rounded-lg bg-sidebar-accent text-primary hover:brightness-110 transition-all shrink-0" aria-label="Toggle sidebar">
+            <header className="fixed top-0 z-40 flex items-center gap-3 px-4 py-3 bg-primary w-full">
+              <button onClick={toggleSidebar} className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/15 text-white hover:brightness-110 transition-all shrink-0" aria-label="Toggle sidebar">
                 <i className="fa-solid fa-bars text-sm"></i>
               </button>
-              <span className="text-sm font-bold text-on-surface truncate">Fanos Dashboard</span>
+              <span className="text-sm font-bold text-white truncate">Fanos Dashboard</span>
             </header>
-            <main ref={mainRef} className="flex-1 overflow-auto pt-[56px]">
+            <main ref={mainRef} className="flex-1 overflow-auto max-h-[calc(100dvh-56px)] pt-[56px]">
               <div className="max-w-container mx-auto px-lg pb-lg">
                 {renderPage({ sidebarVisible, toggleSidebar })}
               </div>

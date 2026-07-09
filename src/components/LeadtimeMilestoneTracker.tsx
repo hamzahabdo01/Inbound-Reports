@@ -133,22 +133,6 @@ export default function LeadtimeMilestoneTracker({
 
       {isMobile ? (
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={goPrev} aria-label="Previous stage"
-              className="w-9 h-9 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-container-low transition-colors"
-            >
-              <i className="fa-solid fa-chevron-left text-sm text-on-surface" />
-            </button>
-            <span className="text-sm font-semibold text-on-surface">
-              Stage {currentStage + 1} of {totalStages}
-            </span>
-            <button onClick={goNext} aria-label="Next stage"
-              className="w-9 h-9 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-container-low transition-colors"
-            >
-              <i className="fa-solid fa-chevron-right text-sm text-on-surface" />
-            </button>
-          </div>
-
           <div aria-live="polite" className="sr-only">
             Stage {currentStage + 1} of {totalStages}: {LEADTIME_MILESTONE_STEPS[currentStage].label}
           </div>
