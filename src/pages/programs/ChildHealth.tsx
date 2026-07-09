@@ -825,7 +825,7 @@ function ChildHealth() {
     });
 
     return Object.entries(map)
-      .map(([label, value]) => ({ label, value }))
+      .map(([label, value]) => ({ label, value, color: '#4A9598' }))
       .sort((a, b) => b.value - a.value);
   }, [apiMosData, mosSite]);
 

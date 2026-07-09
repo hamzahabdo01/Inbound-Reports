@@ -1,7 +1,14 @@
 export const CHART_PALETTE = [
-  '#00373B', '#0B4F54', '#216E6A', '#4A9598',
-  '#86BFC5', '#D97706', '#515F74', '#059669',
-  '#BA1A1A', '#4A8EA5',
+  '#0B4F54', // Primary default
+  '#D97706', // Secondary (Amber/Orange)
+  '#216E6A', // Medium teal
+  '#00373B', // Dark teal
+  '#4A9598', // Light teal
+  '#86BFC5', // Primary container light
+  '#059669', // Success green
+  '#515F74', // Muted blue/grey
+  '#BA1A1A', // Error red
+  '#4A8EA5', // Muted teal
 ];
 
 export const getChartColor = (index: number, palette = CHART_PALETTE) => palette[index % palette.length];

@@ -3,6 +3,11 @@ import BaseTable, { ColumnDef } from '../BaseTable';
 
 const formatNumber = (value) => new Intl.NumberFormat('en').format(value || 0);
 
+const formatCompact = (v) => {
+  if (v === 0) return '0';
+  return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(v);
+};
+
 const statuses = [
   { label: 'Excess', color: '#0B4F54' },
   { label: 'Normal', color: '#059669' },
@@ -16,7 +21,7 @@ const getCellStatus = (value, thresholds, ss) => {
     const found = statuses.find((s) => s.label.toLowerCase() === ss.toLowerCase());
     if (found) return found;
   }
-  if (!value) return statuses[4];
+  if (!value) return statuses[4]; // Stocked Out
 
   const { min, max, eop } = thresholds;
 
@@ -28,6 +33,7 @@ const getCellStatus = (value, thresholds, ss) => {
 
 function HubHeatmap({ rows, products, thresholds, statusMap }: any) {
   const [page, setPage] = useState(1);
+  const [activeTemplate, setActiveTemplate] = useState<'subtle' | 'solid' | 'outline'>('subtle');
   const rowsPerPage = 10;
 
   const getThresholds = (product) => (thresholds || {})[product] || { min: 0, max: Infinity, eop: Infinity };
@@ -55,18 +61,6 @@ function HubHeatmap({ rows, products, thresholds, statusMap }: any) {
 
   const startRow = sortedRows.length > 0 ? (page - 1) * rowsPerPage + 1 : 0;
   const end = Math.min(page * rowsPerPage, sortedRows.length);
-
-  const getPillStyle = (status, value) => {
-    const isCritical = !value || status.label === 'Stocked Out' || status.label === 'Below EOP' || status.label === 'Excess';
-    const isWarning = status.label === 'Below Min';
-    if (isCritical) {
-      return { backgroundColor: status.color, color: '#ffffff', fontWeight: 600 };
-    }
-    if (isWarning) {
-      return { backgroundColor: status.color + '20', color: status.color, fontWeight: 600 };
-    }
-    return { backgroundColor: status.color + '14', color: status.color, fontWeight: 500 };
-  };
 
   const computeRiskCount = (row) => {
     let count = 0;
@@ -116,27 +110,114 @@ function HubHeatmap({ rows, products, thresholds, statusMap }: any) {
       key: product,
       label: product,
       align: 'center' as const,
-      headerClassName: 'min-w-[100px] !px-3 whitespace-nowrap',
-      className: '!px-3 !py-2 border-l border-surface-container-low bg-white whitespace-nowrap',
+      headerClassName: 'min-w-[90px] !px-2 whitespace-nowrap',
+      className: '!px-2 !py-2 border-l border-surface-container-low bg-white whitespace-nowrap align-middle',
       render: (row) => {
         const value = row[product] || 0;
         const status = getCellStatus(value, getThresholds(product), statusMap?.[row.Site]?.[product]);
-        const pillStyle = getPillStyle(status, value);
+        const titleStr = `${row.Site} / ${product}: ${formatNumber(value)} (${status.label})`;
+
+        if (activeTemplate === 'solid') {
+          const badgeStyle = {
+            backgroundColor: status.color,
+            color: '#ffffff',
+            fontWeight: 700,
+          };
+          return (
+            <div className="flex items-center justify-center w-full py-0.5" title={titleStr}>
+              <span
+                className="inline-flex items-center justify-center rounded-lg px-2 py-1.5 text-[12px] w-full text-center shadow-sm select-none"
+                style={badgeStyle}
+              >
+                {formatCompact(value)}
+              </span>
+            </div>
+          );
+        }
+
+        if (activeTemplate === 'outline') {
+          const outlineStyle = {
+            backgroundColor: 'transparent',
+            color: status.color,
+            border: `1px dashed ${status.color}70`,
+            fontWeight: 700,
+          };
+          return (
+            <div className="flex items-center justify-center w-full py-0.5" title={titleStr}>
+              <span
+                className="inline-flex items-center justify-center rounded-lg px-2 py-1.5 text-[12px] w-full text-center select-none"
+                style={outlineStyle}
+              >
+                {formatCompact(value)}
+              </span>
+            </div>
+          );
+        }
+
+        // Default: subtle heatmap tint
+        const cellStyle = {
+          backgroundColor: status.color + '18', // ~9% opacity
+          color: status.color,
+          border: `1px solid ${status.color}25`,
+        };
         return (
-          <span
-            className="inline-flex items-center justify-center rounded-md px-2 py-1 text-[12px] min-w-[3rem] w-full"
-            style={pillStyle}
-            title={`${row.Site} / ${product}: ${formatNumber(value)} (${status.label})`}
-          >
-            {formatNumber(value)}
-          </span>
+          <div className="flex items-center justify-center w-full py-0.5" title={titleStr}>
+            <span
+              className="inline-flex items-center justify-center rounded-lg px-2 py-1.5 text-[12px] font-bold w-full text-center transition-colors select-none"
+              style={cellStyle}
+            >
+              {formatCompact(value)}
+            </span>
+          </div>
         );
       },
     })),
   ];
 
   return (
-    <div>
+    <div className="flex flex-col">
+      {/* Template selection tabs bar */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-outline-variant bg-surface-container-lowest">
+        <div className="flex items-center gap-1.5 bg-surface-container-high p-1 rounded-lg">
+          <button
+            type="button"
+            onClick={() => setActiveTemplate('subtle')}
+            className={`px-3 py-1.5 rounded-md text-[11px] font-bold text-center transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTemplate === 'subtle'
+                ? 'bg-white text-primary shadow-[0px_1px_3px_rgba(0,0,0,0.1)]'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/50'
+            }`}
+          >
+            <i className="fa-solid fa-border-all" /> Subtle Heatmap
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTemplate('solid')}
+            className={`px-3 py-1.5 rounded-md text-[11px] font-bold text-center transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTemplate === 'solid'
+                ? 'bg-white text-primary shadow-[0px_1px_3px_rgba(0,0,0,0.1)]'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/50'
+            }`}
+          >
+            <i className="fa-solid fa-square" /> Solid Badges
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTemplate('outline')}
+            className={`px-3 py-1.5 rounded-md text-[11px] font-bold text-center transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTemplate === 'outline'
+                ? 'bg-white text-primary shadow-[0px_1px_3px_rgba(0,0,0,0.1)]'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/50'
+            }`}
+          >
+            <i className="fa-solid fa-square-o" style={{ WebkitTextStroke: '1px' }} /> Outline Heatmap
+          </button>
+        </div>
+        <div className="text-[11px] text-on-surface-variant font-medium">
+          Style: <span className="font-bold text-primary capitalize">{activeTemplate} view (estimated values)</span>
+        </div>
+      </div>
+
       <BaseTable
         columns={columns}
         rows={visibleRows}
