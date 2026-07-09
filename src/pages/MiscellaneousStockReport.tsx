@@ -7,7 +7,7 @@ import SearchInput from '../components/SearchInput';
 import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
 import SelectFilter from '../components/SelectFilter';
-import ExportButton from '../components/ExportButton';
+import ExportDropdown from '../components/ExportDropdown';
 import StickyHeader from '../components/StickyHeader';
 import IconButton from '../components/IconButton';
 
@@ -52,7 +52,7 @@ const HUB_KEYS = [
   { key: 'shire', label: 'Shire' }
 ];
 
-function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
+function MiscellaneousStockReport() {
   const [activeTab, setActiveTab] = useState('stock-report');
 
   useEffect(() => {
@@ -61,6 +61,24 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
       mainEl.scrollTop = 0;
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (columnsRef.current && !columnsRef.current.contains(e.target as Node)) {
+        setColumnsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   // Search query
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,10 +95,15 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
   const [showQtyLeft, setShowQtyLeft] = useState(false);
   const [showExpiries, setShowExpiries] = useState(false);
   const [showHubColumns, setShowHubColumns] = useState(false);
+  const [columnsOpen, setColumnsOpen] = useState(false);
+  const columnsRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 12;
+  const [mobilePageSize, setMobilePageSize] = useState(10);
+  const effectiveRowsPerPage = isMobile ? mobilePageSize : rowsPerPage;
 
   // Row Expansion (for dashboard summary view)
   const [expandedRow, setExpandedRow] = useState(null);
@@ -98,6 +121,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
     return () => ro.disconnect();
   }, []);
   const [activeTabs, setActiveTabs] = useState({}); // { [itemSn]: 'pipeline' | 'hubs' | 'expiries' }
+  const [dismissedHints, setDismissedHints] = useState<Record<string, boolean>>({});
 
   // National AMC tab state
   const [amcData, setAmcData] = useState([]);
@@ -105,7 +129,8 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
   const [amcPage, setAmcPage] = useState(1);
   const [amcEditing, setAmcEditing] = useState({}); // { rowIndex: true }
   const [amcDirtyValues, setAmcDirtyValues] = useState({}); // { rowIndex: 'newValue' }
-  const amcRowsPerPage = 20;
+  const [amcMobilePageSize, setAmcMobilePageSize] = useState(10);
+  const amcRowsPerPage = isMobile ? amcMobilePageSize : 20;
 
   useEffect(() => {
     const parsed = parseCSV(nationalAMCCSVData);
@@ -128,7 +153,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
   const paginatedAmcData = useMemo(() => {
     const start = (amcPage - 1) * amcRowsPerPage;
     return filteredAmcData.slice(start, start + amcRowsPerPage);
-  }, [filteredAmcData, amcPage]);
+  }, [filteredAmcData, amcPage, amcRowsPerPage]);
 
   const amcTotalPages = Math.ceil(filteredAmcData.length / amcRowsPerPage);
 
@@ -179,11 +204,11 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
 
   // Paginated data
   const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    return filteredData.slice(startIndex, startIndex + rowsPerPage);
-  }, [filteredData, currentPage]);
+    const startIndex = (currentPage - 1) * effectiveRowsPerPage;
+    return filteredData.slice(startIndex, startIndex + effectiveRowsPerPage);
+  }, [filteredData, currentPage, effectiveRowsPerPage]);
 
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -230,70 +255,99 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
 
   const maxTotalCols = 4 + 6 + 2 + 3 + 3 + 3 + 2 + 1 + HUB_KEYS.length + 2; // all columns always counted
 
-  // Export CSV
-  const handleExportCSV = () => {
-    const headers = [
-      'SN', 'Item Description', 'Unit', 'VEN',
-      'National SOH', 'National DOS', 'National AMC', 'National Adjusted AMC', 'National MOS', 'National Adjusted MOS',
-      'Contract Qty', 'Contract MOS',
-      'Ordered PO', 'Ordered Qty', 'Ordered MOS',
-      'Shipped PO', 'Shipped Qty', 'Shipped MOS',
-      'Delivered PO', 'Delivered Qty', 'Delivered MOS',
-      'Quantity Left', 'Quantity Left MOS',
-      'Expiry Batches'
-    ];
+  const [kpiPage, setKpiPage] = useState(0);
+  const [kpiCardsPerPage, setKpiCardsPerPage] = useState(() => window.innerWidth >= 1024 ? 5 : window.innerWidth >= 640 ? 2 : 1);
+  const kpiTotalPages = Math.ceil(5 / kpiCardsPerPage);
 
-    const rows = filteredData.map(item => [
-      item.sn,
-      `"${item.item.replace(/"/g, '""')}"`,
-      `"${item.unit}"`,
-      item.ven,
-      item.national.soh,
-      item.national.dos,
-      item.national.amc,
-      item.national.adjusted_amc,
-      item.national.mos,
-      item.national.adjusted_mos,
-      item.contract.quantity,
-      item.contract.mos,
-      `"${item.ordered.po}"`,
-      item.ordered.quantity,
-      item.ordered.mos,
-      `"${item.shipped.po}"`,
-      item.shipped.quantity,
-      item.shipped.mos,
-      `"${item.delivered.po}"`,
-      item.delivered.quantity,
-      item.delivered.mos,
-      item.quantity_left.quantity,
-      item.quantity_left.mos,
-      `"${item.expiry_raw.replace(/"/g, '""')}"`
-    ]);
+  useEffect(() => {
+    const onResize = () => {
+      const next = window.innerWidth >= 1024 ? 5 : window.innerWidth >= 640 ? 2 : 1;
+      setKpiCardsPerPage(prev => {
+        if (prev !== next) setKpiPage(0);
+        return next;
+      });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Miscellaneous_Stock_Report_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const kpiTouchStartX = useRef(0);
+  const kpiTouchDeltaX = useRef(0);
+  const handleKpiTouchStart = (e: any) => { kpiTouchStartX.current = e.touches[0].clientX; kpiTouchDeltaX.current = 0; };
+  const handleKpiTouchMove = (e: any) => { kpiTouchDeltaX.current = e.touches[0].clientX - kpiTouchStartX.current; };
+  const handleKpiTouchEnd = () => {
+    if (Math.abs(kpiTouchDeltaX.current) > 50) {
+      if (kpiTouchDeltaX.current < 0 && kpiPage < kpiTotalPages - 1) setKpiPage(p => p + 1);
+      else if (kpiTouchDeltaX.current > 0 && kpiPage > 0) setKpiPage(p => p - 1);
+    }
   };
 
+  const kpiCardProps = [
+    { icon: 'fa-boxes-stacked', iconBg: 'bg-slate-50', iconColor: 'text-slate-500', label: 'Total Items', value: formatNumber(stats.total), valueColor: 'text-slate-900', subtitle: 'Monitored commodities' },
+    { icon: 'fa-circle-exclamation', iconBg: 'bg-red-50', iconColor: 'text-red-500', label: 'Out of Stock', value: formatNumber(stats.outOfStock), valueColor: 'text-red-600', subtitle: 'MOS = 0 Months', trendIcon: 'text-red-500 font-semibold' },
+    { icon: 'fa-triangle-exclamation', iconBg: 'bg-amber-50', iconColor: 'text-amber-500', label: 'Understocked', value: formatNumber(stats.understocked), valueColor: 'text-amber-600', subtitle: 'MOS < 3 Months', trendIcon: 'text-amber-600 font-semibold' },
+    { icon: 'fa-check-double', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', label: 'Adequate', value: formatNumber(stats.adequate), valueColor: 'text-emerald-600', subtitle: 'MOS 3 - 6 Months', trendIcon: 'text-emerald-600 font-semibold' },
+    { icon: 'fa-circle-arrow-up', iconBg: 'bg-[#4A8EA5]/10', iconColor: 'text-[#4A8EA5]', label: 'Overstocked', value: formatNumber(stats.overstocked), valueColor: 'text-[#4A8EA5]', subtitle: 'MOS > 6 Months', trendIcon: 'text-[#4A8EA5] font-semibold' },
+  ];
+
+  const exportHeaders = [
+    { key: 'sn', label: 'SN' },
+    { key: 'item', label: 'Item Description' },
+    { key: 'unit', label: 'Unit' },
+    { key: 'ven', label: 'VEN' },
+    { key: 'nationalSoh', label: 'National SOH' },
+    { key: 'nationalDos', label: 'National DOS' },
+    { key: 'nationalAmc', label: 'National AMC' },
+    { key: 'nationalAdjAmc', label: 'National Adjusted AMC' },
+    { key: 'nationalMos', label: 'National MOS' },
+    { key: 'nationalAdjMos', label: 'National Adjusted MOS' },
+    { key: 'contractQty', label: 'Contract Qty' },
+    { key: 'contractMos', label: 'Contract MOS' },
+    { key: 'orderedPo', label: 'Ordered PO' },
+    { key: 'orderedQty', label: 'Ordered Qty' },
+    { key: 'orderedMos', label: 'Ordered MOS' },
+    { key: 'shippedPo', label: 'Shipped PO' },
+    { key: 'shippedQty', label: 'Shipped Qty' },
+    { key: 'shippedMos', label: 'Shipped MOS' },
+    { key: 'deliveredPo', label: 'Delivered PO' },
+    { key: 'deliveredQty', label: 'Delivered Qty' },
+    { key: 'deliveredMos', label: 'Delivered MOS' },
+    { key: 'qtyLeft', label: 'Quantity Left' },
+    { key: 'qtyLeftMos', label: 'Quantity Left MOS' },
+    { key: 'expiryRaw', label: 'Expiry Batches' },
+  ];
+  const exportRows = filteredData.map(item => ({
+    sn: item.sn,
+    item: item.item,
+    unit: item.unit,
+    ven: item.ven,
+    nationalSoh: item.national.soh,
+    nationalDos: item.national.dos,
+    nationalAmc: item.national.amc,
+    nationalAdjAmc: item.national.adjusted_amc,
+    nationalMos: item.national.mos,
+    nationalAdjMos: item.national.adjusted_mos,
+    contractQty: item.contract.quantity,
+    contractMos: item.contract.mos,
+    orderedPo: item.ordered.po,
+    orderedQty: item.ordered.quantity,
+    orderedMos: item.ordered.mos,
+    shippedPo: item.shipped.po,
+    shippedQty: item.shipped.quantity,
+    shippedMos: item.shipped.mos,
+    deliveredPo: item.delivered.po,
+    deliveredQty: item.delivered.quantity,
+    deliveredMos: item.delivered.mos,
+    qtyLeft: item.quantity_left.quantity,
+    qtyLeftMos: item.quantity_left.mos,
+    expiryRaw: item.expiry_raw,
+  }));
+
   return (
-    <div className="space-y-lg animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       {/* Tab Navigation */}
       <StickyHeader className="gap-md border-b border-outline-variant">
         <div className="flex items-center gap-1">
-          <button
-            onClick={toggleSidebar}
-            className="p-2 hover:bg-surface-container rounded-lg text-on-surface-variant md:hidden"
-            aria-label="Toggle Sidebar"
-          >
-            <i className="fa-solid fa-bars text-lg"></i>
-          </button>
           <button
             onClick={() => setActiveTab('stock-report')}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 ${
@@ -318,36 +372,187 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
           </button>
         </div>
         
-        <div className="flex items-center gap-2">
-          <IconButton variant="info" contentId={activeTab === 'stock-report' ? 'main-stock-report' : 'national-amc-report'} />
-          <ExportButton onClick={handleExportCSV} label="Export Excel Data" icon="fa-file-excel" className="border-outline bg-white hover:bg-surface-low font-semibold text-body-sm shadow-sm" />
-        </div>
       </StickyHeader>
 
       {activeTab === 'stock-report' && <>
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-md">
-        <KPICard variant="detailed" icon="fa-boxes-stacked" iconBg="bg-slate-50" iconColor="text-slate-500" label="Total Items" value={formatNumber(stats.total)} valueColor="text-slate-900" subtitle="Monitored commodities" />
-        <KPICard variant="detailed" icon="fa-circle-exclamation" iconBg="bg-red-50" iconColor="text-red-500" label="Out of Stock" value={formatNumber(stats.outOfStock)} valueColor="text-red-600" subtitle="MOS = 0 Months" trendIcon="text-red-500 font-semibold" />
-        <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg="bg-amber-50" iconColor="text-amber-500" label="Understocked" value={formatNumber(stats.understocked)} valueColor="text-amber-600" subtitle="MOS < 3 Months" trendIcon="text-amber-600 font-semibold" />
-        <KPICard variant="detailed" icon="fa-check-double" iconBg="bg-emerald-50" iconColor="text-emerald-600" label="Adequate" value={formatNumber(stats.adequate)} valueColor="text-emerald-600" subtitle="MOS 3 - 6 Months" trendIcon="text-emerald-600 font-semibold" />
-        <KPICard variant="detailed" icon="fa-circle-arrow-up" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Overstocked" value={formatNumber(stats.overstocked)} valueColor="text-[#4A8EA5]" subtitle="MOS > 6 Months" trendIcon="text-[#4A8EA5] font-semibold" className="col-span-2 lg:col-span-1" />
-      </div>
+      {kpiTotalPages <= 1 ? (
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-md">
+          {kpiCardProps.map((card, i) => (
+            <KPICard key={card.label || i} variant="detailed" {...card} className={i === 4 ? 'col-span-2 lg:col-span-1' : ''} />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="relative lg:pl-12 lg:pr-12">
+            <div className="relative overflow-hidden w-full" onTouchStart={handleKpiTouchStart} onTouchMove={handleKpiTouchMove} onTouchEnd={handleKpiTouchEnd}>
+              <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${kpiPage * 100}%)` }}>
+                {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
+                  <div key={pageIdx} className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full shrink-0">
+                    {kpiCardProps.slice(pageIdx * kpiCardsPerPage, pageIdx * kpiCardsPerPage + kpiCardsPerPage).map((card, cardIdx) => (
+                      <KPICard key={card.label || cardIdx} variant="detailed" {...card} />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {kpiTotalPages > 1 && (
+              <>
+                <button type="button" onClick={() => setKpiPage(p => Math.max(p - 1, 0))} disabled={kpiPage === 0}
+                  className="hidden lg:flex absolute left-0 top-0 bottom-0 w-8 items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
+                  aria-label="Previous KPI page"
+                ><i className="fa-solid fa-chevron-left text-[10px]"></i></button>
+                <button type="button" onClick={() => setKpiPage(p => Math.min(p + 1, kpiTotalPages - 1))} disabled={kpiPage === kpiTotalPages - 1}
+                  className="hidden lg:flex absolute right-0 top-0 bottom-0 w-8 items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
+                  aria-label="Next KPI page"
+                ><i className="fa-solid fa-chevron-right text-[10px]"></i></button>
+              </>
+            )}
+          </div>
+          <div className="flex items-center justify-center gap-1.5">
+            {Array.from({ length: kpiTotalPages }, (_, i) => (
+              <button key={i} type="button" onClick={() => setKpiPage(i)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${i === kpiPage ? 'bg-primary w-5' : 'bg-outline-variant hover:bg-outline'}`}
+                aria-label={`Go to page ${i + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Control panel (Filters and search) */}
-      <div className="bg-white p-md rounded-xl border border-outline-variant shadow-level-1 space-y-4">
-        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-          
-          {/* Search bar */}
-          <div className="w-full lg:w-96">
-            <SearchInput value={searchQuery} onChange={(v) => { setSearchQuery(v); setCurrentPage(1); }} placeholder="Search by SN or Item Description..." />
+      <div className="bg-white p-md rounded-xl border border-outline-variant shadow-level-1">
+
+        {/* Desktop toolbar */}
+        <div className="hidden md:block space-y-4">
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            
+            {/* Search bar + actions */}
+            <div className="flex items-center gap-2 w-full lg:w-96">
+              <div className="flex-1">
+                <SearchInput value={searchQuery} onChange={(v) => { setSearchQuery(v); setCurrentPage(1); }} placeholder="Search by SN or Item Description..." />
+              </div>
+              <IconButton variant="info" contentId={activeTab === 'stock-report' ? 'main-stock-report' : 'national-amc-report'} />
+              <ExportDropdown headers={exportHeaders} rows={exportRows} filename="miscellaneous-stock-report" />
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-md w-full lg:w-auto">
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                <label className="text-body-sm font-semibold text-on-surface-variant">Status:</label>
+                <SelectFilter
+                  value={statusFilter || 'All'}
+                  onChange={(v) => { setStatusFilter(v || 'All'); setCurrentPage(1); }}
+                  options={[
+                    { value: 'Out of Stock', label: 'Out of Stock' },
+                    { value: 'Understocked', label: 'Understocked' },
+                    { value: 'Adequate', label: 'Adequate' },
+                    { value: 'Overstocked', label: 'Overstocked' }
+                  ]}
+                  allLabel="All Statuses"
+                  className="px-3 py-1.5"
+                />
+              </div>
+
+              {/* VEN Buttons */}
+              <div className="flex items-center gap-2">
+                <span className="text-body-sm font-semibold text-on-surface-variant">VEN:</span>
+                <div className="inline-flex rounded-lg border border-outline p-0.5 bg-surface-low">
+                  {['All', 'V', 'E', 'N'].map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => {
+                        setVenFilter(type);
+                        setCurrentPage(1);
+                      }}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                        venFilter === type
+                          ? 'bg-primary text-white shadow-sm'
+                          : 'text-on-surface-variant hover:text-on-surface hover:bg-surface'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Filter Result Counter */}
+              <div className="text-xs text-on-surface-variant font-medium ml-auto lg:ml-0">
+                Showing {filteredData.length} of {stockData.length} items
+              </div>
+            </div>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-md w-full lg:w-auto">
-            {/* Status Filter */}
-            <div className="flex items-center gap-2">
-              <label className="text-body-sm font-semibold text-on-surface-variant">Status:</label>
+          {/* Column Group Selector - Hierarchical View Toggle */}
+          <div className="border-t border-outline-variant/60 pt-3">
+            <div className="flex flex-wrap items-center gap-y-2 gap-x-4">
+              <span className="text-xs font-bold text-primary-dark uppercase tracking-wider">
+                <i className="fa-solid fa-table-columns mr-1"></i> Column Visibility Selector:
+              </span>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <button 
+                  onClick={() => setShowContract(!showContract)}
+                  className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showContract ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+                >
+                  <i className={`${showContract ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Contract
+                </button>
+                <button 
+                  onClick={() => setShowOrdered(!showOrdered)}
+                  className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showOrdered ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+                >
+                  <i className={`${showOrdered ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Ordered (Pipeline)
+                </button>
+                <button 
+                  onClick={() => setShowShipped(!showShipped)}
+                  className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showShipped ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+                >
+                  <i className={`${showShipped ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Shipped
+                </button>
+                <button 
+                  onClick={() => setShowDelivered(!showDelivered)}
+                  className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showDelivered ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+                >
+                  <i className={`${showDelivered ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Delivered
+                </button>
+                <button 
+                  onClick={() => setShowQtyLeft(!showQtyLeft)}
+                  className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showQtyLeft ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+                >
+                  <i className={`${showQtyLeft ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Quantity Left
+                </button>
+                <button 
+                  onClick={() => setShowExpiries(!showExpiries)}
+                  className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showExpiries ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+                >
+                  <i className={`${showExpiries ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Expiry Dates
+                </button>
+                <button 
+                  onClick={() => setShowHubColumns(!showHubColumns)}
+                  className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showHubColumns ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
+                >
+                  <i className={`${showHubColumns ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Regional Hubs (21 Cols)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile toolbar */}
+        <div className="md:hidden space-y-3">
+          {/* 1. Search input + actions */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <SearchInput value={searchQuery} onChange={(v) => { setSearchQuery(v); setCurrentPage(1); }} placeholder="Search by SN or Item Description..." />
+            </div>
+            <IconButton variant="info" contentId={activeTab === 'stock-report' ? 'main-stock-report' : 'national-amc-report'} />
+            <ExportDropdown headers={exportHeaders} rows={exportRows} filename="miscellaneous-stock-report" />
+          </div>
+
+          {/* 2. Status + VEN row */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
               <SelectFilter
                 value={statusFilter || 'All'}
                 onChange={(v) => { setStatusFilter(v || 'All'); setCurrentPage(1); }}
@@ -358,22 +563,18 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
                   { value: 'Overstocked', label: 'Overstocked' }
                 ]}
                 allLabel="All Statuses"
-                className="px-3 py-1.5"
+                className="px-3 py-1.5 w-full"
               />
             </div>
-
-            {/* VEN Buttons */}
-            <div className="flex items-center gap-2">
-              <span className="text-body-sm font-semibold text-on-surface-variant">VEN:</span>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-[10px] font-semibold text-on-surface-variant">VEN:</span>
               <div className="inline-flex rounded-lg border border-outline p-0.5 bg-surface-low">
                 {['All', 'V', 'E', 'N'].map((type) => (
                   <button
                     key={type}
-                    onClick={() => {
-                      setVenFilter(type);
-                      setCurrentPage(1);
-                    }}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                    onClick={() => { setVenFilter(type); setCurrentPage(1); }}
+                    aria-pressed={venFilter === type}
+                    className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md transition-all ${
                       venFilter === type
                         ? 'bg-primary text-white shadow-sm'
                         : 'text-on-surface-variant hover:text-on-surface hover:bg-surface'
@@ -384,76 +585,78 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
                 ))}
               </div>
             </div>
-            
-            {/* Filter Result Counter */}
-            <div className="text-xs text-on-surface-variant font-medium ml-auto lg:ml-0">
-              Showing {filteredData.length} of {stockData.length} items
-            </div>
+          </div>
+
+          {/* 3. Columns dropdown */}
+          <div className="relative" ref={columnsRef}>
+            <button
+              onClick={() => setColumnsOpen(!columnsOpen)}
+              aria-expanded={columnsOpen}
+              aria-haspopup="listbox"
+              className="w-full px-3 py-1.5 border border-outline rounded-lg text-xs font-semibold text-on-surface-variant hover:bg-surface-container flex items-center justify-between gap-2 transition-colors"
+            >
+              <span><i className="fa-solid fa-table-columns mr-1.5"></i> Columns ({[showContract, showOrdered, showShipped, showDelivered, showQtyLeft, showExpiries, showHubColumns].filter(Boolean).length})</span>
+              <i className={`fa-solid fa-chevron-down text-[10px] transition-transform ${columnsOpen ? 'rotate-180' : ''}`}></i>
+            </button>
+            {columnsOpen && (
+              <div className="absolute z-50 w-full bg-white rounded-lg border border-outline-variant shadow-lg py-1 overflow-hidden mt-1">
+                {[
+                  { key: 'contract', label: 'Contract', state: showContract, setter: setShowContract },
+                  { key: 'ordered', label: 'Ordered (Pipeline)', state: showOrdered, setter: setShowOrdered },
+                  { key: 'shipped', label: 'Shipped', state: showShipped, setter: setShowShipped },
+                  { key: 'delivered', label: 'Delivered', state: showDelivered, setter: setShowDelivered },
+                  { key: 'qtyLeft', label: 'Quantity Left', state: showQtyLeft, setter: setShowQtyLeft },
+                  { key: 'expiries', label: 'Expiry Dates', state: showExpiries, setter: setShowExpiries },
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    role="checkbox"
+                    aria-checked={item.state}
+                    onClick={() => { item.setter(!item.state); }}
+                    className="w-full px-3 py-2 text-left text-xs text-on-surface hover:bg-surface-container-low flex items-center gap-2 transition-colors"
+                  >
+                    <i className={`${item.state ? 'fa-solid fa-square-check text-primary' : 'fa-regular fa-square text-outline'}`}></i>
+                    {item.label}
+                  </button>
+                ))}
+                <div className="border-t border-outline-variant/60 my-1"></div>
+                <div className="px-3 py-2">
+                  <div className="flex items-start gap-2">
+                    <button
+                      role="checkbox"
+                      aria-checked={showHubColumns}
+                      onClick={() => { setShowHubColumns(!showHubColumns); }}
+                      className="mt-0.5 shrink-0"
+                    >
+                      <i className={`${showHubColumns ? 'fa-solid fa-square-check text-primary' : 'fa-regular fa-square text-outline'}`}></i>
+                    </button>
+                    <div>
+                      <div className="text-xs font-semibold text-on-surface">Regional Hubs</div>
+                      <div className="text-[10px] text-on-surface-variant mt-0.5">View as per-item breakdown (21 hub columns)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 4. Item count */}
+          <div className="hidden md:block text-xs text-on-surface-variant font-medium">
+            Showing {filteredData.length} of {stockData.length} items
           </div>
         </div>
 
-        {/* Column Group Selector - Hierarchical View Toggle */}
-        <div className="border-t border-outline-variant/60 pt-3">
-          <div className="flex flex-wrap items-center gap-y-2 gap-x-4">
-            <span className="text-xs font-bold text-primary-dark uppercase tracking-wider">
-              <i className="fa-solid fa-table-columns mr-1"></i> Column Visibility Selector:
-            </span>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <button 
-                onClick={() => setShowContract(!showContract)}
-                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showContract ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
-              >
-                <i className={`${showContract ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Contract
-              </button>
-              <button 
-                onClick={() => setShowOrdered(!showOrdered)}
-                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showOrdered ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
-              >
-                <i className={`${showOrdered ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Ordered (Pipeline)
-              </button>
-              <button 
-                onClick={() => setShowShipped(!showShipped)}
-                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showShipped ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
-              >
-                <i className={`${showShipped ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Shipped
-              </button>
-              <button 
-                onClick={() => setShowDelivered(!showDelivered)}
-                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showDelivered ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
-              >
-                <i className={`${showDelivered ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Delivered
-              </button>
-              <button 
-                onClick={() => setShowQtyLeft(!showQtyLeft)}
-                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showQtyLeft ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
-              >
-                <i className={`${showQtyLeft ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Quantity Left
-              </button>
-              <button 
-                onClick={() => setShowExpiries(!showExpiries)}
-                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showExpiries ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
-              >
-                <i className={`${showExpiries ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Expiry Dates
-              </button>
-              <button 
-                onClick={() => setShowHubColumns(!showHubColumns)}
-                className={`px-3 py-1.5 border rounded-lg font-semibold flex items-center gap-1.5 ${showHubColumns ? 'bg-primary/10 border-primary text-primary-dark' : 'bg-white border-outline text-on-surface-variant'}`}
-              >
-                <i className={`${showHubColumns ? 'fa-solid fa-square-check' : 'fa-regular fa-square'}`}></i> Regional Hubs (21 Cols)
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Main Stock Table */}
-      <div className="bg-white rounded-xl border border-outline-variant shadow-level-1 overflow-hidden">
-        <div ref={scrollRef} className="overflow-x-auto relative">
-          <table className="w-full text-left border-collapse border border-outline-variant">
+      <div className={`bg-white rounded-xl border border-outline-variant shadow-level-1 ${isMobile ? '' : 'overflow-hidden'}`}>
+        {(() => {
+          const stockTable = (
+            <table className={`text-left border-collapse border border-outline-variant ${isMobile ? 'whitespace-nowrap' : 'w-full'}`}>
             <thead>
               {/* Grouped Headers (Row 1) */}
               <tr className="bg-surface border-b border-outline-variant text-[11px] font-bold text-primary-dark uppercase tracking-wider text-center">
-                <th colSpan={4} className="py-2.5 px-4 border-r border-outline-variant sticky left-0 bg-surface z-10">Item Description</th>
+                <th colSpan={4} className={`py-2.5 px-4 border-r border-outline-variant ${isMobile ? '' : 'sticky left-0 bg-surface z-10'}`}>Item Description</th>
                 <th colSpan={6} className="py-2.5 px-4 border-r border-outline-variant bg-surface-low">National SOH & Consumption</th>
                 {showContract && <th colSpan={2} className="py-2.5 px-4 border-r border-outline-variant bg-slate-50">Contract</th>}
                 {showOrdered && <th colSpan={3} className="py-2.5 px-4 border-r border-outline-variant bg-sky-50/50">Ordered</th>}
@@ -468,10 +671,10 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
               {/* Sub Columns (Row 2) */}
               <tr className="bg-surface border-b border-outline-variant text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
                 {/* Item Description Sub Headers */}
-                <th className="py-3 px-4 border-r border-outline-variant w-12 sticky left-0 bg-surface z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">SN</th>
-                <th className="py-3 px-4 border-r border-outline-variant min-w-[240px] sticky left-12 bg-surface z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Item</th>
-                <th className="py-3 px-4 border-r border-outline-variant w-24 sticky left-[285px] bg-surface z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Unit</th>
-                <th className="py-3 px-4 border-r border-outline-variant w-16 text-center sticky left-[354px] bg-surface z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">VEN</th>
+                <th className="py-3 px-4 border-r border-outline-variant w-12 sticky left-0 bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">SN</th>
+                <th className={`py-3 px-4 border-r border-outline-variant min-w-[240px] ${isMobile ? '' : 'sticky left-12 bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>Item</th>
+                <th className={`py-3 px-4 border-r border-outline-variant w-24 ${isMobile ? '' : 'sticky left-[285px] bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>Unit</th>
+                <th className={`py-3 px-4 border-r border-outline-variant w-16 text-center ${isMobile ? '' : 'sticky left-[354px] bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>VEN</th>
                 
                 {/* National Sub Headers */}
                 <th className="py-3 px-4 border-r border-outline-variant w-24 text-right">SOH</th>
@@ -558,16 +761,16 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
                         }`}
                       >
                         {/* Item Description Values */}
-                        <td className="py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant sticky left-0 bg-white group-hover:bg-surface-container-low z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                        <td className="py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                           {item.sn}
                         </td>
-                        <td className="py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky left-12 bg-white group-hover:bg-surface-container-low z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${isMobile ? '' : 'sticky left-12 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
                           {item.item}
                         </td>
-                        <td className="py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky left-[285px] bg-white group-hover:bg-surface-container-low z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${isMobile ? '' : 'sticky left-[285px] bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
                           {item.unit}
                         </td>
-                        <td className="py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky left-[354px] bg-white group-hover:bg-surface-container-low z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${isMobile ? '' : 'sticky left-[354px] bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
                           <span className={`inline-block px-2 py-0.5 text-[10px] font-extrabold rounded ${
                             item.ven === 'V' ? 'bg-purple-100 text-purple-700' :
                             item.ven === 'E' ? 'bg-sky-100 text-sky-700' :
@@ -702,147 +905,229 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
                               style={visibleWidth ? { position: 'sticky', left: 0, width: visibleWidth, overflow: 'hidden' } : {}}
                             >
                               {/* Detail Tabs */}
-                              <div className="flex border-b border-outline-variant">
+                              <div className="flex border-b border-outline-variant" role="tablist">
                                 <button
                                   onClick={() => setTab(item.sn, 'pipeline')}
-                                  className={`px-4 py-2 text-xs font-bold tracking-wide border-b-2 -mb-[2px] ${
+                                  role="tab"
+                                  aria-selected={activeTab === 'pipeline'}
+                                  className={`${
+                                    isMobile
+                                      ? 'flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] font-bold tracking-wide border-b-2 -mb-[2px]'
+                                      : 'px-4 py-2 text-xs font-bold tracking-wide border-b-2 -mb-[2px]'
+                                  } ${
                                     activeTab === 'pipeline'
                                       ? 'border-primary text-primary'
                                       : 'border-transparent text-on-surface-variant hover:text-on-surface'
                                   }`}
                                 >
-                                  <i className="fa-solid fa-route mr-2"></i>
-                                  Pipeline Summary Card View
+                                  <i className={`fa-solid fa-route ${isMobile ? 'text-sm' : 'mr-2'}`}></i>
+                                  {isMobile ? 'Pipeline' : 'Pipeline Summary Card View'}
                                 </button>
                                 <button
                                   onClick={() => setTab(item.sn, 'hubs')}
-                                  className={`px-4 py-2 text-xs font-bold tracking-wide border-b-2 -mb-[2px] ${
+                                  role="tab"
+                                  aria-selected={activeTab === 'hubs'}
+                                  className={`${
+                                    isMobile
+                                      ? 'flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] font-bold tracking-wide border-b-2 -mb-[2px]'
+                                      : 'px-4 py-2 text-xs font-bold tracking-wide border-b-2 -mb-[2px]'
+                                  } ${
                                     activeTab === 'hubs'
                                       ? 'border-primary text-primary'
                                       : 'border-transparent text-on-surface-variant hover:text-on-surface'
                                   }`}
                                 >
-                                  <i className="fa-solid fa-hospital-user mr-2"></i>
-                                  Hub Inventory Distribution Chart
+                                  <i className={`fa-solid fa-hospital-user ${isMobile ? 'text-sm' : 'mr-2'}`}></i>
+                                  {isMobile ? 'Hubs' : 'Hub Inventory Distribution Chart'}
                                 </button>
                                 <button
                                   onClick={() => setTab(item.sn, 'expiries')}
-                                  className={`px-4 py-2 text-xs font-bold tracking-wide border-b-2 -mb-[2px] ${
+                                  role="tab"
+                                  aria-selected={activeTab === 'expiries'}
+                                  className={`${
+                                    isMobile
+                                      ? 'flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] font-bold tracking-wide border-b-2 -mb-[2px]'
+                                      : 'px-4 py-2 text-xs font-bold tracking-wide border-b-2 -mb-[2px]'
+                                  } ${
                                     activeTab === 'expiries'
                                       ? 'border-primary text-primary'
                                       : 'border-transparent text-on-surface-variant hover:text-on-surface'
                                   }`}
                                 >
-                                  <i className="fa-solid fa-hourglass-half mr-2"></i>
-                                  Expiry Batches Timeline
+                                  <i className={`fa-solid fa-hourglass-half ${isMobile ? 'text-sm' : 'mr-2'}`}></i>
+                                  {isMobile ? 'Expiry' : 'Expiry Batches Timeline'}
                                 </button>
                               </div>
 
                               {/* Tab Content 1: Pipeline Summary */}
                               {activeTab === 'pipeline' && (
-                                <div className="grid grid-cols-2 md:grid-cols-5 gap-md pt-2">
-                                  {/* Contract */}
-                                  <div className="bg-surface-container-low p-md rounded-lg border border-outline-variant/60">
-                                    <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">1. Contracted</div>
-                                    <div className="text-body-md font-extrabold text-slate-800 font-mono">
-                                      {formatNumber(item.contract.quantity)}
+                                isMobile ? (
+                                  <div className="pt-2">
+                                    <div
+                                      tabIndex={0}
+                                      onScroll={() => { if (!dismissedHints[item.sn]) setDismissedHints(prev => ({ ...prev, [item.sn]: true })); }}
+                                      className="flex overflow-x-auto gap-2 pb-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+                                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                                    >
+                                      {[
+                                        { num: '1', label: 'Contracted', qty: item.contract.quantity, mos: item.contract.mos },
+                                        { num: '2', label: 'Ordered', qty: item.ordered.quantity, mos: item.ordered.mos, po: item.ordered.po },
+                                        { num: '3', label: 'Shipped', qty: item.shipped.quantity, mos: item.shipped.mos, po: item.shipped.po },
+                                        { num: '4', label: 'Delivered', qty: item.delivered.quantity, mos: item.delivered.mos, po: item.delivered.po },
+                                        { num: '5', label: 'Remaining Left', qty: item.quantity_left.quantity, mos: item.quantity_left.mos },
+                                      ].map(card => (
+                                        <div key={card.num} className="w-[130px] shrink-0 snap-start bg-surface-container-low p-md rounded-lg border border-outline-variant/60">
+                                          <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">{card.num}. {card.label}</div>
+                                          <div className="text-body-md font-extrabold text-slate-800 font-mono">{formatNumber(card.qty)}</div>
+                                          <div className="text-xs text-on-surface-variant font-medium mt-1">{formatNumber(card.mos)} MOS</div>
+                                          {card.po && (
+                                            <div className="text-[10px] bg-white border border-outline-variant px-1.5 py-0.5 rounded text-on-surface-variant font-mono mt-2 truncate" title={card.po}>
+                                              PO: {card.po}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
                                     </div>
-                                    <div className="text-xs text-on-surface-variant font-medium mt-1">
-                                      {formatNumber(item.contract.mos)} MOS
-                                    </div>
-                                  </div>
-
-                                  {/* Ordered */}
-                                  <div className="bg-surface-container-low p-md rounded-lg border border-outline-variant/60">
-                                    <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">2. Ordered</div>
-                                    <div className="text-body-md font-extrabold text-slate-800 font-mono">
-                                      {formatNumber(item.ordered.quantity)}
-                                    </div>
-                                    <div className="text-xs text-on-surface-variant font-medium mt-1">
-                                      {formatNumber(item.ordered.mos)} MOS
-                                    </div>
-                                    {item.ordered.po && (
-                                      <div className="text-[10px] bg-white border border-outline-variant px-1.5 py-0.5 rounded text-on-surface-variant font-mono mt-2 truncate" title={item.ordered.po}>
-                                        PO: {item.ordered.po}
+                                    {!dismissedHints[item.sn] && (
+                                      <div className="text-center text-[10px] text-on-surface-variant mt-2 animate-fade-in">
+                                        ← swipe for more stages →
                                       </div>
                                     )}
                                   </div>
-
-                                  {/* Shipped */}
-                                  <div className="bg-surface-container-low p-md rounded-lg border border-outline-variant/60">
-                                    <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">3. Shipped</div>
-                                    <div className="text-body-md font-extrabold text-slate-800 font-mono">
-                                      {formatNumber(item.shipped.quantity)}
-                                    </div>
-                                    <div className="text-xs text-on-surface-variant font-medium mt-1">
-                                      {formatNumber(item.shipped.mos)} MOS
-                                    </div>
-                                    {item.shipped.po && (
-                                      <div className="text-[10px] bg-white border border-outline-variant px-1.5 py-0.5 rounded text-on-surface-variant font-mono mt-2 truncate" title={item.shipped.po}>
-                                        PO: {item.shipped.po}
+                                ) : (
+                                  <div className="grid grid-cols-2 md:grid-cols-5 gap-md pt-2">
+                                    {/* Contract */}
+                                    <div className="bg-surface-container-low p-md rounded-lg border border-outline-variant/60">
+                                      <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">1. Contracted</div>
+                                      <div className="text-body-md font-extrabold text-slate-800 font-mono">
+                                        {formatNumber(item.contract.quantity)}
                                       </div>
-                                    )}
-                                  </div>
-
-                                  {/* Delivered */}
-                                  <div className="bg-surface-container-low p-md rounded-lg border border-outline-variant/60">
-                                    <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">4. Delivered</div>
-                                    <div className="text-body-md font-extrabold text-slate-800 font-mono">
-                                      {formatNumber(item.delivered.quantity)}
-                                    </div>
-                                    <div className="text-xs text-on-surface-variant font-medium mt-1">
-                                      {formatNumber(item.delivered.mos)} MOS
-                                    </div>
-                                    {item.delivered.po && (
-                                      <div className="text-[10px] bg-white border border-outline-variant px-1.5 py-0.5 rounded text-on-surface-variant font-mono mt-2 truncate" title={item.delivered.po}>
-                                        PO: {item.delivered.po}
+                                      <div className="text-xs text-on-surface-variant font-medium mt-1">
+                                        {formatNumber(item.contract.mos)} MOS
                                       </div>
-                                    )}
-                                  </div>
+                                    </div>
 
-                                  {/* Quantity Left */}
-                                  <div className="bg-surface-container-low p-md rounded-lg border border-outline-variant/60">
-                                    <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">5. Remaining Left</div>
-                                    <div className="text-body-md font-extrabold text-slate-800 font-mono">
-                                      {formatNumber(item.quantity_left.quantity)}
+                                    {/* Ordered */}
+                                    <div className="bg-surface-container-low p-md rounded-lg border border-outline-variant/60">
+                                      <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">2. Ordered</div>
+                                      <div className="text-body-md font-extrabold text-slate-800 font-mono">
+                                        {formatNumber(item.ordered.quantity)}
+                                      </div>
+                                      <div className="text-xs text-on-surface-variant font-medium mt-1">
+                                        {formatNumber(item.ordered.mos)} MOS
+                                      </div>
+                                      {item.ordered.po && (
+                                        <div className="text-[10px] bg-white border border-outline-variant px-1.5 py-0.5 rounded text-on-surface-variant font-mono mt-2 truncate" title={item.ordered.po}>
+                                          PO: {item.ordered.po}
+                                        </div>
+                                      )}
                                     </div>
-                                    <div className="text-xs text-on-surface-variant font-medium mt-1">
-                                      {formatNumber(item.quantity_left.mos)} MOS
+
+                                    {/* Shipped */}
+                                    <div className="bg-surface-container-low p-md rounded-lg border border-outline-variant/60">
+                                      <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">3. Shipped</div>
+                                      <div className="text-body-md font-extrabold text-slate-800 font-mono">
+                                        {formatNumber(item.shipped.quantity)}
+                                      </div>
+                                      <div className="text-xs text-on-surface-variant font-medium mt-1">
+                                        {formatNumber(item.shipped.mos)} MOS
+                                      </div>
+                                      {item.shipped.po && (
+                                        <div className="text-[10px] bg-white border border-outline-variant px-1.5 py-0.5 rounded text-on-surface-variant font-mono mt-2 truncate" title={item.shipped.po}>
+                                          PO: {item.shipped.po}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Delivered */}
+                                    <div className="bg-surface-container-low p-md rounded-lg border border-outline-variant/60">
+                                      <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">4. Delivered</div>
+                                      <div className="text-body-md font-extrabold text-slate-800 font-mono">
+                                        {formatNumber(item.delivered.quantity)}
+                                      </div>
+                                      <div className="text-xs text-on-surface-variant font-medium mt-1">
+                                        {formatNumber(item.delivered.mos)} MOS
+                                      </div>
+                                      {item.delivered.po && (
+                                        <div className="text-[10px] bg-white border border-outline-variant px-1.5 py-0.5 rounded text-on-surface-variant font-mono mt-2 truncate" title={item.delivered.po}>
+                                          PO: {item.delivered.po}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Quantity Left */}
+                                    <div className="bg-surface-container-low p-md rounded-lg border border-outline-variant/60">
+                                      <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">5. Remaining Left</div>
+                                      <div className="text-body-md font-extrabold text-slate-800 font-mono">
+                                        {formatNumber(item.quantity_left.quantity)}
+                                      </div>
+                                      <div className="text-xs text-on-surface-variant font-medium mt-1">
+                                        {formatNumber(item.quantity_left.mos)} MOS
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
+                                )
                               )}
 
                               {/* Tab Content 2: Hub Inventory Breakdown */}
                               {activeTab === 'hubs' && (
                                 <div className="space-y-4 pt-2">
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Central Stock */}
-                                    <div className="bg-slate-50 p-lg rounded-lg border border-outline-variant flex justify-between items-center">
-                                      <div>
-                                        <div className="text-xs font-bold text-on-surface-variant uppercase">Central Warehouse (SOH)</div>
-                                        <div className="text-headline-md font-extrabold font-mono text-primary-dark mt-1">
-                                          {formatNumber(item.hubs.center)}
+                                  {isMobile ? (
+                                    <div
+                                      tabIndex={0}
+                                      onScroll={() => { if (!dismissedHints[item.sn]) setDismissedHints(prev => ({ ...prev, [item.sn]: true })); }}
+                                      className="flex overflow-x-auto gap-4 pb-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+                                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                                    >
+                                      <div className="w-[280px] shrink-0 snap-start bg-slate-50 p-lg rounded-lg border border-outline-variant flex justify-between items-center">
+                                        <div>
+                                          <div className="text-xs font-bold text-on-surface-variant uppercase">Central Warehouse (SOH)</div>
+                                          <div className="text-headline-md font-extrabold font-mono text-primary-dark mt-1">
+                                            {formatNumber(item.hubs.center)}
+                                          </div>
+                                        </div>
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-lg">
+                                          <i className="fa-solid fa-warehouse"></i>
                                         </div>
                                       </div>
-                                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-lg">
-                                        <i className="fa-solid fa-warehouse"></i>
-                                      </div>
-                                    </div>
-
-                                    {/* GIT */}
-                                    <div className="bg-slate-50 p-lg rounded-lg border border-outline-variant flex justify-between items-center">
-                                      <div>
-                                        <div className="text-xs font-bold text-on-surface-variant uppercase">In Transit (GIT - Center to Hub)</div>
-                                        <div className="text-headline-md font-extrabold font-mono text-sky-700 mt-1">
-                                          {formatNumber(item.hubs.git)}
+                                      <div className="w-[280px] shrink-0 snap-start bg-slate-50 p-lg rounded-lg border border-outline-variant flex justify-between items-center">
+                                        <div>
+                                          <div className="text-xs font-bold text-on-surface-variant uppercase">In Transit (GIT - Center to Hub)</div>
+                                          <div className="text-headline-md font-extrabold font-mono text-sky-700 mt-1">
+                                            {formatNumber(item.hubs.git)}
+                                          </div>
+                                        </div>
+                                        <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 text-lg">
+                                          <i className="fa-solid fa-truck-ramp-box"></i>
                                         </div>
                                       </div>
-                                      <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 text-lg">
-                                        <i className="fa-solid fa-truck-ramp-box"></i>
+                                    </div>
+                                  ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div className="bg-slate-50 p-lg rounded-lg border border-outline-variant flex justify-between items-center">
+                                        <div>
+                                          <div className="text-xs font-bold text-on-surface-variant uppercase">Central Warehouse (SOH)</div>
+                                          <div className="text-headline-md font-extrabold font-mono text-primary-dark mt-1">
+                                            {formatNumber(item.hubs.center)}
+                                          </div>
+                                        </div>
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-lg">
+                                          <i className="fa-solid fa-warehouse"></i>
+                                        </div>
+                                      </div>
+                                      <div className="bg-slate-50 p-lg rounded-lg border border-outline-variant flex justify-between items-center">
+                                        <div>
+                                          <div className="text-xs font-bold text-on-surface-variant uppercase">In Transit (GIT - Center to Hub)</div>
+                                          <div className="text-headline-md font-extrabold font-mono text-sky-700 mt-1">
+                                            {formatNumber(item.hubs.git)}
+                                          </div>
+                                        </div>
+                                        <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 text-lg">
+                                          <i className="fa-solid fa-truck-ramp-box"></i>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
+                                  )}
 
                                   {/* Hub distribution list */}
                                   <div>
@@ -900,34 +1185,70 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
                               {activeTab === 'expiries' && (
                                 <div className="space-y-4 pt-2">
                                   {item.expiry_list && item.expiry_list.length > 0 ? (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-md">
-                                      {item.expiry_list.map((batch, index) => {
-                                        let batchStyle = "border-emerald-200 bg-emerald-50 text-emerald-800";
-                                        
-                                        if (batch.date) {
-                                          const isExpired = batch.date.includes('2024') || batch.date.includes('2025');
-                                          const isNear = batch.date.includes('2026');
-                                          if (isExpired) {
-                                            batchStyle = "border-red-200 bg-red-50/70 text-red-800";
-                                          } else if (isNear) {
-                                            batchStyle = "border-amber-200 bg-amber-50 text-amber-800";
+                                    isMobile ? (
+                                      <div
+                                        tabIndex={0}
+                                        onScroll={() => { if (!dismissedHints[item.sn]) setDismissedHints(prev => ({ ...prev, [item.sn]: true })); }}
+                                        className="flex overflow-x-auto gap-3 pb-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+                                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                                      >
+                                        {item.expiry_list.map((batch, index) => {
+                                          let batchStyle = "border-emerald-200 bg-emerald-50 text-emerald-800";
+                                          
+                                          if (batch.date) {
+                                            const isExpired = batch.date.includes('2024') || batch.date.includes('2025');
+                                            const isNear = batch.date.includes('2026');
+                                            if (isExpired) {
+                                              batchStyle = "border-red-200 bg-red-50/70 text-red-800";
+                                            } else if (isNear) {
+                                              batchStyle = "border-amber-200 bg-amber-50 text-amber-800";
+                                            }
                                           }
-                                        }
 
-                                        return (
-                                          <div key={index} className={`p-md rounded-lg border flex flex-col justify-between ${batchStyle}`}>
-                                            <div>
-                                              <div className="text-[10px] uppercase font-bold tracking-wider opacity-80">Batch Expiry</div>
-                                              <div className="text-header-sm font-extrabold mt-1">{batch.date || 'Unknown Date'}</div>
+                                          return (
+                                            <div key={index} className={`w-[180px] shrink-0 snap-start p-md rounded-lg border flex flex-col justify-between ${batchStyle}`}>
+                                              <div>
+                                                <div className="text-[10px] uppercase font-bold tracking-wider opacity-80">Batch Expiry</div>
+                                                <div className="text-header-sm font-extrabold mt-1">{batch.date || 'Unknown Date'}</div>
+                                              </div>
+                                              <div className="mt-4 flex justify-between items-baseline">
+                                                <span className="text-[10px] opacity-80">Quantity:</span>
+                                                <span className="font-mono font-extrabold text-body-md">{formatNumber(batch.quantity)}</span>
+                                              </div>
                                             </div>
-                                            <div className="mt-4 flex justify-between items-baseline">
-                                              <span className="text-[10px] opacity-80">Quantity:</span>
-                                              <span className="font-mono font-extrabold text-body-md">{formatNumber(batch.quantity)}</span>
+                                          );
+                                        })}
+                                      </div>
+                                    ) : (
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-md">
+                                        {item.expiry_list.map((batch, index) => {
+                                          let batchStyle = "border-emerald-200 bg-emerald-50 text-emerald-800";
+                                          
+                                          if (batch.date) {
+                                            const isExpired = batch.date.includes('2024') || batch.date.includes('2025');
+                                            const isNear = batch.date.includes('2026');
+                                            if (isExpired) {
+                                              batchStyle = "border-red-200 bg-red-50/70 text-red-800";
+                                            } else if (isNear) {
+                                              batchStyle = "border-amber-200 bg-amber-50 text-amber-800";
+                                            }
+                                          }
+
+                                          return (
+                                            <div key={index} className={`p-md rounded-lg border flex flex-col justify-between ${batchStyle}`}>
+                                              <div>
+                                                <div className="text-[10px] uppercase font-bold tracking-wider opacity-80">Batch Expiry</div>
+                                                <div className="text-header-sm font-extrabold mt-1">{batch.date || 'Unknown Date'}</div>
+                                              </div>
+                                              <div className="mt-4 flex justify-between items-baseline">
+                                                <span className="text-[10px] opacity-80">Quantity:</span>
+                                                <span className="font-mono font-extrabold text-body-md">{formatNumber(batch.quantity)}</span>
+                                              </div>
                                             </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )
                                   ) : (
                                     <div className="text-center py-8 text-xs text-on-surface-variant/70 border border-dashed border-outline-variant rounded-lg">
                                       <i className="fa-regular fa-calendar-xmark text-lg mb-2 block"></i>
@@ -953,17 +1274,68 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
               )}
             </tbody>
           </table>
-        </div>
+          );
+          
+          if (isMobile) {
+            return (
+              <div className="relative">
+                <div ref={scrollRef} tabIndex={0}
+                  className="overflow-x-auto -webkit-overflow-scrolling:touch outline-none focus:ring-2 focus:ring-primary/20"
+                  style={{ scrollBehavior: 'smooth' }}
+                >
+                  <div style={{ minWidth: '960px' }}>
+                    {stockTable}
+                  </div>
+                </div>
+                <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white/80 to-transparent pointer-events-none" />
+              </div>
+            );
+          }
+          
+          return (
+            <div ref={scrollRef} className="overflow-x-auto relative">
+              {stockTable}
+            </div>
+          );
+        })()}
 
-        {/* Pagination controls */}
-        <SimplePagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredData.length}
-          itemsPerPage={rowsPerPage}
-          onPageChange={handlePageChange}
-          label="items"
-        />
+        {isMobile ? (
+          <div className="flex items-center justify-between gap-3 py-2 px-lg bg-surface border-t border-outline-variant">
+            <select value={mobilePageSize} onChange={(e) => { setMobilePageSize(Number(e.target.value)); setCurrentPage(1); }}
+              className="h-7 rounded border border-outline-variant bg-white px-1.5 text-xs text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+            </select>
+            <div className="flex items-center gap-2">
+              <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}
+                className="p-2 rounded border border-outline-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+                aria-label="Previous page"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}
+                className="p-2 rounded border border-outline-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+                aria-label="Next page"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <SimplePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredData.length}
+            itemsPerPage={effectiveRowsPerPage}
+            onPageChange={handlePageChange}
+            label="items"
+          />
+        )}
       </div>
       </>}
 
@@ -977,8 +1349,8 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
               {filteredAmcData.length} items · Editable monthly consumption figures
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="relative w-96">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 max-w-96">
               <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm"></i>
               <input
                 type="text"
@@ -988,19 +1360,19 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
                 className="w-full pl-10 pr-4 py-2 border border-outline rounded-lg text-body-sm bg-white focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
-            <div className="text-xs text-on-surface-variant font-medium whitespace-nowrap">
-              Page {amcPage} of {amcTotalPages || 1}
-            </div>
+            <IconButton variant="info" contentId={activeTab === 'stock-report' ? 'main-stock-report' : 'national-amc-report'} />
+            <ExportDropdown headers={exportHeaders} rows={exportRows} filename="miscellaneous-stock-report" />
           </div>
         </div>
 
         {/* AMC Table */}
-        <div className="bg-white rounded-xl border border-outline-variant shadow-level-1 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+        <div className={`bg-white rounded-xl border border-outline-variant shadow-level-1 ${isMobile ? '' : 'overflow-hidden'}`}>
+          {(() => {
+            const amcTable = (
+              <table className={`text-left border-collapse ${isMobile ? 'whitespace-nowrap' : 'w-full'}`}>
               <thead>
                 <tr className="bg-surface-container border-b border-outline-variant text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
-                  <th className="px-4 py-3 w-16 text-center">#</th>
+                  <th className={`px-4 py-3 w-16 text-center ${isMobile ? 'sticky left-0 z-20 bg-surface-container-low shadow-[2px_0_4px_rgba(0,0,0,0.06)]' : ''}`}>#</th>
                   <th className="px-4 py-3 w-20 text-center">SN</th>
                   <th className="px-4 py-3 min-w-[300px]">Item Name</th>
                   <th className="px-4 py-3 w-24">Unit</th>
@@ -1015,7 +1387,7 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
                     const isEditing = amcEditing[globalIdx] === true;
                     return (
                       <tr key={globalIdx} className="hover:bg-surface-container-low transition-colors">
-                        <td className="px-4 py-3 text-center text-xs text-on-surface-variant font-mono">
+                        <td className={`px-4 py-3 text-center text-xs text-on-surface-variant font-mono ${isMobile ? 'sticky left-0 z-10 bg-white shadow-[2px_0_4px_rgba(0,0,0,0.06)]' : ''}`}>
                           {row.RowNumber}
                         </td>
                         <td className="px-4 py-3 text-center font-mono text-xs text-on-surface-variant">
@@ -1109,17 +1481,69 @@ function MiscellaneousStockReport({ sidebarVisible, toggleSidebar }: any) {
                 )}
               </tbody>
             </table>
-          </div>
+            );
+            
+            if (isMobile) {
+              return (
+                <div className="relative">
+                  <div tabIndex={0}
+                    className="overflow-x-auto -webkit-overflow-scrolling:touch outline-none focus:ring-2 focus:ring-primary/20"
+                    style={{ scrollBehavior: 'smooth' }}
+                  >
+                    <div style={{ minWidth: '600px' }}>
+                      {amcTable}
+                    </div>
+                  </div>
+                  <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white/80 to-transparent pointer-events-none" />
+                </div>
+              );
+            }
+            
+            return (
+              <div className="overflow-x-auto">
+                {amcTable}
+              </div>
+            );
+          })()}
 
-          {/* Pagination */}
-          <SimplePagination
-            currentPage={amcPage}
-            totalPages={amcTotalPages}
-            totalItems={filteredAmcData.length}
-            itemsPerPage={amcRowsPerPage}
-            onPageChange={(p) => setAmcPage(p)}
-            label="items"
-          />
+          {isMobile ? (
+            <div className="flex items-center justify-between gap-3 py-2 px-lg bg-surface border-t border-outline-variant">
+              <select value={amcMobilePageSize} onChange={(e) => { setAmcMobilePageSize(Number(e.target.value)); setAmcPage(1); }}
+                className="h-7 rounded border border-outline-variant bg-white px-1.5 text-xs text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+              </select>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setAmcPage(Math.max(amcPage - 1, 1))} disabled={amcPage === 1}
+                  className="p-2 rounded border border-outline-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+                  aria-label="Previous page"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <span className="text-body-sm text-on-surface-variant font-semibold tabular-nums min-w-[4rem] text-center">{amcPage} of {amcTotalPages}</span>
+                <button onClick={() => setAmcPage(Math.min(amcPage + 1, amcTotalPages))} disabled={amcPage === amcTotalPages}
+                  className="p-2 rounded border border-outline-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+                  aria-label="Next page"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <SimplePagination
+              currentPage={amcPage}
+              totalPages={amcTotalPages}
+              totalItems={filteredAmcData.length}
+              itemsPerPage={amcRowsPerPage}
+              onPageChange={(p) => setAmcPage(p)}
+              label="items"
+            />
+          )}
         </div>
       </div>
       </>}
