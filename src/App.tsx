@@ -116,7 +116,7 @@ function AppContent() {
               </button>
               <span className="text-sm font-bold text-white truncate">Fanos Dashboard</span>
             </header>
-            <main ref={mainRef} className="flex-1 overflow-auto max-h-[calc(100dvh-56px)] pt-[56px]">
+            <main ref={mainRef} className="flex-1 overflow-auto h-[calc(100dvh-56px)] pt-[56px]">
               <div className="max-w-container mx-auto px-lg pb-lg">
                 {renderPage({ sidebarVisible, toggleSidebar })}
               </div>
