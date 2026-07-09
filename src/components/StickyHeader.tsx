@@ -39,7 +39,7 @@ function StickyHeader({ children, className = '' }: any) {
   if (isMobile) {
     return (
       <>
-        <div style={{ height: headerHeight }} />
+        <div className="bg-surface" style={{ height: headerHeight }} />
         <div
           ref={headerRef}
           className={`flex flex-wrap items-center justify-between gap-2 fixed left-0 right-0 top-[40px] z-30 bg-surface py-3 px-lg shadow-sm ${className}`}
