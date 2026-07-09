@@ -122,21 +122,35 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
       {activeSections.includes('ppc-overview') && (
         <section id="ppc-overview">
           <div className="space-y-3">
-            <div className="relative overflow-hidden w-full" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-              <div 
-                className="flex transition-transform duration-500 ease-in-out"
-                style={{ transform: `translateX(-${kpiPage * 100}%)` }}
-              >
-                {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
-                  <div key={pageIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full shrink-0">
-                    {kpiCards.slice(pageIdx * cardsPerPage, pageIdx * cardsPerPage + cardsPerPage).map((c, cardIdx) => (
-                      <div key={c.label || cardIdx}>
-                        <KPICard variant="detailed" {...c} />
-                      </div>
-                    ))}
-                  </div>
-                ))}
+            <div className="relative lg:pl-12 lg:pr-12">
+              <div className="relative overflow-hidden w-full" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+                <div 
+                  className="flex transition-transform duration-500 ease-in-out"
+                  style={{ transform: `translateX(-${kpiPage * 100}%)` }}
+                >
+                  {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
+                    <div key={pageIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full shrink-0">
+                      {kpiCards.slice(pageIdx * cardsPerPage, pageIdx * cardsPerPage + cardsPerPage).map((c, cardIdx) => (
+                        <div key={c.label || cardIdx}>
+                          <KPICard variant="detailed" {...c} />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
+              {kpiTotalPages > 1 && (
+                <>
+                  <button type="button" onClick={() => setKpiPage((p) => Math.max(p - 1, 0))} disabled={kpiPage === 0}
+                    className="hidden lg:flex absolute left-0 top-0 bottom-0 w-8 items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
+                    aria-label="Previous KPI page"
+                  ><i className="fa-solid fa-chevron-left text-[10px]"></i></button>
+                  <button type="button" onClick={() => setKpiPage((p) => Math.min(p + 1, kpiTotalPages - 1))} disabled={kpiPage === kpiTotalPages - 1}
+                    className="hidden lg:flex absolute right-0 top-0 bottom-0 w-8 items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
+                    aria-label="Next KPI page"
+                  ><i className="fa-solid fa-chevron-right text-[10px]"></i></button>
+                </>
+              )}
             </div>
             {kpiTotalPages > 1 && (
               <div className="flex flex-col items-center gap-1">
@@ -165,7 +179,7 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
 
       {activeSections.includes('ppc-supplier-share') && (
         <section id="ppc-supplier-share">
-          <SectionPanel title="Contract by Supplier Share" subtitle="Distribution of contract value by supplier">
+          <SectionPanel title="Contract by Supplier Share" subtitle="Distribution of contract value by supplier" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={data.supplierShare.map(s => ({ label: s.label, value: s.amount }))} title="Contract by Supplier Share" /><IconButton variant="info" contentId="po-supplier-share" /></div>}>
             {(() => {
               const SUPPLIER_COLORS = {
                 'EPSS': '#00373B', 'MOH': '#0B4F54', 'Global Fund': '#D97706', 'UNICEF': '#216E6A',

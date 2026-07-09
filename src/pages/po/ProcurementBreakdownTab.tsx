@@ -4,6 +4,7 @@ import KpiCarousel from '../../components/KpiCarousel';
 import PieChart from '../../components/PieChart';
 import IconButton from '../../components/IconButton';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
+import ExportDropdown from '../../components/ExportDropdown';
 
 const fmtDuration = (days) => {
   if (days == null || days < 0) return null;
@@ -55,7 +56,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
           <SectionPanel
             title="Open & Overdue Purchase Orders"
             subtitle={`${filteredOpenOverduePOs.length} records requiring attention`}
-            action={<IconButton variant="info" contentId="po-overdue" />}
+            action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-overdue" /><ExportDropdown headers={[{ key: 'poNo', label: 'PO No' }, { key: 'supplier', label: 'Supplier' }, { key: 'program', label: 'Program' }, { key: 'amount', label: 'Amount (ETB)' }, { key: 'issueDate', label: 'Issue Date' }, { key: 'dueDate', label: 'Due Date' }, { key: 'status', label: 'Status' }, { key: 'daysOverdue', label: 'Days Overdue' }]} rows={filteredOpenOverduePOs} filename="open-overdue-pos" /></div>}
             searchBar={
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="relative">
@@ -123,7 +124,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
 
       {activeSections.includes('ppc-open-po-items') && (
         <section id="ppc-open-po-items">
-          <SectionPanel title="Open PO Item Details" subtitle={`${filteredOpenItems.length} of ${data.openPOItemDetail?.data?.length || 0} open line items`} action={<IconButton variant="info" contentId="po-open-items" />}
+          <SectionPanel title="Open PO Item Details" subtitle={`${filteredOpenItems.length} of ${data.openPOItemDetail?.data?.length || 0} open line items`} action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-open-items" /><ExportDropdown headers={[{ key: 'purchaseOrderNumber', label: 'PO No' }, { key: 'purchaseOrderItemNumber', label: 'Item' }, { key: 'supplierName', label: 'Supplier' }, { key: 'materialDescription', label: 'Material' }, { key: 'orderedQuantity', label: 'Ordered' }, { key: 'receivedQuantity', label: 'Received' }, { key: 'openQuantity', label: 'Open Qty' }, { key: 'openAmountReportingCurrency', label: 'Open Amount (ETB)' }, { key: 'plannedDeliveryDate', label: 'Planned Delivery' }]} rows={filteredOpenItems} filename="open-po-items" /></div>}
             searchBar={
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
@@ -168,7 +169,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
 
       {activeSections.includes('ppc-overdue-pos') && (
         <section id="ppc-overdue-pos">
-          <SectionPanel title="Overdue PO Schedule Lines" subtitle={`${filteredOverdueLines.length} of ${data.overduePOScheduleLine?.data?.length || 0} overdue schedule lines`} action={<IconButton variant="info" contentId="po-overdue-schedule" />}
+          <SectionPanel title="Overdue PO Schedule Lines" subtitle={`${filteredOverdueLines.length} of ${data.overduePOScheduleLine?.data?.length || 0} overdue schedule lines`} action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-overdue-schedule" /><ExportDropdown headers={[{ key: 'purchaseOrderNumber', label: 'PO No' }, { key: 'purchaseOrderItemNumber', label: 'Item' }, { key: 'supplierName', label: 'Supplier' }, { key: 'materialDescription', label: 'Material' }, { key: 'purchaseOrderDate', label: 'PO Date' }, { key: 'scheduledDeliveryDate', label: 'Due Date' }, { key: 'daysOverdue', label: 'Days Overdue' }, { key: 'overdueBucket', label: 'Bucket' }, { key: 'openQuantity', label: 'Open Qty' }, { key: 'openAmountReportingCurrency', label: 'Open Amt (ETB)' }]} rows={filteredOverdueLines} filename="overdue-pos" /></div>}
             searchBar={
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative">
@@ -247,7 +248,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
 
       {activeSections.includes('ppc-status') && (
         <section id="ppc-status">
-          <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} title="Procurement Status" /><IconButton variant="info" contentId="po-proc-status" /></div>}>
+          <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} title="Procurement Status" /><IconButton variant="info" contentId="po-proc-status" /><ExportDropdown headers={[{ key: 'refNo', label: 'Reference' }, { key: 'supplier', label: 'Supplier' }, { key: 'stage', label: 'Stage' }, { key: 'statusDate', label: 'Status Date' }]} rows={filteredStatusDetails} filename="procurement-status" /></div>}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
                 <PieChart data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} totalLabel="Procurement stages" />

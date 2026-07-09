@@ -3,6 +3,7 @@ import KpiCarousel from '../../components/KpiCarousel';
 import IconButton from '../../components/IconButton';
 import LeadtimeMilestoneTracker from '../../components/LeadtimeMilestoneTracker';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
+import ExportDropdown from '../../components/ExportDropdown';
 
 const fmtDuration = (days) => {
   if (days == null || days < 0) return null;
@@ -31,7 +32,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
     <>
       {activeSections.includes('ppc-leadtime') && (
         <section id="ppc-leadtime">
-          <SectionPanel title="Leadtime Analysis" subtitle="Average processing times across procurement stages" action={<IconButton variant="info" contentId="po-leadtime" />}>
+          <SectionPanel title="Leadtime Analysis" subtitle="Average processing times across procurement stages" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-leadtime" /><ExportDropdown headers={[{ key: 'poNo', label: 'PO No' }, { key: 'supplier', label: 'Supplier' }, { key: 'contractToPO', label: 'C→PO' }, { key: 'poToLCOpening', label: 'PO→LC' }, { key: 'lcToPortArrival', label: 'LC→Port' }, { key: 'portToCleared', label: 'Port→Clr' }, { key: 'clearedToReceive', label: 'Clr→Rcv' }, { key: 'totalLeadtime', label: 'Total' }]} rows={data.leadtime.details} filename="leadtime" /></div>}>
             {data.leadtime.milestone && (
               <LeadtimeMilestoneTracker
                 counts={data.leadtime.milestone.counts}
@@ -80,7 +81,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
           {(() => {
             const s = data.supplierPerformanceSummary;
             return (
-              <SectionPanel title="Supplier Performance Tracking" subtitle="Delivery performance leaderboard based on evaluated delivery records" action={<IconButton variant="info" contentId="po-supplier-perf" />}>
+              <SectionPanel title="Supplier Performance Tracking" subtitle="Delivery performance leaderboard based on evaluated delivery records" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-supplier-perf" /><ExportDropdown headers={[{ key: 'rank', label: 'Rank' }, { key: 'supplierName', label: 'Supplier' }, { key: 'supplierCountryCode', label: 'Country' }, { key: 'purchaseOrderCount', label: 'POs' }, { key: 'purchaseOrderItemCount', label: 'Items' }, { key: 'favorableDeliveryRatePercent', label: 'Delivery Rate' }, { key: 'secondaryPerformanceRatePercent', label: 'Perf. Rate' }, { key: 'overdueScheduleLineCount', label: 'Overdue Lines' }, { key: 'maximumDaysOverdue', label: 'Max Overdue' }]} rows={data.supplierPerformanceLeaderboard} filename="supplier-performance" /></div>}>
                 {s && (
                   <KpiCarousel>
                     <KPICard variant="detailed" icon="fa-building" iconBg="bg-primary/10" iconColor="text-primary" label="Suppliers" value={s.supplierCount.toLocaleString()} subtitle={`${s.purchaseOrderCount.toLocaleString()} POs`} />
@@ -136,7 +137,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
           {(() => {
             const risk = data.supplierRiskRanking || [];
             return (
-              <SectionPanel title="Supplier Risk Ranking" subtitle="Risk assessment based on overdue amounts, delivery rates, and max days overdue" action={<IconButton variant="info" contentId="po-supplier-risk" />}>
+              <SectionPanel title="Supplier Risk Ranking" subtitle="Risk assessment based on overdue amounts, delivery rates, and max days overdue" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-supplier-risk" /><ExportDropdown headers={[{ key: 'rank', label: 'Rank' }, { key: 'supplierName', label: 'Supplier' }, { key: 'supplierCountryCode', label: 'Country' }, { key: 'purchaseOrderItemCount', label: 'PO Items' }, { key: 'favorableDeliveryRatePercent', label: 'Delivery Rate' }, { key: 'overdueOpenAmountPercent', label: 'Overdue %' }, { key: 'maximumDaysOverdue', label: 'Max Overdue' }, { key: 'totalOpenAmount', label: 'Open Amount' }, { key: 'riskLevel', label: 'Risk' }]} rows={risk} filename="supplier-risk" /></div>}>
                 <Table page={tp('supplier-risk')} setPage={sp('supplier-risk')}
                   headers={[
                     { key: 'rank', label: 'Rank', className: 'text-center w-12' },
@@ -182,7 +183,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
 
       {activeSections.includes('ppc-bond') && (
         <section id="ppc-bond">
-          <SectionPanel title="Performance Bond Report" subtitle="Received, Verified, Expiry, Confiscated, Extended" action={<IconButton variant="info" contentId="po-bond" />}>
+          <SectionPanel title="Performance Bond Report" subtitle="Received, Verified, Expiry, Confiscated, Extended" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-bond" /><ExportDropdown headers={[{ key: 'bondNo', label: 'Bond No' }, { key: 'supplier', label: 'Supplier' }, { key: 'amount', label: 'Amount (ETB)' }, { key: 'receivedDate', label: 'Received Date' }, { key: 'verifiedDate', label: 'Verified Date' }, { key: 'expiryDate', label: 'Expiry Date' }, { key: 'status', label: 'Status' }]} rows={data.performanceBonds} filename="performance-bonds" /></div>}>
             {(() => {
               const bonds = data.performanceBonds;
               const totalAmount = bonds.reduce((s, b) => s + b.amount, 0);

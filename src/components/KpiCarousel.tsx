@@ -48,22 +48,36 @@ export default function KpiCarousel({ children }: KpiCarouselProps) {
 
   return (
     <div className="space-y-3 mb-5 sm:mb-6">
-      <div
-        className="relative overflow-hidden w-full"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
+      <div className="relative lg:pl-12 lg:pr-12">
         <div
-          className="flex transition-transform duration-500 ease-in-out"
-          style={{ transform: `translateX(-${page * 100}%)` }}
+          className="relative overflow-hidden w-full"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
-          {Array.from({ length: totalPages }).map((_, pageIdx) => (
-              <div key={pageIdx} className={`${gridCls} w-full shrink-0`}>
-                {items.slice(pageIdx * cardsPerPage, pageIdx * cardsPerPage + cardsPerPage)}
-              </div>
-            ))}
+          <div
+            className="flex transition-transform duration-500 ease-in-out"
+            style={{ transform: `translateX(-${page * 100}%)` }}
+          >
+            {Array.from({ length: totalPages }).map((_, pageIdx) => (
+                <div key={pageIdx} className={`${gridCls} w-full shrink-0`}>
+                  {items.slice(pageIdx * cardsPerPage, pageIdx * cardsPerPage + cardsPerPage)}
+                </div>
+              ))}
+          </div>
         </div>
+        {totalPages > 1 && (
+          <>
+            <button type="button" onClick={() => setPage((p) => Math.max(p - 1, 0))} disabled={page === 0}
+              className="hidden lg:flex absolute left-0 top-0 bottom-0 w-8 items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
+              aria-label="Previous KPI page"
+            ><i className="fa-solid fa-chevron-left text-[10px]"></i></button>
+            <button type="button" onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))} disabled={page === totalPages - 1}
+              className="hidden lg:flex absolute right-0 top-0 bottom-0 w-8 items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
+              aria-label="Next KPI page"
+            ><i className="fa-solid fa-chevron-right text-[10px]"></i></button>
+          </>
+        )}
       </div>
       <div className="flex flex-col items-center gap-1">
         <div className="flex items-center justify-center gap-1.5">

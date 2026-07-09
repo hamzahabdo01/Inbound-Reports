@@ -3,6 +3,7 @@ import KPICard from '../../components/KPICard';
 import KpiCarousel from '../../components/KpiCarousel';
 import IconButton from '../../components/IconButton';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
+import ExportDropdown from '../../components/ExportDropdown';
 
 const FUNNEL_COLORS = ['#00373B', '#0B4F54', '#D97706', '#86BFC5'];
 const FUNNEL_LABELS = ['Contract', 'PO', 'Inbound', 'Received'];
@@ -299,7 +300,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
     <>
       {activeSections.includes('ppc-pipeline') && (
         <section id="ppc-pipeline">
-          <SectionPanel title="Contract vs PO vs Inbound Delivery vs Received" subtitle="Full procurement pipeline per contract" action={<IconButton variant="info" contentId="po-pipeline" />}>
+          <SectionPanel title="Contract vs PO vs Inbound Delivery vs Received" subtitle="Full procurement pipeline per contract" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-pipeline" /><ExportDropdown headers={[{ key: 'contractNo', label: 'Contract' }, { key: 'supplier', label: 'Supplier' }, { key: 'contractAmount', label: 'Contract Amount (ETB)' }, { key: 'poAmount', label: 'PO Amount (ETB)' }, { key: 'inboundDelivery', label: 'Invoiced (ETB)' }, { key: 'received', label: 'Received (ETB)' }]} rows={data.contractPipeline} filename="pipeline" /></div>}>
             {(() => {
               const totalPO = data.contractPipeline.reduce((s, c) => s + c.poAmount, 0);
               const totalInbound = data.contractPipeline.reduce((s, c) => s + c.inboundDelivery, 0);
@@ -391,7 +392,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
 
       {activeSections.includes('ppc-contract-vs-po') && (
         <section id="ppc-contract-vs-po">
-          <SectionPanel title="Contract vs PO - Consumption & Remaining" subtitle="Per contract with summary" action={<IconButton variant="info" contentId="po-contract-vs-po" />}>
+          <SectionPanel title="Contract vs PO - Consumption & Remaining" subtitle="Per contract with summary" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-contract-vs-po" /><ExportDropdown headers={[{ key: 'contractNo', label: 'Contract' }, { key: 'supplier', label: 'Supplier' }, { key: 'contractAmount', label: 'Contract Amt (ETB)' }, { key: 'poAmount', label: 'PO Amt (ETB)' }, { key: 'pctConsumed', label: 'PO Rate' }, { key: 'remaining', label: 'Remaining (ETB)' }]} rows={data.contractVsPO} filename="contract-vs-po" /></div>}>
             <KpiCarousel>
               <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total PO Amount" value={formatAmount(data.contractVsPO.reduce((s, c) => s + c.poAmount, 0))} subtitle="all contracts" />
               <KPICard variant="detailed" icon="fa-cart-shopping" iconBg="bg-success/10" iconColor="text-success" label="Total Consumption" value={formatAmount(data.contractVsPO.reduce((s, c) => s + c.consumption, 0))} subtitle={`${data.contractVsPO.reduce((s, c) => s + c.poAmount, 0) ? Math.round((data.contractVsPO.reduce((s, c) => s + c.consumption, 0) / data.contractVsPO.reduce((s, c) => s + c.poAmount, 0)) * 100) : 0}% consumed`} />
@@ -440,7 +441,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
             const phaseColors = { PLANNING: 'bg-[#4A8EA5]/10 text-[#4A8EA5]', EXECUTION: 'bg-primary/10 text-primary', COMPLETED: 'bg-success/10 text-success' };
             return (
               <SectionPanel title="Contract-to-Receipt Status Tracking" subtitle={`${filteredCtr.length} of ${(data.contractToReceiveTracking || []).length} PO-level milestones`}
-                action={<IconButton variant="info" contentId="po-contract-to-receive" />}
+                action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-contract-to-receive" /><ExportDropdown headers={[{ key: 'purchaseOrderNumber', label: 'PO No' }, { key: 'supplierName', label: 'Supplier' }, { key: 'purchaseOrderAmount', label: 'Amount (ETB)' }, { key: 'currentProcessStatus', label: 'Process Status' }, { key: 'routeStatus', label: 'Route Status' }, { key: 'deliveryDeadline', label: 'Deadline' }, { key: 'daysToOrPastDeadline', label: 'Days ±' }, { key: 'milestoneCompletionPercent', label: 'Milestone %' }, { key: 'currentMilestoneName', label: 'Current Milestone' }, { key: 'processPhase', label: 'Phase' }]} rows={filteredCtr} filename="contract-to-receive" /></div>}
                 searchBar={
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="relative">
@@ -651,7 +652,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
 
       {activeSections.includes('ppc-lc-cad') && (
         <section id="ppc-lc-cad">
-          <SectionPanel title="LC / CAD Expiry Report" subtitle="Letter of Credit expiry tracking" action={<IconButton variant="info" contentId="po-lc-cad" />}>
+          <SectionPanel title="LC / CAD Expiry Report" subtitle="Letter of Credit expiry tracking" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-lc-cad" /><ExportDropdown headers={[{ key: 'lcNo', label: 'LC No' }, { key: 'supplier', label: 'Supplier' }, { key: 'amount', label: 'Amount (ETB)' }, { key: 'issueDate', label: 'Issue Date' }, { key: 'expiryDate', label: 'Expiry Date' }, { key: 'status', label: 'Status' }, { key: 'daysToExpiry', label: 'Days Left' }]} rows={data.lcCadExpiry} filename="lc-cad-expiry" /></div>}>
             {data.lcCadExpirySummary && (() => {
               const s = data.lcCadExpirySummary;
               const expired = s.expiryBreakdownMetrics?.[0];

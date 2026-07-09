@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import PieChart from './PieChart';
 import { formatCompactNumber } from '../utils/chartUtils';
+import ExportDropdown from './ExportDropdown';
 
 /**
  * ExpandModal — two-tab modal for every pie chart.
@@ -120,16 +121,16 @@ export default function ExpandModal({ isOpen, onClose, data = [], title = 'Chart
           {activeTab === 'tabular' && (
             <div className="flex flex-col">
               {/* ── Table ── */}
-              <table className="w-full text-sm">
+              <table className="w-full text-sm table-fixed">
                 <thead>
                   <tr className="bg-[#CFD8DC]">
-                    <th className="px-5 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-[#404849]">
+                    <th className="px-3 sm:px-5 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-[#404849] w-1/2">
                       {title}
                     </th>
-                    <th className="px-5 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-[#404849]">
+                    <th className="px-3 sm:px-5 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-[#404849] w-[30%]">
                       Value
                     </th>
-                    <th className="px-5 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-[#404849]">
+                    <th className="px-3 sm:px-5 py-3 text-right text-[11px] font-bold uppercase tracking-wider text-[#404849] w-[20%]">
                       % Share
                     </th>
                   </tr>
@@ -142,21 +143,21 @@ export default function ExpandModal({ isOpen, onClose, data = [], title = 'Chart
                         key={row.label}
                         className={`border-b border-[#F0F4F6] hover:bg-[#F0F4F6] transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-white'}`}
                       >
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-2.5">
+                        <td className="px-3 sm:px-5 py-3 sm:py-3.5">
+                          <div className="flex items-center gap-2">
                             {row.color && (
                               <span
-                                className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                                className="w-2 h-2 rounded-sm flex-shrink-0"
                                 style={{ backgroundColor: row.color }}
                               />
                             )}
-                            <span className="font-medium text-[#0B4F54]">{row.label}</span>
+                            <span className="font-medium text-[#0B4F54] truncate text-xs sm:text-sm">{row.label}</span>
                           </div>
                         </td>
-                        <td className="px-5 py-3.5 text-right font-mono text-[#181C1E] text-sm">
+                        <td className="px-3 sm:px-5 py-3 sm:py-3.5 text-right font-mono text-[#181C1E] text-xs sm:text-sm">
                           {new Intl.NumberFormat('en').format(row.value)}
                         </td>
-                        <td className="px-5 py-3.5 text-right text-[#515F74] text-sm font-semibold">
+                        <td className="px-3 sm:px-5 py-3 sm:py-3.5 text-right text-[#515F74] text-xs sm:text-sm font-semibold">
                           {pct}%
                         </td>
                       </tr>
@@ -166,7 +167,8 @@ export default function ExpandModal({ isOpen, onClose, data = [], title = 'Chart
               </table>
 
               {/* ── Footer ── */}
-              <div className="px-5 py-3 border-t border-[#F0F4F6] bg-[#F6FAFC] flex items-center justify-end">
+              <div className="sticky bottom-0 px-5 py-3 border-t border-[#F0F4F6] bg-[#F6FAFC] flex items-center justify-between">
+                <ExportDropdown dropUp iconClassName="bg-transparent" headers={[{ key: 'label', label: title }, { key: 'value', label: 'Value' }, { key: 'pct', label: '% Share' }]} rows={sorted.map(r => ({ ...r, pct: total > 0 ? ((r.value / total) * 100).toFixed(1) : '0.0' }))} filename={title.toLowerCase().replace(/\s+/g, '-')} />
                 <span className="text-xs text-[#707979] font-medium">
                   1–{sorted.length} of {sorted.length}
                 </span>
