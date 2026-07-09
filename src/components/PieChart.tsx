@@ -21,7 +21,7 @@ const describeSlice = (cx, cy, r, startAngle, endAngle, offset = 0) => {
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
-export default function PieChart({ data, totalLabel, showCenterLabel = true, legendPosition = 'bottom' }: any) {
+export default function PieChart({ data, totalLabel, showCenterLabel = true, legendPosition = 'bottom', viewHeightRatio = 0.55 }: any) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(420);
@@ -66,7 +66,7 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
   const isCompact = chartWidth < 500;
   const legendLeft = legendPosition === 'left' && !isCompact;
   const viewWidth = isCompact ? 320 : Math.min(Math.round(chartWidth * 0.48), 360);
-  const viewHeight = Math.round(viewWidth * 0.55);
+  const viewHeight = Math.round(viewWidth * viewHeightRatio);
   const cx = viewWidth / 2;
   const cy = viewHeight * 0.5;
   const r = viewWidth * 0.22;

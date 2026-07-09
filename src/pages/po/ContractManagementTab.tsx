@@ -4,19 +4,20 @@ import KpiCarousel from '../../components/KpiCarousel';
 import IconButton from '../../components/IconButton';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 import ExportDropdown from '../../components/ExportDropdown';
+import PieChart from '../../components/PieChart';
 
 const FUNNEL_COLORS = ['#00373B', '#0B4F54', '#D97706', '#86BFC5'];
 const FUNNEL_LABELS = ['Contract', 'PO', 'Inbound', 'Received'];
 const FIELDS = ['contractAmount', 'purchaseOrderAmount', 'inboundAmount', 'receivedAmount'];
 
-function FunnelChart({ data }: any) {
+function FunnelChart({ data, isMobile }: any) {
   const rows = [...data.data].reverse();
   const maxVal = Math.max(...rows.flatMap(r => FIELDS.map(f => r[f] || 0)));
-  const padL = 50, padR = 16, padT = 8, padB = 52;
+  const padL = isMobile ? 30 : 50, padR = 16, padT = 8, padB = 52;
   const w = 720, h = 300;
   const chartW = w - padL - padR;
   const groupW = chartW / rows.length;
-  const barW = Math.max(6, groupW * 0.1);
+  const barW = isMobile ? Math.max(16, groupW * 0.25) : Math.max(6, groupW * 0.1);
   const gap = (groupW - barW * 4) / 5;
   const [tooltip, setTooltip] = useState(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,9 +55,13 @@ function FunnelChart({ data }: any) {
               <g key={`fi-${fi}`}>
                 <rect x={x} y={y} width={barW} height={barH} rx={3} fill={FUNNEL_COLORS[fi]} opacity={tooltip?.fi === fi && tooltip?.year === r.year ? 1 : 0.85}
                   style={{ cursor: 'pointer', transition: 'all 0.3s ease-in-out' }}
-                  onMouseEnter={(e) => setTooltip({ year: r.year, fi, v, stageLabel, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, row: r })}
-                  onMouseMove={(e) => setTooltip((prev) => prev ? { ...prev, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY } : null)}
-                  onMouseLeave={() => setTooltip(null)}
+                  {...(isMobile ? {
+                    onClick: () => setTooltip((prev) => prev?.fi === fi && prev?.year === r.year ? null : { year: r.year, fi, v, stageLabel, x: 0, y: 0, row: r }),
+                  } : {
+                    onMouseEnter: (e) => setTooltip({ year: r.year, fi, v, stageLabel, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY, row: r }),
+                    onMouseMove: (e) => setTooltip((prev) => prev ? { ...prev, x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY } : null),
+                    onMouseLeave: () => setTooltip(null),
+                  })}
                 />
                 {fi === 0 && (
                   <text x={gx + groupW / 2} y={h - 8} textAnchor="middle" fontSize={12} fontWeight={700} fill="#404849">{r.year}</text>
@@ -77,7 +82,8 @@ function FunnelChart({ data }: any) {
         const inbVsPO = r.purchaseOrderAmount > 0 ? Math.round((r.inboundAmount / r.purchaseOrderAmount) * 100) : 0;
         const recVsInb = r.inboundAmount > 0 ? Math.round((r.receivedAmount / r.inboundAmount) * 100) : 0;
         return (
-          <div className="absolute pointer-events-none bg-white rounded-xl shadow-lg border border-outline-variant px-4 py-3 text-xs z-50" style={{ left: Math.min(tooltip.x + 12, containerW - 220), top: Math.max(tooltip.y - 100, 0) }}>
+          <div className="absolute pointer-events-none bg-white rounded-xl shadow-lg border border-outline-variant px-4 py-3 text-xs z-50"
+            style={isMobile ? { left: '50%', top: '8px', transform: 'translateX(-50%)' } : { left: Math.min(tooltip.x + 12, containerW - 220), top: Math.max(tooltip.y - 100, 0) }}>
             <div className="font-bold text-on-surface mb-1.5">{tooltip.year} — {tooltip.stageLabel}</div>
             <div className="space-y-1 text-on-surface-variant">
               <div className="flex justify-between gap-6"><span>Amount</span><span className="font-semibold text-on-surface">{fmt(tooltip.v)} ETB</span></div>
@@ -274,6 +280,9 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
   const allYears = data.yearlyContractToReceipt?.data?.map(r => r.year).sort() || [];
   const [funnelYear, setFunnelYear] = useState(allYears.length ? String(allYears[allYears.length - 1]) : '2026');
   const funnelFiltered = { ...data.yearlyContractToReceipt, data: data.yearlyContractToReceipt.data.filter(r => r.year === Number(funnelYear)) };
+  const [funnelPage, setFunnelPage] = useState(0);
+  const funnelTouchX = useRef(0);
+  const funnelTouchDelta = useRef(0);
   const [pipelineExpanded, setPipelineExpanded] = useState(null);
   const [ctrExpanded, setCtrExpanded] = useState(null);
   const [showCtrDaysPast, setShowCtrDaysPast] = useState(false);
@@ -451,34 +460,36 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
                         className="pl-7 pr-2 py-1 h-8 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-full sm:w-44 transition-all"
                       />
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <select value={ctrProcessFilter} onChange={(e) => setCtrProcessFilter(e.target.value)}
-                        className="h-8 shrink-0 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[160px]"
-                      >
-                        <option value="">All Process Status</option>
-                        {(() => {
-                          const present = new Set((data.contractToReceiveTracking || []).map(r => r.currentProcessStatus));
-                          return PIPELINE_STEPS.map(step => {
-                            const opts = [...step.statuses].filter(s => present.has(s));
-                            if (!opts.length) return null;
-                            return (
-                              <optgroup key={step.label} label={`— ${step.label} —`}>
-                                {opts.map(s => (
-                                  <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
-                                ))}
-                              </optgroup>
-                            );
-                          });
-                        })()}
-                      </select>
-                      <select value={ctrRouteFilter} onChange={(e) => setCtrRouteFilter(e.target.value)}
-                        className="h-8 shrink-0 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[130px]"
-                      >
-                        <option value="">All Route Status</option>
-                        {[...new Set<string>((data.contractToReceiveTracking || []).map((r: any) => String(r.routeStatus)))].map(s => (
-                          <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
-                        ))}
-                      </select>
+                    <div className="flex items-start gap-2 shrink-0">
+                      <div className="flex flex-col md:flex-row gap-1.5">
+                        <select value={ctrProcessFilter} onChange={(e) => setCtrProcessFilter(e.target.value)}
+                          className="h-8 shrink-0 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[160px]"
+                        >
+                          <option value="">All Process Status</option>
+                          {(() => {
+                            const present = new Set((data.contractToReceiveTracking || []).map(r => r.currentProcessStatus));
+                            return PIPELINE_STEPS.map(step => {
+                              const opts = [...step.statuses].filter(s => present.has(s));
+                              if (!opts.length) return null;
+                              return (
+                                <optgroup key={step.label} label={`— ${step.label} —`}>
+                                  {opts.map(s => (
+                                    <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                                  ))}
+                                </optgroup>
+                              );
+                            });
+                          })()}
+                        </select>
+                        <select value={ctrRouteFilter} onChange={(e) => setCtrRouteFilter(e.target.value)}
+                          className="h-8 shrink-0 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 max-w-[160px]"
+                        >
+                          <option value="">All Route Status</option>
+                          {[...new Set<string>((data.contractToReceiveTracking || []).map((r: any) => String(r.routeStatus)))].map(s => (
+                            <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                          ))}
+                        </select>
+                      </div>
                       {(ctrSearch || ctrProcessFilter || ctrRouteFilter) && (
                         <button
                           type="button"
@@ -585,20 +596,40 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
                 <i className="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary pointer-events-none" />
               </div>
             }>
-              <div className="flex flex-col lg:flex-row items-start gap-6">
-                <div className="w-full lg:flex-1 lg:min-w-0">
-                  <FunnelChart data={funnelFiltered} />
-                  <div className="mt-4 flex justify-center">
-                    <FunnelPercentRow />
-                  </div>
-                </div>
-                <div className="w-full xl:w-[480px] shrink-0 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {funnelFiltered.data.map(row => {
-                        const poVsContract = row.contractAmount && row.contractAmount > 0 ? Math.round((row.purchaseOrderAmount / row.contractAmount) * 100) : null;
-                        const inboundVsPO = row.purchaseOrderAmount > 0 ? Math.round((row.inboundAmount / row.purchaseOrderAmount) * 100) : 0;
-                        const receivedVsInbound = row.inboundAmount > 0 ? Math.round((row.receivedAmount / row.inboundAmount) * 100) : 0;
-                        return (
-                          <div key={row.year} className="bg-white rounded-xl border border-outline-variant shadow-sm p-5">
+              {(() => {
+                const row = funnelFiltered.data[0];
+                if (!row) return <div className="text-center py-10 text-body-sm text-on-surface-variant">No data for {funnelYear}.</div>;
+                const poVsContract = row.contractAmount && row.contractAmount > 0 ? Math.round((row.purchaseOrderAmount / row.contractAmount) * 100) : null;
+                const inboundVsPO = row.purchaseOrderAmount > 0 ? Math.round((row.inboundAmount / row.purchaseOrderAmount) * 100) : 0;
+                const receivedVsInbound = row.inboundAmount > 0 ? Math.round((row.receivedAmount / row.inboundAmount) * 100) : 0;
+                const pieData = [
+                  { label: 'Contract', value: row.contractAmount || 0, color: '#00373B' },
+                  { label: 'PO', value: row.purchaseOrderAmount || 0, color: '#0B4F54' },
+                  { label: 'Invoiced', value: row.inboundAmount || 0, color: '#D97706' },
+                  { label: 'Received', value: row.receivedAmount || 0, color: '#86BFC5' },
+                ];
+                if (isMobile) {
+                  return (
+                    <div className="w-full overflow-hidden">
+                      <div
+                        className="flex transition-transform duration-500 ease-in-out"
+                        style={{ transform: `translateX(-${funnelPage * 100}%)` }}
+                        onTouchStart={(e) => { funnelTouchX.current = e.touches[0].clientX; funnelTouchDelta.current = 0; }}
+                        onTouchMove={(e) => { funnelTouchDelta.current = e.touches[0].clientX - funnelTouchX.current; }}
+                        onTouchEnd={() => {
+                          if (Math.abs(funnelTouchDelta.current) > 50) {
+                            if (funnelTouchDelta.current < 0 && funnelPage < 2) setFunnelPage((p) => p + 1);
+                            else if (funnelTouchDelta.current > 0 && funnelPage > 0) setFunnelPage((p) => p - 1);
+                          }
+                        }}
+                      >
+                        <div className="w-full shrink-0">
+                          <div className="h-[280px] flex items-center justify-center">
+                            <PieChart data={pieData} totalLabel="Pipeline Amount" viewHeightRatio={0.8} />
+                          </div>
+                        </div>
+                        <div className="w-full shrink-0 px-1">
+                          <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-5">
                             <div className="mb-5">
                               <span className="text-title-sm font-bold text-on-surface">Summary</span>
                             </div>
@@ -627,12 +658,8 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
                               </div>
                             </div>
                           </div>
-                        );
-                      })}
-                      {(() => {
-                        const row = funnelFiltered.data[0];
-                        if (!row) return null;
-                        return (
+                        </div>
+                        <div className="w-full shrink-0 px-1">
                           <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-5">
                             <div className="mb-5"><span className="text-title-sm font-bold text-on-surface">Counts</span></div>
                             <div className="space-y-6 text-[13px] text-on-surface-variant">
@@ -642,10 +669,70 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
                               <div className="flex justify-between"><span className="font-medium">Lines</span><span className="font-bold text-on-surface">{row.purchaseOrderLineCount?.toLocaleString()}</span></div>
                             </div>
                           </div>
-                        );
-                      })()}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center gap-1.5 mt-4">
+                        {[0, 1, 2].map((i) => (
+                          <button key={i} type="button" onClick={() => setFunnelPage(i)}
+                            className={`w-2 h-2 rounded-full transition-all duration-300 ${i === funnelPage ? 'bg-primary w-5' : 'bg-outline-variant hover:bg-outline'}`}
+                          />
+                        ))}
+                      </div>
                     </div>
-              </div>
+                  );
+                }
+                return (
+                  <div className="flex flex-col lg:flex-row items-start gap-6">
+                    <div className="w-full lg:w-[420px] shrink-0">
+                      <div className="h-[310px]">
+                        <PieChart data={pieData} totalLabel="Pipeline Amount" />
+                      </div>
+                    </div>
+                    <div className="w-full xl:w-[480px] shrink-0">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-5">
+                          <div className="mb-5">
+                            <span className="text-title-sm font-bold text-on-surface">Summary</span>
+                          </div>
+                          <div className="space-y-4 text-[13px]">
+                            <div className="space-y-1.5">
+                              <div className="flex justify-between items-center text-on-surface-variant font-medium"><span>PO → Contract</span><span className={`font-bold ${poVsContract >= 100 ? 'text-error' : 'text-on-surface'}`}>{poVsContract !== null ? `${poVsContract}%` : '—'}</span></div>
+                              <div className="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full ${poVsContract >= 100 ? 'bg-error' : 'bg-[#00373B]'}`} style={{ width: `${Math.min(poVsContract || 0, 100)}%` }} />
+                              </div>
+                            </div>
+                            <div className="space-y-1.5">
+                              <div className="flex justify-between items-center text-on-surface-variant font-medium"><span>Inbound → PO</span><span className="font-bold text-on-surface">{inboundVsPO}%</span></div>
+                              <div className="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+                                <div className="h-full rounded-full bg-[#00373B]" style={{ width: `${Math.min(inboundVsPO, 100)}%` }} />
+                              </div>
+                            </div>
+                            <div className="space-y-1.5">
+                              <div className="flex justify-between items-center text-on-surface-variant font-medium"><span>Received → Inbound</span><span className="font-bold text-on-surface">{receivedVsInbound}%</span></div>
+                              <div className="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+                                <div className="h-full rounded-full bg-[#4A9598]" style={{ width: `${Math.min(receivedVsInbound, 100)}%` }} />
+                              </div>
+                            </div>
+                            <div className="border-t border-outline-variant pt-3 mt-2 flex justify-between items-center text-on-surface font-semibold text-[14px]">
+                              <span>Overall</span>
+                              <span className="font-extrabold">{row.purchaseOrderAmount > 0 ? `${Math.round((row.receivedAmount / row.purchaseOrderAmount) * 100)}%` : '—'}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-5">
+                          <div className="mb-5"><span className="text-title-sm font-bold text-on-surface">Counts</span></div>
+                          <div className="space-y-6 text-[13px] text-on-surface-variant">
+                            <div className="flex justify-between"><span className="font-medium">Contracts</span><span className="font-bold text-on-surface">{row.contractCount?.toLocaleString() || '—'}</span></div>
+                            <div className="flex justify-between"><span className="font-medium">POs</span><span className="font-bold text-on-surface">{row.purchaseOrderCount?.toLocaleString()}</span></div>
+                            <div className="flex justify-between"><span className="font-medium">Suppliers</span><span className="font-bold text-on-surface">{row.supplierCount?.toLocaleString() || '—'}</span></div>
+                            <div className="flex justify-between"><span className="font-medium">Lines</span><span className="font-bold text-on-surface">{row.purchaseOrderLineCount?.toLocaleString()}</span></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </SectionPanel>
           </section>
       )}
