@@ -42,7 +42,7 @@ function StickyHeader({ children, className = '' }: any) {
         <div className="bg-surface" style={{ height: headerHeight }} />
         <div
           ref={headerRef}
-          className={`flex flex-wrap items-center justify-between gap-2 fixed left-0 right-0 top-[40px] z-30 bg-surface py-3 px-lg shadow-sm ${className}`}
+          className={`flex flex-nowrap items-center justify-between gap-2 fixed left-0 right-0 top-[40px] z-30 bg-surface py-3 px-lg shadow-sm overflow-x-auto [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden ${className}`}
         >
           {children}
         </div>
@@ -54,7 +54,7 @@ function StickyHeader({ children, className = '' }: any) {
     <>
       <div ref={sentinelRef} />
       <div
-        className={`flex flex-wrap items-center justify-between gap-2 sticky top-0 z-30 bg-surface py-3 -mx-lg px-lg ${className} ${
+        className={`flex flex-nowrap items-center justify-between gap-2 sticky top-0 z-30 bg-surface py-3 -mx-lg px-lg overflow-x-auto [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden ${className} ${
           isSticky ? 'shadow-sm' : ''
         }`}
       >

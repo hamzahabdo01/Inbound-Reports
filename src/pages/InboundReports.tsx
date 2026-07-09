@@ -1,16 +1,14 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { parseCSV, parseDwellingTime, parseQuantity, parseDate } from '../utils/csvParser';
 import { shipmentCSVData } from '../data/shipmentData';
-import { exportDataToCSV } from '../utils/exportCSV';
 import PurchaseOrderFollowUp from './PurchaseOrderFollowUp';
 import KPICard from '../components/KPICard';
 import SearchInput from '../components/SearchInput';
-import TabGroup from '../components/TabGroup';
 import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
 import LoadingState from '../components/LoadingState';
 import SelectFilter from '../components/SelectFilter';
-import ExportButton from '../components/ExportButton';
+import ExportDropdown from '../components/ExportDropdown';
 import StickyHeader from '../components/StickyHeader';
 import IconButton from '../components/IconButton';
 
@@ -33,6 +31,7 @@ function InboundReports() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage] = useState(13);
+  const [mobilePageSize, setMobilePageSize] = useState(10);
   const [activeTab, setActiveTab] = useState('shipment');
 
   // Search query
@@ -45,6 +44,46 @@ function InboundReports() {
 
   // Quick filter state
   const [quickFilter, setQuickFilter] = useState(null);
+
+  // Mobile KPI carousel state
+  const [kpiPage, setKpiPage] = useState(0);
+  const [cardsPerPage, setCardsPerPage] = useState(() => window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1);
+
+  const useMediaQuery = (query: string) => {
+    const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+    useEffect(() => {
+      const mq = window.matchMedia(query);
+      const onChange = () => setMatches(mq.matches);
+      mq.addEventListener('change', onChange);
+      return () => mq.removeEventListener('change', onChange);
+    }, [query]);
+    return matches;
+  };
+
+  const isMobile = useMediaQuery('(max-width: 767px)');
+
+  useEffect(() => {
+    const onResize = () => {
+      const next = window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1;
+      setCardsPerPage(prev => {
+        if (prev !== next) setKpiPage(0);
+        return next;
+      });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const touchStartX = useRef(0);
+  const touchDeltaX = useRef(0);
+  const handleTouchStart = (e: any) => { touchStartX.current = e.touches[0].clientX; touchDeltaX.current = 0; };
+  const handleTouchMove = (e: any) => { touchDeltaX.current = e.touches[0].clientX - touchStartX.current; };
+  const handleTouchEnd = () => {
+    if (Math.abs(touchDeltaX.current) > 50) {
+      if (touchDeltaX.current < 0 && kpiPage < kpiTotalPages - 1) setKpiPage(p => p + 1);
+      else if (touchDeltaX.current > 0 && kpiPage > 0) setKpiPage(p => p - 1);
+    }
+  };
 
   // Load data
   useEffect(() => {
@@ -142,6 +181,17 @@ function InboundReports() {
     return { totalActive, avgDwelling, maxDwelling, over90Days };
   }, [filteredData]);
 
+  const effectiveRowsPerPage = isMobile ? mobilePageSize : rowsPerPage;
+
+  const kpiTotalPages = Math.ceil(4 / cardsPerPage);
+
+  const kpiCards = useMemo(() => [
+    { icon: 'fa-boxes-stacked', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', label: 'Active Shipments', value: kpis.totalActive, valueColor: 'text-emerald-600', subtitle: '2.4% increase' },
+    { icon: 'fa-clock', label: 'Avg Dwelling', value: kpis.avgDwelling, subtitle: 'average days' },
+    { icon: 'fa-triangle-exclamation', iconBg: 'bg-red-50', iconColor: 'text-red-500', label: 'Max Dwelling', value: kpis.maxDwelling, valueColor: 'text-red-600', subtitle: '12% increase' },
+    { icon: 'fa-circle-exclamation', iconBg: 'bg-red-50', iconColor: 'text-red-500', label: '> 90 Days', value: kpis.over90Days, valueColor: 'text-red-600', subtitle: 'critical items' },
+  ], [kpis]);
+
   // Sorting state
   const [sortBy, setSortBy] = useState({ key: null, direction: null });
   const [openSortMenu, setOpenSortMenu] = useState(null);
@@ -220,12 +270,12 @@ function InboundReports() {
 
   // Paginated data (after sorting)
   const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
+    const startIndex = (currentPage - 1) * effectiveRowsPerPage;
+    const endIndex = startIndex + effectiveRowsPerPage;
     return sortedData.slice(startIndex, endIndex);
-  }, [sortedData, currentPage, rowsPerPage]);
+  }, [sortedData, currentPage, effectiveRowsPerPage]);
 
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
 
   useEffect(() => {
     setTimeout(() => {
@@ -251,9 +301,11 @@ function InboundReports() {
     }
   }, [activeTab]);
 
-  const handleExport = () => {
-    exportDataToCSV(data, ALL_COLUMNS);
-  };
+  // Reset page when mobile page size changes
+  useEffect(() => { setCurrentPage(1); }, [mobilePageSize]);
+
+  const exportHeaders = useMemo(() => ALL_COLUMNS.map(key => ({ key, label: key.replace(/([A-Z])/g, ' $1').trim() })), []);
+  const exportRows = data;
 
   const handleClearAll = () => {
     setSearchQuery('');
@@ -276,22 +328,32 @@ function InboundReports() {
   }
 
   return (
-    <>
+    <div className="space-y-5 animate-fade-in">
       {/* Header */}
-      <StickyHeader className="mb-lg">
-        <TabGroup
-          tabs={[
-            { id: 'shipment', label: 'Shipment Dwelling Time', icon: 'fa-ship' },
-            { id: 'purchase-order', label: 'Purchase Order Follow Up', icon: 'fa-file-lines' }
-          ]}
-          activeTab={activeTab}
-          onChange={setActiveTab}
-        />
-        <div className="flex items-center gap-2">
-          {activeTab === 'shipment' && (
-            <IconButton variant="info" contentId="shipment-dwelling-time" />
-          )}
-          <ExportButton onClick={handleExport} label="Export Report" />
+      <StickyHeader className="gap-md">
+        <div className="flex items-center gap-1 whitespace-nowrap">
+          <button
+            onClick={() => setActiveTab('shipment')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 ${
+              activeTab === 'shipment'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+            }`}
+          >
+            <i className="fa-solid fa-ship mr-2"></i>
+            Shipment Dwelling Time
+          </button>
+          <button
+            onClick={() => setActiveTab('purchase-order')}
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-150 ${
+              activeTab === 'purchase-order'
+                ? 'bg-primary text-white shadow-sm'
+                : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+            }`}
+          >
+            <i className="fa-solid fa-file-lines mr-2"></i>
+            Purchase Order Follow Up
+          </button>
         </div>
       </StickyHeader>
 
@@ -302,60 +364,121 @@ function InboundReports() {
       {activeTab === 'shipment' && (
       <>
       {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-lg">
-        <KPICard variant="detailed" icon="fa-boxes-stacked" iconBg="bg-emerald-50" iconColor="text-emerald-600" label="Active Shipments" value={kpis.totalActive} valueColor="text-emerald-600" subtitle="2.4% increase" />
-        <KPICard variant="detailed" icon="fa-clock" label="Avg Dwelling" value={kpis.avgDwelling} subtitle="average days" />
-        <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg="bg-red-50" iconColor="text-red-500" label="Max Dwelling" value={kpis.maxDwelling} valueColor="text-red-600" subtitle="12% increase" />
-        <KPICard variant="detailed" icon="fa-circle-exclamation" iconBg="bg-red-50" iconColor="text-red-500" label="> 90 Days" value={kpis.over90Days} valueColor="text-red-600" subtitle="critical items" />
+      <div className="relative mt-md mb-lg">
+        <div className="relative overflow-hidden w-full" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+          <div
+            className="flex transition-transform duration-500 ease-in-out"
+            style={{ transform: `translateX(-${kpiPage * 100}%)` }}
+          >
+            {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
+              <div key={pageIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full shrink-0">
+                {kpiCards.slice(pageIdx * cardsPerPage, pageIdx * cardsPerPage + cardsPerPage).map((c, cardIdx) => (
+                  <div key={c.label || cardIdx}>
+                    <KPICard variant="detailed" {...c} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        {kpiTotalPages > 1 && (
+          <>
+            <button type="button" onClick={() => setKpiPage((p) => Math.max(p - 1, 0))} disabled={kpiPage === 0}
+              className="hidden lg:flex absolute left-0 top-0 bottom-0 w-8 items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
+              aria-label="Previous KPI page"
+            ><i className="fa-solid fa-chevron-left text-[10px]"></i></button>
+            <button type="button" onClick={() => setKpiPage((p) => Math.min(p + 1, kpiTotalPages - 1))} disabled={kpiPage === kpiTotalPages - 1}
+              className="hidden lg:flex absolute right-0 top-0 bottom-0 w-8 items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
+              aria-label="Next KPI page"
+            ><i className="fa-solid fa-chevron-right text-[10px]"></i></button>
+          </>
+        )}
+        {kpiTotalPages > 1 && (
+          <div className="flex flex-col items-center gap-1 mt-3">
+            <div className="flex items-center justify-center gap-1.5">
+              {Array.from({ length: kpiTotalPages }, (_, i) => (
+                <button key={i} type="button" onClick={() => setKpiPage(i)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${i === kpiPage ? 'bg-primary w-5' : 'bg-outline-variant hover:bg-outline'}`}
+                  aria-label={`Go to page ${i + 1}`}
+                />
+              ))}
+            </div>
+            {isMobile && (
+              <div className="flex items-center gap-2 text-[10px] text-on-surface-variant/50 font-semibold tracking-wider animate-pulse">
+                <i className="fa-solid fa-chevron-left text-[8px]" /> SWIPE <i className="fa-solid fa-chevron-right text-[8px]" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Search and Filters */}
       <div className="bg-surface-container-lowest border border-[#D1D5DB] rounded-lg p-4 mb-md">
-        <div className="flex items-center gap-3 mb-md">
-          <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search POs, Medicines, Suppliers" />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-md">
+          <div className="flex items-center gap-2 sm:hidden">
+            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search POs, Medicines, Suppliers" className="flex-1" />
+            <IconButton variant="info" contentId="shipment-dwelling-time" />
+            <ExportDropdown headers={exportHeaders} rows={exportRows} filename="shipment-dwelling-time" />
+          </div>
+          <div className="hidden sm:block sm:w-72 lg:w-96">
+            <SearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search POs, Medicines, Suppliers" />
+          </div>
 
-          <SelectFilter
-            value={officerFilter || ''}
-            onChange={setOfficerFilter}
-            options={[...new Set(data.map(row => row.ShipmentOfficer).filter(Boolean))]}
-            placeholder="Officer: All"
-          />
+          <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+            <div className="grid grid-cols-2 sm:contents gap-2 w-full sm:w-auto">
+              <SelectFilter
+                value={officerFilter || ''}
+                onChange={setOfficerFilter}
+                options={[...new Set(data.map(row => row.ShipmentOfficer).filter(Boolean))]}
+                placeholder="Officer: All"
+                className="w-full sm:w-auto"
+              />
 
-          <SelectFilter
-            value={arrivalDateFilter || ''}
-            onChange={setArrivalDateFilter}
-            options={[...new Set(data.map(row => row.PortArrivalDate).filter(Boolean))]}
-            placeholder="Arrival Date: Any"
-          />
+              <SelectFilter
+                value={arrivalDateFilter || ''}
+                onChange={setArrivalDateFilter}
+                options={[...new Set(data.map(row => row.PortArrivalDate).filter(Boolean))]}
+                placeholder="Arrival Date: Any"
+                className="w-full sm:w-auto"
+              />
+            </div>
 
-          <SelectFilter
-            value={dwellingTimeFilter || ''}
-            onChange={setDwellingTimeFilter}
-            options={[
-              { value: '>90', label: '> 90 days' },
-              { value: '60-90', label: '60-90 days' },
-              { value: '30-60', label: '30-60 days' },
-              { value: '<30', label: '< 30 days' }
-            ]}
-            placeholder="Dwelling Time: Any"
-          />
+            <SelectFilter
+              value={dwellingTimeFilter || ''}
+              onChange={setDwellingTimeFilter}
+              options={[
+                { value: '>90', label: '> 90 days' },
+                { value: '60-90', label: '60-90 days' },
+                { value: '30-60', label: '30-60 days' },
+                { value: '<30', label: '< 30 days' }
+              ]}
+              placeholder="Dwelling Time: Any"
+              className="w-full sm:w-auto"
+            />
+          </div>
 
-          {hasActiveFilters && (
-            <button
-              onClick={handleClearAll}
-              className="px-4 py-2 text-body-md text-primary hover:text-primary/80 transition-colors"
-            >
-              Clear All
-            </button>
-          )}
+          <div className="flex items-center gap-2 ml-auto">
+            <div className="hidden sm:flex items-center gap-2">
+              <IconButton variant="info" contentId="shipment-dwelling-time" />
+              <ExportDropdown headers={exportHeaders} rows={exportRows} filename="shipment-dwelling-time" />
+            </div>
+            {hasActiveFilters && (
+              <button
+                onClick={handleClearAll}
+                className="px-4 py-2 text-body-md text-primary hover:text-primary/80 transition-colors shrink-0 whitespace-nowrap"
+              >
+                Clear All
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Quick Filters */}
-        <div className="flex items-center gap-2">
-          <span className="text-body-sm text-on-surface-variant">Quick Filters:</span>
+        <div className="flex items-center gap-2 overflow-x-auto scroll-smooth flex-nowrap sm:flex-wrap sm:overflow-visible [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+          <span className="text-body-sm text-on-surface-variant shrink-0">Quick Filters:</span>
           <button
             onClick={() => handleQuickFilter('critical')}
-            className={`px-3 py-1 rounded-full text-body-sm transition-colors ${
+            className={`shrink-0 px-3 py-1 rounded-full text-body-sm transition-colors ${
               quickFilter === 'critical'
                 ? 'bg-error text-on-error'
                 : 'bg-error/10 text-error hover:bg-error/20'
@@ -365,7 +488,7 @@ function InboundReports() {
           </button>
           <button
             onClick={() => handleQuickFilter('delayed-90')}
-            className={`px-3 py-1 rounded-full text-body-sm transition-colors ${
+            className={`shrink-0 px-3 py-1 rounded-full text-body-sm transition-colors ${
               quickFilter === 'delayed-90'
                 ? 'bg-warning text-white'
                 : 'bg-warning/10 text-warning hover:bg-warning/20'
@@ -375,7 +498,7 @@ function InboundReports() {
           </button>
           <button
             onClick={() => handleQuickFilter('no-officer')}
-            className={`px-3 py-1 rounded-full text-body-sm transition-colors ${
+            className={`shrink-0 px-3 py-1 rounded-full text-body-sm transition-colors ${
               quickFilter === 'no-officer'
                 ? 'bg-on-surface-variant text-white'
                 : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
@@ -385,7 +508,7 @@ function InboundReports() {
           </button>
           <button
             onClick={() => handleQuickFilter('recently-arrived')}
-            className={`px-3 py-1 rounded-full text-body-sm transition-colors ${
+            className={`shrink-0 px-3 py-1 rounded-full text-body-sm transition-colors ${
               quickFilter === 'recently-arrived'
                 ? 'bg-[#4A8EA5] text-white'
                 : 'bg-[#4A8EA5]/10 text-[#4A8EA5] hover:bg-[#4A8EA5]/20'
@@ -398,14 +521,16 @@ function InboundReports() {
 
       {/* Table */}
       <div className="bg-surface-container-lowest border border-[#D1D5DB] rounded-lg overflow-hidden mb-md">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className={`${isMobile ? 'relative before:absolute before:top-0 before:right-0 before:bottom-0 before:w-8 before:bg-gradient-to-l before:from-surface-container-lowest before:to-transparent before:pointer-events-none before:z-10 focus-within:ring-2 focus-within:ring-primary/20 rounded-lg' : ''}`}>
+        <div className={`${isMobile ? 'overflow-x-auto scroll-smooth -webkit-overflow-scrolling:touch' : 'overflow-x-auto'}`}>
+          <div className={isMobile ? 'min-w-[960px]' : ''}>
+          <table className={isMobile ? '' : 'w-full'}>
             <thead className="bg-surface-container border-b border-[#D1D5DB]">
               <tr>
-                    <th className="w-8 px-4 py-3"></th>
+                    <th className="py-3 px-4 border-r border-outline-variant w-8"></th>
                     <th
                       onClick={() => toggleSort('PurchaseOrderNumber')}
-                      className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group"
+                      className="py-3 px-4 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group border-r border-outline-variant sticky left-0 bg-surface-container z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
                     >
                       <div className="flex items-center gap-2">
                         <span className="flex-1">PO NUMBER {sortBy.key === 'PurchaseOrderNumber' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
@@ -624,11 +749,11 @@ function InboundReports() {
                   const isOver90 = dwellingDays > 90;
 
                   return (
-                    <tr key={index} className="border-b border-[#D1D5DB] hover:bg-surface-container-low transition-colors">
-                      <td className="px-4 py-2">
+                    <tr key={index} className="group border-b border-[#D1D5DB] hover:bg-surface-container-low transition-colors">
+                      <td className="py-4 px-4 border-r border-outline-variant/60">
                         <div className={`w-2 h-2 rounded-full ${isOver90 ? 'bg-error' : 'bg-success'}`}></div>
                       </td>
-                      <td className="px-4 py-2 text-body-md text-on-surface">{row.PurchaseOrderNumber}</td>
+                      <td className="py-4 px-4 border-r border-outline-variant/60 text-body-md text-on-surface sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">{row.PurchaseOrderNumber}</td>
                       <td className="px-4 py-2">
                         <div className="text-body-md font-semibold text-on-surface">{row.Item}</div>
                         <div className="text-body-sm text-on-surface-variant">Quantity: {row.InvoicedQuantity}</div>
@@ -654,19 +779,50 @@ function InboundReports() {
             </tbody>
           </table>
         </div>
+        </div>
+      </div>
       </div>
 
-      <SimplePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={filteredData.length}
-        itemsPerPage={rowsPerPage}
-        onPageChange={(p) => setCurrentPage(p)}
-        label="shipments"
-      />
+      {isMobile ? (
+        <div className="flex items-center justify-between gap-3 py-2 px-lg bg-surface border-t border-outline-variant">
+          <select value={mobilePageSize} onChange={(e) => { setMobilePageSize(Number(e.target.value)); setCurrentPage(1); }}
+            className="h-7 rounded border border-outline-variant bg-white px-1.5 text-xs text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+          </select>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}
+              className="p-2 rounded border border-outline-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+              aria-label="Previous page"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}
+              className="p-2 rounded border border-outline-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+              aria-label="Next page"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <SimplePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredData.length}
+          itemsPerPage={rowsPerPage}
+          onPageChange={(p) => setCurrentPage(p)}
+          label="shipments"
+        />
+      )}
       </>
       )}
-    </>
+    </div>
   );
 }
 

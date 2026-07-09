@@ -9,7 +9,7 @@ function SimplePagination({ currentPage, totalPages, totalItems, itemsPerPage, o
 
   return (
     <div className="flex items-center justify-between px-lg py-4 bg-surface border-t border-outline-variant">
-      <div className="text-body-sm text-on-surface-variant">
+      <div className="text-body-sm text-on-surface-variant hidden sm:block">
         Showing {start}-{end} of {totalItems} {displayLabel}
       </div>
       <div className="flex items-center gap-2">
