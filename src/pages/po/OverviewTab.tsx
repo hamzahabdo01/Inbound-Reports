@@ -373,7 +373,7 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
           {activeSections.includes('ppc-local-intl') && (
             <section id="ppc-local-intl" className="w-full lg:w-[41.666%]">
               <SectionPanel title="Local vs International Procurement" subtitle="Breakdown by procurement origin" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount, color: l.type?.toLowerCase().includes('international') ? '#D97706' : '#0B4F54' }))} title="Local vs International Procurement" /><IconButton variant="info" contentId="procurement-local-intl" /></div>}>
-                <div className="w-full h-[310px] flex items-center justify-center">
+                <div className="w-full lg:h-[310px] flex items-center justify-center">
                   <PieChart data={data.localVsIntl.map((l) => ({ label: l.type, value: l.amount, color: l.type?.toLowerCase().includes('international') ? '#D97706' : '#0B4F54' }))} totalLabel="Procurement origin" />
                 </div>
               </SectionPanel>

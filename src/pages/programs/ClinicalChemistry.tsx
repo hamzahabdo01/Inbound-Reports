@@ -88,7 +88,7 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
     </div>
   );
 
-  const kpis = { soh: 0, ordered: 0, qit: 0, expired: 0, nearExpiry: 0, damaged: 2, gap: 0, overage: 0, skuCount: 0 };
+  const kpis = { soh: 0, ordered: 0, qit: 0, expired: 0, nearExpiry: 0, damaged: 0, gap: 0, overage: 0, skuCount: 0 };
 
   const kpiCards = kpis ? [
     { icon: 'fa-boxes-stacked',        iconBg: 'bg-surface-container', iconColor: 'text-primary', label: 'SOH',        value: formatCompact(kpis.soh),  subtitle: `${kpis.skuCount} SKUs` },

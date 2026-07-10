@@ -4,6 +4,19 @@ import ChildHealth from './programs/ChildHealth';
 import ClinicalChemistry from './programs/ClinicalChemistry';
 import LlinProgram from './programs/LLIN';
 import DroughtImpact from './programs/DroughtImpact';
+import FamilyPlanning from './programs/FamilyPlanning';
+import HIVAdult from './programs/HIVAdult';
+import HIVPediatric from './programs/HIVPediatric';
+import HIVTest from './programs/HIVTest';
+import Leprosy from './programs/Leprosy';
+import Malaria from './programs/Malaria';
+import MaternalHealth from './programs/MaternalHealth';
+import MDRTB from './programs/MDRTB';
+import NeglectedTropicalDiseases from './programs/NeglectedTropicalDiseases';
+import Nutrition from './programs/Nutrition';
+import RDFProgram from './programs/RDFProgram';
+import TBProgram from './programs/TBProgram';
+import Vaccine from './programs/Vaccine';
 
 function OrgToggle({ value, onChange }: any) {
   const isHPR = value === 'HPR';
@@ -67,6 +80,32 @@ function ProgramDashboard() {
         return <LlinProgram />;
       case 'Drought Impact':
         return <DroughtImpact />;
+      case 'Family Planning':
+        return <FamilyPlanning />;
+      case 'HIV Adult':
+        return <HIVAdult />;
+      case 'HIV Pediatric':
+        return <HIVPediatric />;
+      case 'HIV Test':
+        return <HIVTest />;
+      case 'Leprosy':
+        return <Leprosy />;
+      case 'Malaria':
+        return <Malaria />;
+      case 'Maternal Health':
+        return <MaternalHealth />;
+      case 'MDR - TB':
+        return <MDRTB />;
+      case 'Neglected Tropical Diseases':
+        return <NeglectedTropicalDiseases />;
+      case 'Nutrition':
+        return <Nutrition />;
+      case 'RDF':
+        return <RDFProgram />;
+      case 'TB':
+        return <TBProgram />;
+      case 'Vaccine':
+        return <Vaccine />;
       default:
         return (
           <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">

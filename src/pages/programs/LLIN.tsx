@@ -476,12 +476,10 @@ function LlinProgram() {
 
       {/* ── Overview: KPI cards ──────────────────────────────────────────── */}
       <section id="llin-overview">
-        <div className="grid grid-cols-6 gap-3">
-          <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-success/10"     iconColor="text-success"     label="SOH"     value={formatCompact(kpis.totalSoh)}     subtitle={pageReady ? `${stockRows.length} SKUs` : '—'} />
-          <KPICard variant="detailed" icon="fa-cart-shopping"       iconBg="bg-surface-container" iconColor="text-primary" label="Ordered" value={formatCompact(kpis.totalOrdered)} subtitle="total PO quantity" />
-          <KPICard variant="detailed" icon="fa-truck-fast"          iconBg="bg-[#4A8EA5]/10"   iconColor="text-[#4A8EA5]"   label="Shipped" value={formatCompact(kpis.totalShipped)} subtitle="total shipped" />
-          <KPICard variant="detailed" icon="fa-warehouse"           iconBg="bg-success/10"     iconColor="text-success"     label="Received"value={formatCompact(kpis.totalReceived)} subtitle="total received" />
-          <KPICard variant="detailed" icon="fa-clock-rotate-left"   iconBg="bg-warning/10"     iconColor="text-warning"     label="Pending" value={formatCompact(kpis.totalPending)} subtitle="pending delivery" />
+        <div className="grid grid-cols-4 gap-3">
+          <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-success/10"     iconColor="text-success"     label="SOH"     value="101.7K"     subtitle={pageReady ? `${stockRows.length} SKUs` : '—'} />
+          <KPICard variant="detailed" icon="fa-cart-shopping"       iconBg="bg-surface-container" iconColor="text-primary" label="Ordered" value="0" subtitle="total PO quantity" />
+          <KPICard variant="detailed" icon="fa-route"          iconBg="bg-[#4A8EA5]/10"   iconColor="text-[#4A8EA5]"   label="GIT" value="0" subtitle="in transit" />
           <KPICard variant="detailed" icon="fa-circle-exclamation"  iconBg="bg-warning/10"     iconColor="text-warning"     label="Damaged" value="10.9K"                        subtitle="reported damage" />
         </div>
       </section>

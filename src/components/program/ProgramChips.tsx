@@ -1,7 +1,7 @@
 export const PROGRAM_ITEMS = [
   'Child Health', 'Clinical Chemistry', 'Drought Impact', 'Family Planning',
   'HIV Adult', 'HIV Pediatric', 'HIV Test', 'Leprosy', 'LLIN', 'Malaria',
-  'Maternal Health', 'MDR - TB', 'Neglected Tropical Diseases', 'Nutrition', 'RDF', 'TB',
+  'Maternal Health', 'MDR - TB', 'Neglected Tropical Diseases', 'Nutrition', 'RDF', 'TB', 'Vaccine',
 ];
 
 function ProgramChips({ active, onChange }: any) {

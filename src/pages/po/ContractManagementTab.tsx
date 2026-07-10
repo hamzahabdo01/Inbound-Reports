@@ -682,50 +682,73 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
                   );
                 }
                 return (
-                  <div className="flex flex-col lg:flex-row items-start gap-6">
-                    <div className="w-full lg:w-[420px] shrink-0">
-                      <div className="h-[310px]">
+                  <div className="flex flex-col lg:flex-row items-center gap-6">
+                    {/* ── Pie chart ─────────────────────────────────────────── */}
+                    <div className="w-full lg:w-[450px] shrink-0 flex flex-col items-center gap-3">
+                      <div className="w-full xl:h-[280px]">
                         <PieChart data={pieData} totalLabel="Pipeline Amount" />
                       </div>
                     </div>
-                    <div className="w-full xl:w-[480px] shrink-0">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-5">
-                          <div className="mb-5">
-                            <span className="text-title-sm font-bold text-on-surface">Summary</span>
+
+                    {/* ── Summary + Counts cards ─────────────────────────────── */}
+                    <div className="flex-1 grid grid-cols-2 gap-4 self-stretch">
+                      {/* Summary */}
+                      <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-5 flex flex-col justify-between">
+                        <span className="text-title-sm font-bold text-on-surface mb-4 block">Summary</span>
+                        <div className="space-y-4 text-[13px] flex-1">
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-on-surface-variant font-medium">
+                              <span>PO → Contract</span>
+                              <span className={`font-bold ${poVsContract >= 100 ? 'text-error' : 'text-on-surface'}`}>{poVsContract !== null ? `${poVsContract}%` : '—'}</span>
+                            </div>
+                            <div className="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full ${poVsContract >= 100 ? 'bg-error' : 'bg-[#00373B]'}`} style={{ width: `${Math.min(poVsContract || 0, 100)}%` }} />
+                            </div>
                           </div>
-                          <div className="space-y-4 text-[13px]">
-                            <div className="space-y-1.5">
-                              <div className="flex justify-between items-center text-on-surface-variant font-medium"><span>PO → Contract</span><span className={`font-bold ${poVsContract >= 100 ? 'text-error' : 'text-on-surface'}`}>{poVsContract !== null ? `${poVsContract}%` : '—'}</span></div>
-                              <div className="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
-                                <div className={`h-full rounded-full ${poVsContract >= 100 ? 'bg-error' : 'bg-[#00373B]'}`} style={{ width: `${Math.min(poVsContract || 0, 100)}%` }} />
-                              </div>
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-on-surface-variant font-medium">
+                              <span>Inbound → PO</span>
+                              <span className="font-bold text-on-surface">{inboundVsPO}%</span>
                             </div>
-                            <div className="space-y-1.5">
-                              <div className="flex justify-between items-center text-on-surface-variant font-medium"><span>Inbound → PO</span><span className="font-bold text-on-surface">{inboundVsPO}%</span></div>
-                              <div className="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
-                                <div className="h-full rounded-full bg-[#00373B]" style={{ width: `${Math.min(inboundVsPO, 100)}%` }} />
-                              </div>
+                            <div className="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+                              <div className="h-full rounded-full bg-[#00373B]" style={{ width: `${Math.min(inboundVsPO, 100)}%` }} />
                             </div>
-                            <div className="space-y-1.5">
-                              <div className="flex justify-between items-center text-on-surface-variant font-medium"><span>Received → Inbound</span><span className="font-bold text-on-surface">{receivedVsInbound}%</span></div>
-                              <div className="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
-                                <div className="h-full rounded-full bg-[#4A9598]" style={{ width: `${Math.min(receivedVsInbound, 100)}%` }} />
-                              </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center text-on-surface-variant font-medium">
+                              <span>Received → Inbound</span>
+                              <span className="font-bold text-on-surface">{receivedVsInbound}%</span>
                             </div>
-                            <div className="border-t border-outline-variant pt-3 mt-2 flex justify-between items-center text-on-surface font-semibold text-[14px]">
-                              <span>Overall</span>
-                              <span className="font-extrabold">{row.purchaseOrderAmount > 0 ? `${Math.round((row.receivedAmount / row.purchaseOrderAmount) * 100)}%` : '—'}</span>
+                            <div className="w-full h-2 bg-surface-container-low rounded-full overflow-hidden">
+                              <div className="h-full rounded-full bg-[#4A9598]" style={{ width: `${Math.min(receivedVsInbound, 100)}%` }} />
                             </div>
                           </div>
                         </div>
-                        <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-5">
-                          <div className="mb-5"><span className="text-title-sm font-bold text-on-surface">Counts</span></div>
-                          <div className="space-y-6 text-[13px] text-on-surface-variant">
-                            <div className="flex justify-between"><span className="font-medium">Contracts</span><span className="font-bold text-on-surface">{row.contractCount?.toLocaleString() || '—'}</span></div>
-                            <div className="flex justify-between"><span className="font-medium">POs</span><span className="font-bold text-on-surface">{row.purchaseOrderCount?.toLocaleString()}</span></div>
-                            <div className="flex justify-between"><span className="font-medium">Suppliers</span><span className="font-bold text-on-surface">{row.supplierCount?.toLocaleString() || '—'}</span></div>
-                            <div className="flex justify-between"><span className="font-medium">Lines</span><span className="font-bold text-on-surface">{row.purchaseOrderLineCount?.toLocaleString()}</span></div>
+                        <div className="border-t border-outline-variant pt-3 mt-4 flex justify-between items-center text-on-surface font-semibold text-[14px]">
+                          <span>Overall</span>
+                          <span className="font-extrabold">{row.purchaseOrderAmount > 0 ? `${Math.round((row.receivedAmount / row.purchaseOrderAmount) * 100)}%` : '—'}</span>
+                        </div>
+                      </div>
+
+                      {/* Counts */}
+                      <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-5 flex flex-col justify-between">
+                        <span className="text-title-sm font-bold text-on-surface mb-4 block">Counts</span>
+                        <div className="flex-1 flex flex-col justify-around text-[13px] text-on-surface-variant space-y-4">
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">Contracts</span>
+                            <span className="font-bold text-on-surface text-base">{row.contractCount?.toLocaleString() || '—'}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">POs</span>
+                            <span className="font-bold text-on-surface text-base">{row.purchaseOrderCount?.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">Suppliers</span>
+                            <span className="font-bold text-on-surface text-base">{row.supplierCount?.toLocaleString() || '—'}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">Lines</span>
+                            <span className="font-bold text-on-surface text-base">{row.purchaseOrderLineCount?.toLocaleString()}</span>
                           </div>
                         </div>
                       </div>
