@@ -159,7 +159,7 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
       </div>
 
       {!legendLeft && (
-        <div className={`flex flex-wrap items-center justify-center ${isCompact ? 'gap-x-3 gap-y-1.5' : 'gap-x-5 gap-y-1'}`}>
+        <div className={`flex flex-nowrap items-center justify-center overflow-x-auto ${isCompact ? 'gap-x-3 gap-y-0' : 'gap-x-5 gap-y-0'}`} style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {slices.map((slice, index) => (
             <button
               key={slice.label}
@@ -169,7 +169,7 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
               className={`inline-flex items-center gap-2 ${isCompact ? 'text-[11px]' : 'text-body-sm'} text-on-surface-variant hover:text-on-surface`}
             >
               <span className={`${isCompact ? 'h-2.5 w-2.5' : 'h-3 w-3'} rounded`} style={{ backgroundColor: slice.color }} />
-              <span>{slice.label}</span>
+              <span className="whitespace-nowrap">{slice.label}</span>
             </button>
           ))}
         </div>
