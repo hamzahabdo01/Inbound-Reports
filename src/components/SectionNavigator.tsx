@@ -50,52 +50,26 @@ function SectionNavigator({ sections, scrollOffset = 120 }: any) {
   }, [sections]);
 
   useEffect(() => {
-    const scrollContainer = document.querySelector('main');
-    if (!scrollContainer) return;
+    if (!sections.length) return;
 
-    const handleScroll = () => {
-      if (isScrollingRef.current) return;
-      
-      const containerRect = scrollContainer.getBoundingClientRect();
-      const referenceLine = 150; // px from the top of the container
-      
-      // If we scroll to the absolute bottom of the container, highlight the last section
-      const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 25;
-      if (isAtBottom && mergedSections.length > 0) {
-        setActive(mergedSections[mergedSections.length - 1].id);
-        return;
-      }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isScrollingRef.current) return;
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (!visible.length) return;
+        // Pick the one closest to the top of the viewport
+        const best = visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        const id = best.target.id;
+        const group = mergedSections.find((g) => g.ids && g.ids.includes(id));
+        setActive(group ? group.id : id);
+      },
+      { rootMargin: '-80px 0px -60% 0px', threshold: 0 }
+    );
 
-      let currentActiveId = null;
+    const els = sections.map((s) => document.getElementById(s.id)).filter(Boolean);
+    els.forEach((el) => observer.observe(el));
 
-      // Find the section that currently wraps the reference line
-      for (const section of sections) {
-        const el = document.getElementById(section.id);
-        if (!el) continue;
-        
-        const rect = el.getBoundingClientRect();
-        const relativeTop = rect.top - containerRect.top;
-        const relativeBottom = rect.bottom - containerRect.top;
-        
-        if (relativeTop <= referenceLine && relativeBottom > referenceLine) {
-          currentActiveId = section.id;
-          break;
-        }
-      }
-
-      // If we found an active section, update it to its merged group representative
-      if (currentActiveId) {
-        const group = mergedSections.find(g => g.ids && g.ids.includes(currentActiveId));
-        setActive(group ? group.id : currentActiveId);
-      }
-    };
-
-    // Run once initially and listen to scrolls
-    handleScroll();
-    scrollContainer.addEventListener('scroll', handleScroll);
-    return () => {
-      scrollContainer.removeEventListener('scroll', handleScroll);
-    };
+    return () => observer.disconnect();
   }, [sections, mergedSections]);
 
   const handleClick = (id) => {
@@ -132,13 +106,9 @@ function SectionNavigator({ sections, scrollOffset = 120 }: any) {
   };
 
   return (
-    <div
-      className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex items-stretch"
-      onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => setExpanded(false)}
-    >
+    <div className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex items-stretch">
       <div
-        className={`flex flex-col gap-0.5 py-3 bg-[#0B4F54] border border-[#00373B] rounded-l-xl shadow-[0px_12px_32px_rgba(10,50,53,0.18)] transition-all duration-200 overflow-hidden ${
+        className={`flex flex-col gap-0.5 py-3 bg-primary border border-[#00373B] border-r-0 rounded-l-xl shadow-[0px_12px_32px_rgba(10,50,53,0.18)] transition-all duration-200 overflow-hidden ${
           expanded ? 'opacity-100 w-48 px-3' : 'opacity-0 w-0 px-0'
         }`}
         aria-hidden={!expanded}
@@ -149,7 +119,7 @@ function SectionNavigator({ sections, scrollOffset = 120 }: any) {
             <button
               key={id}
               type="button"
-              onClick={() => handleClick(id)}
+              onClick={() => { handleClick(id); setExpanded(false); }}
               className={`flex items-center gap-2.5 w-full text-left px-2 py-1.5 rounded-lg transition-colors ${
                 isActive
                   ? 'bg-white/15 text-white'
@@ -168,30 +138,14 @@ function SectionNavigator({ sections, scrollOffset = 120 }: any) {
           );
         })}
       </div>
-
-      <div className="flex flex-col gap-2 py-3 px-2 bg-[#0B4F54] border border-[#00373B] rounded-l-xl shadow-[0px_4px_20px_rgba(10,50,53,0.12)]">
-        {sections.map(({ id, label }) => {
-          const isActive = active === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => handleClick(id)}
-              aria-label={`Go to ${label}`}
-              title={label}
-              className="flex items-center justify-center w-4 h-4"
-            >
-              <span
-                className={`rounded-full transition-all duration-200 ${
-                  isActive
-                    ? 'w-2.5 h-2.5 bg-white shadow-sm'
-                    : 'w-1.5 h-1.5 bg-white/35 hover:bg-white/70'
-                }`}
-              />
-            </button>
-          );
-        })}
-      </div>
+      <button
+        type="button"
+        onClick={() => setExpanded((p) => !p)}
+        className="w-6 flex items-center justify-center bg-primary border border-[#00373B] border-l-0 rounded-l-xl shadow-lg text-white hover:brightness-110 transition-all shrink-0"
+        aria-label={expanded ? 'Close section navigation' : 'Open section navigation'}
+      >
+        <i className={`fa-solid fa-chevron-left text-[10px] transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+      </button>
     </div>
   );
 }

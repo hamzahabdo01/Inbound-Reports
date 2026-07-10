@@ -257,7 +257,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-sm font-bold text-on-surface">Filter by stage:</span>
                   <select value={procurementStatusFilter} onChange={(e) => setProcurementStatusFilter(e.target.value)}
-                    className="h-8 rounded-md border border-outline-variant bg-white px-2 text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    className="h-8 rounded-md border border-outline-variant bg-white px-2 text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 max-w-[150px]"
                   >
                     <option value="All">All Stages</option>
                     {data.procurementStatus.stages.map((s) => (

@@ -45,6 +45,7 @@ export default function PoPerformanceCompliance() {
     if (mainEl) {
       mainEl.scrollTop = 0;
     }
+    window.scrollTo(0, 0);
   }, [activeTab]);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -138,7 +139,7 @@ export default function PoPerformanceCompliance() {
 
   return (
     <div className="space-y-5">
-      {!isMobile && <SectionNavigator sections={navigatorSections} />}
+      <SectionNavigator sections={navigatorSections} />
       <StickyHeader>
         <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
           {TABS.map((tab) => (
