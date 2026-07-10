@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import StickyHeader from '../components/StickyHeader';
 import IconButton from '../components/IconButton';
 
@@ -7,6 +7,8 @@ import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../data/
 import KPICard from '../components/KPICard';
 import PieChart from '../components/PieChart';
 import HBarChart from '../components/HBarChart';
+import { Table, Td } from './po/poShared';
+import ExportDropdown from '../components/ExportDropdown';
 
 // ─── CSV Parser ────────────────────────────────────────────────────────────────
 function parseCSVLocal(raw) {
@@ -65,7 +67,7 @@ function OrgToggle({ value, onChange }: any) {
     <div className="flex items-center gap-3">
       <button
         onClick={() => onChange(isHPR ? 'RDF' : 'HPR')}
-        className={`relative inline-flex items-center h-7 w-14 rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B4F54] cursor-pointer ${
+        className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B4F54] cursor-pointer ${
           isHPR ? 'bg-[#0B4F54]' : 'bg-[#86BFC5]'
         }`}
         aria-label="Toggle HPR/RDF"
@@ -73,23 +75,23 @@ function OrgToggle({ value, onChange }: any) {
         aria-checked={isHPR}
       >
         <span
-          className={`inline-block w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-300 ${
-            isHPR ? 'translate-x-8' : 'translate-x-1'
+          className={`inline-block w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-300 ${
+            isHPR ? 'translate-x-6' : 'translate-x-0.5'
           }`}
         />
       </button>
       <div className="flex items-center gap-2">
         <button
           onClick={() => onChange('HPR')}
-          className={`text-sm font-bold tracking-wide transition-colors duration-200 cursor-pointer ${
+          className={`text-xs font-bold tracking-wide transition-colors duration-200 cursor-pointer ${
             isHPR ? 'text-[#0B4F54]' : 'text-[#707979] hover:text-[#404849]'
           }`}
         >
           HPR
         </button>
-        <span className="text-[#CFD8DC] text-sm font-light select-none">/</span>
+        <span className="text-[#CFD8DC] text-xs font-light select-none">/</span>
         <span
-          className={`text-sm font-bold tracking-wide transition-colors duration-200 ${
+          className={`text-xs font-bold tracking-wide transition-colors duration-200 ${
             !isHPR ? 'text-[#0B4F54]' : 'text-[#707979]'
           }`}
         >
@@ -137,14 +139,11 @@ function POTypeBadge({ type }: any) {
   );
 }
 
-const ROWS_PER_PAGE = 10;
-
 /** Main Shipment Status Table */
-function ShipmentTable({ rows }: any) {
+function ShipmentTable({ rows, page, setPage }: any) {
   const [search, setSearch] = useState('');
   const [poTypeFilter, setPOTypeFilter] = useState('All');
   const [grnfFilter, setGRNFFilter] = useState('All');
-  const [currentPage, setCurrentPage] = useState(1);
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
 
@@ -197,10 +196,7 @@ function ShipmentTable({ rows }: any) {
     return result;
   }, [rows, search, poTypeFilter, grnfFilter, sortKey, sortDir]);
 
-  useEffect(() => { setCurrentPage(1); }, [search, poTypeFilter, grnfFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
-  const pageRows = filtered.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
+  useEffect(() => { if (setPage) setPage(1); }, [search, poTypeFilter, grnfFilter]);
 
   const handleSort = (key) => {
     if (sortKey === key) {
@@ -212,24 +208,24 @@ function ShipmentTable({ rows }: any) {
     }
   };
 
-  const SortIcon = ({ colKey }) => {
-    if (sortKey !== colKey) return <i className="fa-solid fa-sort text-[#CFD8DC] ml-1 text-[9px]" />;
-    return sortDir === 'asc'
-      ? <i className="fa-solid fa-sort-up text-[#0B4F54] ml-1 text-[9px]" />
-      : <i className="fa-solid fa-sort-down text-[#0B4F54] ml-1 text-[9px]" />;
-  };
-
-  const thCls = (key) =>
-    `px-3 py-3 text-left text-[10px] font-bold uppercase tracking-[0.07em] text-[#707979] select-none whitespace-nowrap cursor-pointer hover:text-[#0B4F54] transition-colors duration-150 ${
-      sortKey === key ? 'text-[#0B4F54]' : ''
-    }`;
+  const headers = [
+    { key: 'sn', label: 'SN' },
+    { key: 'PurchaseOrderNumber', label: 'PO Number' },
+    { key: 'PurchaseOrderType', label: 'PO Type' },
+    { key: 'PurchaseOrderDate', label: 'PO Date' },
+    { key: 'InvoiceNumber', label: 'Invoice Number' },
+    { key: 'ReceiptInvoiceDate', label: 'Invoice Date' },
+    { key: 'InvoiceGRNFGap', label: 'Invoice → GRNF Gap', className: 'text-center' },
+    { key: 'PAmountGRNFPrint', label: 'GRNF%', className: 'text-center' },
+    { key: 'PAmountGRVPrint', label: 'GRV%', className: 'text-center' },
+  ];
 
   return (
     <div>
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative w-full md:w-auto md:flex-1 min-w-[200px]">
           <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[#707979] text-xs" />
           <input
             type="text"
@@ -241,11 +237,11 @@ function ShipmentTable({ rows }: any) {
         </div>
 
         {/* PO Type filter */}
-        <div className="relative">
+        <div className="relative flex-1 md:flex-none">
           <select
             value={poTypeFilter}
             onChange={e => setPOTypeFilter(e.target.value)}
-            className="appearance-none pl-3 pr-8 py-2 text-sm border border-[#CFD8DC] rounded-lg bg-white text-[#181C1E] focus:outline-none focus:border-[#0B4F54] focus:ring-2 focus:ring-[#0B4F54]/10 transition-all cursor-pointer"
+            className="w-full appearance-none pl-3 pr-8 py-2 text-sm border border-[#CFD8DC] rounded-lg bg-white text-[#181C1E] focus:outline-none focus:border-[#0B4F54] focus:ring-2 focus:ring-[#0B4F54]/10 transition-all cursor-pointer"
           >
             {poTypes.map(t => (
               <option key={t} value={t}>{t === 'All' ? 'PO Type: All' : t}</option>
@@ -255,11 +251,11 @@ function ShipmentTable({ rows }: any) {
         </div>
 
         {/* GRNF filter */}
-        <div className="relative">
+        <div className="relative flex-1 md:flex-none">
           <select
             value={grnfFilter}
             onChange={e => setGRNFFilter(e.target.value)}
-            className="appearance-none pl-3 pr-8 py-2 text-sm border border-[#CFD8DC] rounded-lg bg-white text-[#181C1E] focus:outline-none focus:border-[#0B4F54] focus:ring-2 focus:ring-[#0B4F54]/10 transition-all cursor-pointer"
+            className="w-full appearance-none pl-3 pr-8 py-2 text-sm border border-[#CFD8DC] rounded-lg bg-white text-[#181C1E] focus:outline-none focus:border-[#0B4F54] focus:ring-2 focus:ring-[#0B4F54]/10 transition-all cursor-pointer"
           >
             {['All', '≥99%', '100%', '0%'].map(o => (
               <option key={o} value={o}>{o === 'All' ? 'GRNF: All' : `GRNF ${o}`}</option>
@@ -268,207 +264,75 @@ function ShipmentTable({ rows }: any) {
           <i className="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[#707979] text-[9px] pointer-events-none" />
         </div>
 
-        {/* Result count */}
-        <span className="text-xs text-[#707979] font-medium ml-auto">
-          {filtered.length} of {rows.length} shipments
-        </span>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-[#CFD8DC]">
-        <table className="w-full min-w-[900px]">
-          <thead className="bg-[#F0F4F6] border-b border-[#CFD8DC]">
-            <tr>
-              <th className={thCls('')} onClick={() => handleSort('')}>
-                SN <SortIcon colKey="" />
-              </th>
-              <th className={thCls('PurchaseOrderNumber')} onClick={() => handleSort('PurchaseOrderNumber')}>
-                PO Number <SortIcon colKey="PurchaseOrderNumber" />
-              </th>
-              <th className={thCls('PurchaseOrderType')} onClick={() => handleSort('PurchaseOrderType')}>
-                PO Type <SortIcon colKey="PurchaseOrderType" />
-              </th>
-              <th className={thCls('PurchaseOrderDate')} onClick={() => handleSort('PurchaseOrderDate')}>
-                PO Date <SortIcon colKey="PurchaseOrderDate" />
-              </th>
-              <th className={thCls('InvoiceNumber')} onClick={() => handleSort('InvoiceNumber')}>
-                Invoice Number <SortIcon colKey="InvoiceNumber" />
-              </th>
-              <th className={thCls('ReceiptInvoiceDate')} onClick={() => handleSort('ReceiptInvoiceDate')}>
-                Invoice Date <SortIcon colKey="ReceiptInvoiceDate" />
-              </th>
-              <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-[0.07em] text-[#707979] whitespace-nowrap">
-                Invoice → GRNF Gap
-              </th>
-              <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-[0.07em] text-[#707979] whitespace-nowrap cursor-pointer hover:text-[#0B4F54] transition-colors" onClick={() => handleSort('PAmountGRNFPrint')}>
-                GRNF% <SortIcon colKey="PAmountGRNFPrint" />
-              </th>
-              <th className="px-3 py-3 text-center text-[10px] font-bold uppercase tracking-[0.07em] text-[#707979] whitespace-nowrap cursor-pointer hover:text-[#0B4F54] transition-colors" onClick={() => handleSort('PAmountGRVPrint')}>
-                GRV% <SortIcon colKey="PAmountGRVPrint" />
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {pageRows.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="py-16 text-center">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-[#F0F4F6] flex items-center justify-center">
-                      <i className="fa-solid fa-box-open text-xl text-[#707979]" />
-                    </div>
-                    <div className="text-sm font-semibold text-[#404849]">No shipments found</div>
-                    <div className="text-xs text-[#707979]">Try adjusting your search or filters</div>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              pageRows.map((row, idx) => {
-                const sn = parseInt(row[''] || (currentPage - 1) * ROWS_PER_PAGE + idx + 1, 10);
-                const isEven = idx % 2 === 1;
-                return (
-                  <tr
-                    key={idx}
-                    className={`border-b border-[#F0F4F6] hover:bg-[#F6FAFC] transition-colors duration-100 group ${isEven ? 'bg-white' : 'bg-[#FAFCFD]'}`}
-                  >
-                    <td className="px-3 py-2.5 text-center text-xs font-semibold text-[#707979]">
-                      {sn}
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <span className="text-sm font-bold text-[#0B4F54] group-hover:underline cursor-pointer">
-                        {row.PurchaseOrderNumber}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <POTypeBadge type={row.PurchaseOrderType} />
-                    </td>
-                    <td className="px-3 py-2.5 text-sm text-[#404849] whitespace-nowrap">
-                      {row.PurchaseOrderDate}
-                    </td>
-                    <td className="px-3 py-2.5 max-w-[160px]">
-                      <span className="text-sm text-[#181C1E] break-all leading-tight block">
-                        {row.InvoiceNumber}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-sm text-[#404849] whitespace-nowrap">
-                      {row.ReceiptInvoiceDate}
-                    </td>
-                    <td className="px-3 py-2.5 text-center text-sm text-[#707979] font-medium">
-                      {row.InvoiceGRNFGap || '0'}
-                    </td>
-                    <td className="px-3 py-2.5 text-center">
-                      <PctBadge pct={row.PAmountGRNFPrint} />
-                    </td>
-                    <td className="px-3 py-2.5 text-center">
-                      <PctBadge pct={row.PAmountGRVPrint} />
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4 px-1">
-          <span className="text-xs text-[#707979]">
-            Showing {Math.min((currentPage - 1) * ROWS_PER_PAGE + 1, filtered.length)}–{Math.min(currentPage * ROWS_PER_PAGE, filtered.length)} of {filtered.length}
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#CFD8DC] text-[#404849] hover:bg-[#F0F4F6] disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs"
-            >
-              <i className="fa-solid fa-chevron-left text-[10px]" />
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-              <button
-                key={p}
-                onClick={() => setCurrentPage(p)}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold transition-colors ${
-                  p === currentPage
-                    ? 'bg-[#0B4F54] text-white border border-[#0B4F54]'
-                    : 'border border-[#CFD8DC] text-[#404849] hover:bg-[#F0F4F6]'
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-            <button
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#CFD8DC] text-[#404849] hover:bg-[#F0F4F6] disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-xs"
-            >
-              <i className="fa-solid fa-chevron-right text-[10px]" />
-            </button>
-          </div>
-        </div>
-      )}
+      <Table
+        headers={headers}
+        rows={filtered}
+        page={page}
+        setPage={setPage}
+        rowsPerPage={10}
+        renderRow={(row, idx) => {
+          const sn = idx != null ? idx + 1 : 0;
+          return (
+            <>
+              <Td className="text-center text-xs font-semibold text-[#707979]">{sn}</Td>
+              <Td className="font-bold text-[#0B4F54]">{row.PurchaseOrderNumber}</Td>
+              <Td><POTypeBadge type={row.PurchaseOrderType} /></Td>
+              <Td className="whitespace-nowrap">{row.PurchaseOrderDate}</Td>
+              <Td className="max-w-[160px]"><span className="break-all leading-tight block">{row.InvoiceNumber}</span></Td>
+              <Td className="whitespace-nowrap">{row.ReceiptInvoiceDate}</Td>
+              <Td className="text-center font-medium text-[#707979]">{row.InvoiceGRNFGap || '0'}</Td>
+              <Td className="text-center"><PctBadge pct={row.PAmountGRNFPrint} /></Td>
+              <Td className="text-center"><PctBadge pct={row.PAmountGRVPrint} /></Td>
+            </>
+          );
+        }}
+      />
     </div>
   );
 }
 
 
 /** Purchase Order Detail Table */
-function PODetailTable({ headers, rows }: any) {
-  const LABEL_MAP = {
-    PONo: 'PO No',
-    TenderNumber: 'Tender No',
-    ItemName: 'Item',
-    Supplier: 'Supplier',
-    TenderType: 'Tender Type',
-    PODate: 'PO Date',
-    POType: 'PO Type',
-    FundingSource: 'Funding Source',
-    Unit: 'Unit',
-    Quantity: 'Quantity',
-    UnitPrice: 'Unit Price',
-    TotalAmount: 'Total Amount',
-    Currency: 'Currency',
-    Manufacturer: 'Manufacturer',
-    Country: 'Country',
-    LocalAgent: 'Local Agent',
-  };
+const LABEL_MAP = {
+  PONo: 'PO No',
+  TenderNumber: 'Tender No',
+  ItemName: 'Item',
+  Supplier: 'Supplier',
+  TenderType: 'Tender Type',
+  PODate: 'PO Date',
+  POType: 'PO Type',
+  FundingSource: 'Funding Source',
+  Unit: 'Unit',
+  Quantity: 'Quantity',
+  UnitPrice: 'Unit Price',
+  TotalAmount: 'Total Amount',
+  Currency: 'Currency',
+  Manufacturer: 'Manufacturer',
+  Country: 'Country',
+  LocalAgent: 'Local Agent',
+};
+
+function PODetailTable({ headers, rows, page, setPage }: any) {
+  const tableHeaders = headers.map(h => ({ key: h, label: LABEL_MAP[h] || h }));
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-[#CFD8DC]">
-      <table className="w-full min-w-[1100px]">
-        <thead className="bg-[#F0F4F6] border-b border-[#CFD8DC]">
-          <tr>
-            {headers.map(h => (
-              <th key={h} className="px-3 py-3 text-left text-[10px] font-bold uppercase tracking-[0.07em] text-[#707979] whitespace-nowrap">
-                {LABEL_MAP[h] || h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 ? (
-            <tr>
-              <td colSpan={headers.length} className="py-16 text-center">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-[#F0F4F6] flex items-center justify-center">
-                    <i className="fa-solid fa-file-circle-plus text-xl text-[#707979]" />
-                  </div>
-                  <div className="text-sm font-semibold text-[#404849]">No purchase order records</div>
-                  <div className="text-xs text-[#707979]">Purchase order detail data will appear here once available</div>
-                </div>
-              </td>
-            </tr>
-          ) : (
-            rows.map((row, i) => (
-              <tr key={i} className="border-b border-[#F0F4F6] hover:bg-[#F6FAFC] transition-colors">
-                {headers.map(h => (
-                  <td key={h} className="px-3 py-2.5 text-sm text-[#404849]">{row[h] || '—'}</td>
-                ))}
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+    <Table
+      headers={tableHeaders}
+      rows={rows}
+      page={page}
+      setPage={setPage}
+      rowsPerPage={10}
+      renderRow={(row) => (
+        <>
+          {headers.map(h => (
+            <Td key={h}>{row[h] || '—'}</Td>
+          ))}
+        </>
+      )}
+    />
   );
 }
 
@@ -501,10 +365,31 @@ function ShipmentStatus() {
   const [shipmentRows, setShipmentRows] = useState([]);
   const [poHeaders, setPOHeaders] = useState([]);
   const [poRows, setPORows] = useState([]);
+  const [barOpenIdx, setBarOpenIdx] = useState(-1);
+  const [shipmentPage, setShipmentPage] = useState(1);
+  const [poDetailPage, setPODetailPage] = useState(1);
+
+  const useMediaQuery = (query: string) => {
+    const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+    useEffect(() => {
+      const mq = window.matchMedia(query);
+      const onChange = () => setMatches(mq.matches);
+      mq.addEventListener('change', onChange);
+      return () => mq.removeEventListener('change', onChange);
+    }, [query]);
+    return matches;
+  };
+
+  const isMobile = useMediaQuery('(max-width: 767px)');
+
+  const [kpiPage, setKpiPage] = useState(0);
+  const [cardsPerPage, setCardsPerPage] = useState(() => window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1);
 
   // Load data when org changes
   useEffect(() => {
     setIsLoading(true);
+    setShipmentPage(1);
+    setPODetailPage(1);
     
     const mainEl = document.querySelector('main');
     if (mainEl) {
@@ -536,6 +421,38 @@ function ShipmentStatus() {
     return { total, zeroGRNF, highGRNF, fullGRNF };
   }, [shipmentRows]);
 
+  useEffect(() => {
+    const onResize = () => {
+      const next = window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1;
+      setCardsPerPage(prev => {
+        if (prev !== next) setKpiPage(0);
+        return next;
+      });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const kpiCards = useMemo(() => [
+    { icon: 'fa-truck-fast', iconBg: 'bg-[#0B4F54]/10', iconColor: 'text-[#0B4F54]', label: 'Total Shipments', value: stats.total, valueColor: 'text-[#0B4F54]', subtitle: 'HPR active shipments' },
+    { icon: 'fa-circle-check', iconBg: 'bg-[#059669]/10', iconColor: 'text-[#059669]', label: '≥99% GRNF', value: stats.highGRNF, valueColor: 'text-[#059669]', subtitle: `${((stats.highGRNF / stats.total) * 100).toFixed(0)}% of total` },
+    { icon: 'fa-circle-xmark', iconBg: 'bg-[#BA1A1A]/10', iconColor: 'text-[#BA1A1A]', label: '0% GRNF', value: stats.zeroGRNF, valueColor: 'text-[#BA1A1A]', subtitle: 'Requires attention' },
+    { icon: 'fa-trophy', iconBg: 'bg-[#059669]/10', iconColor: 'text-[#059669]', label: '100% Complete', value: stats.fullGRNF, valueColor: 'text-[#059669]', subtitle: 'Fully received' },
+  ], [stats]);
+
+  const kpiTotalPages = Math.ceil(kpiCards.length / cardsPerPage);
+
+  const touchStartX = useRef(0);
+  const touchDeltaX = useRef(0);
+  const handleTouchStart = (e: any) => { touchStartX.current = e.touches[0].clientX; touchDeltaX.current = 0; };
+  const handleTouchMove = (e: any) => { touchDeltaX.current = e.touches[0].clientX - touchStartX.current; };
+  const handleTouchEnd = () => {
+    if (Math.abs(touchDeltaX.current) > 50) {
+      if (touchDeltaX.current < 0 && kpiPage < kpiTotalPages - 1) setKpiPage(p => p + 1);
+      else if (touchDeltaX.current > 0 && kpiPage > 0) setKpiPage(p => p - 1);
+    }
+  };
+
   // Donut chart data — GRNF distribution
   const donutData = useMemo(() => {
     const full = shipmentRows.filter(r => { const p = parsePercent(r.PAmountGRNFPrint); return p !== null && p >= 100; }).length;
@@ -563,14 +480,14 @@ function ShipmentStatus() {
   }, [shipmentRows]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       {/* ── Header Row ────────────────────────────────────────────────── */}
       <StickyHeader className="flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A3235] tracking-tight leading-tight">
+          <h1 className="text-xl font-bold text-[#0A3235] tracking-tight leading-tight">
             Shipment Status
           </h1>
-          <p className="text-sm text-[#707979] mt-0.5">
+          <p className="text-xs text-[#707979] mt-0.5">
           EPSS — {activeOrg === 'HPR' ? 'Health Programmes (HPR)' : 'Revolving Drug Fund (RDF)'} Shipment Tracking
         </p>
         </div>
@@ -596,12 +513,47 @@ function ShipmentStatus() {
       {!isLoading && (
         <>
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <KPICard variant="detailed" icon="fa-truck-fast" iconBg="bg-[#0B4F54]/10" iconColor="text-[#0B4F54]" label="Total Shipments" value={stats.total} valueColor="text-[#0B4F54]" subtitle="HPR active shipments" />
-            <KPICard variant="detailed" icon="fa-circle-check" iconBg="bg-[#059669]/10" iconColor="text-[#059669]" label="≥99% GRNF" value={stats.highGRNF} valueColor="text-[#059669]" subtitle={`${((stats.highGRNF / stats.total) * 100).toFixed(0)}% of total`} />
-            <KPICard variant="detailed" icon="fa-circle-xmark" iconBg="bg-[#BA1A1A]/10" iconColor="text-[#BA1A1A]" label="0% GRNF" value={stats.zeroGRNF} valueColor="text-[#BA1A1A]" subtitle="Requires attention" />
-            <KPICard variant="detailed" icon="fa-trophy" iconBg="bg-[#059669]/10" iconColor="text-[#059669]" label="100% Complete" value={stats.fullGRNF} valueColor="text-[#059669]" subtitle="Fully received" />
-          </div>
+          {isMobile ? (
+            <div className="space-y-3">
+              <div className="relative">
+                <div className="relative overflow-hidden w-full" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+                  <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${kpiPage * 100}%)` }}>
+                    {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
+                      <div key={pageIdx} className="grid grid-cols-1 gap-3 w-full shrink-0">
+                        {kpiCards.slice(pageIdx * cardsPerPage, pageIdx * cardsPerPage + cardsPerPage).map((c, cardIdx) => (
+                          <div key={c.label || cardIdx}>
+                            <KPICard variant="detailed" {...c} />
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {kpiTotalPages > 1 && (
+                <div className="flex flex-col items-center gap-1">
+                  <div className="flex items-center justify-center gap-1.5">
+                    {Array.from({ length: kpiTotalPages }, (_, i) => (
+                      <button key={i} type="button" onClick={() => setKpiPage(i)}
+                        className={`w-2 h-2 rounded-full transition-all duration-300 ${i === kpiPage ? 'bg-[#0B4F54] w-5' : 'bg-[#CFD8DC] hover:bg-[#707979]'}`}
+                        aria-label={`Go to page ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-[#707979]/50 font-semibold tracking-wider animate-pulse">
+                    <i className="fa-solid fa-chevron-left text-[8px]" /> SWIPE <i className="fa-solid fa-chevron-right text-[8px]" />
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <KPICard variant="detailed" icon="fa-truck-fast" iconBg="bg-[#0B4F54]/10" iconColor="text-[#0B4F54]" label="Total Shipments" value={stats.total} valueColor="text-[#0B4F54]" subtitle="HPR active shipments" />
+              <KPICard variant="detailed" icon="fa-circle-check" iconBg="bg-[#059669]/10" iconColor="text-[#059669]" label="≥99% GRNF" value={stats.highGRNF} valueColor="text-[#059669]" subtitle={`${((stats.highGRNF / stats.total) * 100).toFixed(0)}% of total`} />
+              <KPICard variant="detailed" icon="fa-circle-xmark" iconBg="bg-[#BA1A1A]/10" iconColor="text-[#BA1A1A]" label="0% GRNF" value={stats.zeroGRNF} valueColor="text-[#BA1A1A]" subtitle="Requires attention" />
+              <KPICard variant="detailed" icon="fa-trophy" iconBg="bg-[#059669]/10" iconColor="text-[#059669]" label="100% Complete" value={stats.fullGRNF} valueColor="text-[#059669]" subtitle="Fully received" />
+            </div>
+          )}
 
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
@@ -617,7 +569,9 @@ function ShipmentStatus() {
                   <IconButton variant="info" contentId="shipment-grnf-distribution" />
                 </div>
               </div>
-              <PieChart data={donutData} />
+              <div className="w-full h-[240px] flex items-center justify-center">
+                <PieChart data={donutData} />
+              </div>
             </div>
 
             {/* Horizontal Bar — PO Type */}
@@ -626,59 +580,104 @@ function ShipmentStatus() {
                 <h3 className="text-sm font-bold text-[#181C1E]">Shipments by PO Type</h3>
                 <p className="text-xs text-[#707979] mt-0.5">{activeOrg} — number of shipments per purchase order category</p>
               </div>
-              <div className="flex-1 flex items-center">
-                <HBarChart data={barData} />
-              </div>
+              {isMobile ? (
+                <div className="space-y-1 mt-2">
+                  {barData.map((d, i) => {
+                    const isOpen = barOpenIdx === i;
+                    return (
+                      <div key={d.label} className="rounded-xl border border-[#CFD8DC] bg-white overflow-hidden">
+                        <button onClick={() => setBarOpenIdx(prev => prev === i ? -1 : i)}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[#F6FAFC]"
+                        >
+                          <span className="flex-1 text-sm font-semibold text-[#181C1E] truncate">{d.label}</span>
+                          <span className="text-xs font-bold text-[#707979] tabular-nums">{d.value}</span>
+                          <i className={`fa-solid fa-chevron-down text-[10px] text-[#707979] transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {isOpen && (
+                          <div className="px-4 pb-4 pt-0">
+                            <div className="h-px bg-[#CFD8DC]/50 mb-3" />
+                            <div className="bg-[#F6FAFC] rounded-lg p-4 space-y-2 text-sm">
+                              <div className="flex justify-between"><span className="text-[#707979]">Type</span><span className="font-bold text-[#181C1E]">{d.label}</span></div>
+                              <div className="flex justify-between"><span className="text-[#707979]">Count</span><span className="font-bold text-[#181C1E]">{d.value}</span></div>
+                              <div className="flex justify-between"><span className="text-[#707979]">Percentage</span><span className="font-bold text-[#181C1E]">{stats.total > 0 ? ((d.value / stats.total) * 100).toFixed(1) : 0}%</span></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center">
+                  <HBarChart data={barData} />
+                </div>
+              )}
             </div>
           </div>
 
           {/* Shipment Status Table Section */}
           <div className="bg-white rounded-xl border border-[#CFD8DC] shadow-[0px_4px_20px_rgba(10,50,53,0.06)] overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#F0F4F6] flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <h2 className="text-base font-bold text-[#181C1E] flex items-center gap-2">
+            <div className="px-6 py-4 border-b border-[#F0F4F6]">
+              <div className="flex items-center justify-between gap-4">
+                <h2 className="text-base font-bold text-[#181C1E] flex items-center gap-2 min-w-0">
                   <div className="w-1.5 h-5 rounded-full bg-[#0B4F54]" />
                   Shipment Status: EPSS
                 </h2>
-                <p className="text-xs text-[#707979] mt-0.5 ml-3.5">{activeOrg} — Purchase order shipment tracking with GRNF/GRV completion</p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <IconButton variant="info" contentId="shipment-status-epss" />
+                  <ExportDropdown
+                    headers={[
+                      { key: 'PurchaseOrderNumber', label: 'PO Number' },
+                      { key: 'PurchaseOrderType', label: 'PO Type' },
+                      { key: 'PurchaseOrderDate', label: 'PO Date' },
+                      { key: 'InvoiceNumber', label: 'Invoice Number' },
+                      { key: 'ReceiptInvoiceDate', label: 'Invoice Date' },
+                      { key: 'InvoiceGRNFGap', label: 'Invoice→GRNF Gap' },
+                      { key: 'PAmountGRNFPrint', label: 'GRNF%' },
+                      { key: 'PAmountGRVPrint', label: 'GRV%' },
+                    ]}
+                    rows={shipmentRows}
+                    filename="shipment-status"
+                  />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <IconButton variant="info" contentId="shipment-status-epss" />
-                <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#CFD8DC] text-xs font-semibold text-[#404849] hover:bg-[#F0F4F6] transition-colors">
-                  <i className="fa-solid fa-download text-[10px]" />
-                  Export
-                </button>
-              </div>
+              <p className="text-xs text-[#707979] mt-1">{activeOrg} — Purchase order shipment tracking with GRNF/GRV completion</p>
             </div>
             <div className="p-6">
-              <ShipmentTable rows={shipmentRows} />
+              <ShipmentTable rows={shipmentRows} page={shipmentPage} setPage={setShipmentPage} />
             </div>
           </div>
 
           {/* Purchase Order Detail Report */}
           <div className="bg-white rounded-xl border border-[#CFD8DC] shadow-[0px_4px_20px_rgba(10,50,53,0.06)] overflow-hidden">
-            <div className="px-6 py-4 border-b border-[#F0F4F6] flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <h2 className="text-base font-bold text-[#181C1E] flex items-center gap-2">
+            <div className="px-6 py-4 border-b border-[#F0F4F6]">
+              <div className="flex items-center justify-between gap-4">
+                <h2 className="text-base font-bold text-[#181C1E] flex items-center gap-2 min-w-0">
                   <div className="w-1.5 h-5 rounded-full bg-[#515F74]" />
                   Purchase Order Detail Report
                 </h2>
-                <p className="text-xs text-[#707979] mt-0.5 ml-3.5">Detailed line-item view of purchase orders including supplier, funding, and pricing</p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <IconButton variant="info" contentId="po-detail-report" />
+                  <ExportDropdown
+                    headers={poHeaders.map(h => ({ key: h, label: LABEL_MAP[h] || h }))}
+                    rows={poRows}
+                    filename="po-detail-report"
+                  />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <IconButton variant="info" contentId="po-detail-report" />
-                <span className="text-xs font-medium text-[#707979] bg-[#F0F4F6] px-2.5 py-1 rounded-full">
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-xs text-[#707979]">Detailed line-item view of purchase orders including supplier, funding, and pricing</p>
+                <span className="text-xs font-medium text-[#707979] bg-[#F0F4F6] px-2.5 py-1 rounded-full hidden md:inline">
                   {poRows.length} records
                 </span>
-                <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#CFD8DC] text-xs font-semibold text-[#404849] hover:bg-[#F0F4F6] transition-colors">
-                  <i className="fa-solid fa-download text-[10px]" />
-                  Export
-                </button>
               </div>
+              <span className="w-fit text-xs font-medium text-[#707979] bg-[#F0F4F6] px-2.5 py-1 rounded-full md:hidden mt-1">
+                {poRows.length} records
+              </span>
             </div>
             <div className="p-6">
               {poHeaders.length > 0 ? (
-                <PODetailTable headers={poHeaders} rows={poRows} />
+                <PODetailTable headers={poHeaders} rows={poRows} page={poDetailPage} setPage={setPODetailPage} />
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <i className="fa-solid fa-table text-3xl text-[#CFD8DC] mb-3" />
