@@ -91,11 +91,15 @@ export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage,
   const isTrendMobile = useMediaQuery('(max-width: 767px)');
 
   useEffect(() => {
+    let frameId: number;
     const onResize = () => {
-      const next = window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1;
-      setCardsPerPage(prev => {
-        if (prev !== next) setKpiPage(0);
-        return next;
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        const next = window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1;
+        setCardsPerPage(prev => {
+          if (prev !== next) setKpiPage(0);
+          return next;
+        });
       });
     };
     window.addEventListener('resize', onResize);

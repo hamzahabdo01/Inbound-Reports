@@ -21,6 +21,10 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
 
   const labels: string[] = [...new Set<string>(data.flatMap((item: any) => item.segments.map((seg: any) => seg.label)))];
 
+  const BAR_MAX_W = 64;
+  const BAR_GAP = 6;
+  const barsMaxWidth = Math.min(data.length * BAR_MAX_W + (data.length - 1) * BAR_GAP, 9999);
+
   // For absolute mode: find max total to scale bars
   const totals = data.map((item) => item.segments.reduce((sum, s) => sum + s.value, 0));
   const absMax = Math.max(...totals, 1);
@@ -88,7 +92,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
           })}
 
           {/* Bars row */}
-          <div className="absolute left-0 right-0 bottom-6 flex items-end gap-1.5" style={{ height }}>
+          <div className="absolute left-0 right-0 bottom-6 flex items-end gap-1.5" style={{ height, maxWidth: barsMaxWidth, margin: '0 auto' }}>
             {data.map((item) => {
               const total = item.segments.reduce((sum, s) => sum + s.value, 0);
               const barHeightPct = normalized ? 100 : (total / absMax) * 100;
@@ -116,7 +120,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
                             key={seg.label}
                             style={{
                               height: `${segPct}%`,
-                              backgroundColor: getChartColor(labels.indexOf(seg.label)),
+                              backgroundColor: seg.color || getChartColor(labels.indexOf(seg.label)),
                               minHeight: segPct > 0 ? 2 : 0,
                             }}
                           />
@@ -137,7 +141,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
           </div>
 
           {/* X-axis labels */}
-          <div className="absolute left-0 right-0 bottom-0 flex gap-1.5" style={{ height: 24 }}>
+          <div className="absolute left-0 right-0 bottom-0 flex gap-1.5" style={{ height: 24, maxWidth: barsMaxWidth, margin: '0 auto' }}>
             {data.map((item) => (
               <div
                 key={item.label}
@@ -166,10 +170,10 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
             >
               <div className="font-bold text-[#86BFC5] mb-1.5 truncate max-w-[200px]">{tooltip.barLabel}</div>
               {tooltip.segments.map((seg) => {
-                const color = getChartColor(labels.indexOf(seg.label));
+                const color = seg.color || getChartColor(labels.indexOf(seg.label));
                 return (
                   <div key={seg.label} className="flex items-center gap-1.5 mt-1 first:mt-0">
-                    <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: color }} />
+                    <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
                     <span className="font-semibold">{seg.label}:</span>
                     <span>{seg.value.toLocaleString()}</span>
                     <span className="text-white/60">({seg.pct}%)</span>
@@ -183,12 +187,17 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
 
       {/* Legend */}
       <div className="flex flex-wrap justify-center gap-x-5 gap-y-1.5 mt-3">
-        {labels.map((label, index) => (
-          <span key={label} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-on-surface-variant">
-            <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: getChartColor(index) }} />
-            {label}
-          </span>
-        ))}
+        {labels.map((label, index) => {
+          const firstItemWithSeg = data.find((item) => item.segments.some((s) => s.label === label));
+          const segColor = firstItemWithSeg?.segments.find((s) => s.label === label)?.color;
+          const color = segColor || getChartColor(index);
+          return (
+            <span key={label} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-on-surface-variant">
+              <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
+              {label}
+            </span>
+          );
+        })}
       </div>
     </div>
   );

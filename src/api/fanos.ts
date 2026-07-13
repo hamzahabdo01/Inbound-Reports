@@ -879,6 +879,7 @@ export const MainDashboard_WebApi = {
     ProgramCode?: string
     ItemSN?: number
     UnitSN?: number
+    ProductSN?: string
   }): Promise<AxiosResponse<ValueResult>> {
     return fanosClient.get('/api/MainDashboard_WebApi/ReceiveTrend', { params })
   },
@@ -1204,6 +1205,7 @@ export const SS_WebApi = {
   getPoRiRcByDP(params?: {
     ModeCode?: string
     ProgramCode?: string
+    ProductSN?: string
   }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
     return fanosClient.get('/api/SS_WebApi/PoRiRcByDP', { params })
   },
@@ -1233,6 +1235,47 @@ export const SS_WebApi = {
   }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
     return fanosClient.get('/api/SS_WebApi/SOHbyIWAct', { params })
   },
+
+  getNationalMOS(params?: {
+    ModeCode?: string
+    ProductSN?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/SS_WebApi/NationalMOS', { params })
+  },
+
+  getStockutilizationByEnvironment(params?: {
+    ModeCode?: string
+    EnvironmentGroupCode?: string
+    ProductSN?: string
+    OrderBy?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/SS_WebApi/stockutilizationByEnvironment', { params })
+  },
+
+  getSohNearyExpiryBreakdownByEnvironment(params?: {
+    ModeCode?: string
+    EnvironmentGroupCode?: string
+    ProductSN?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/SS_WebApi/SohNearyExpiryBreakdownByEnvironment', { params })
+  },
+
+  getDaysOutOfStockBySite(params?: {
+    ModeCode?: string
+    EnvironmentGroupCode?: string
+    ProductSN?: string
+    From?: string
+    To?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/SS_WebApi/DaysOutOfStockBySite', { params })
+  },
+
+  getSOHByRegion(params?: {
+    ModeCode?: string
+    ProductSN?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/SS_WebApi/SOHByRegion', { params })
+  },
 }
 
 // ─── OIH_WebApi ─────────────────────────────────────────────────────────────
@@ -1261,6 +1304,7 @@ export const OIH_WebApi = {
     FiscalYear?: string
     ModeCode?: string
     ProgramCode?: string
+    ProductSN?: string
   }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
     return fanosClient.get('/api/OIH_WebApi/DistributionByFacilityType', { params })
   },
@@ -1269,6 +1313,7 @@ export const OIH_WebApi = {
     ModeCode?: string
     ProgramCode?: string
     FiscalYear?: string
+    ProductSN?: string
   }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
     return fanosClient.get('/api/OIH_WebApi/DistributionByOwnershipType', { params })
   },
@@ -1280,6 +1325,7 @@ export const OIH_WebApi = {
     ProgramCode?: string
     From?: string
     To?: string
+    ProductSN?: string
   }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
     return fanosClient.get('/api/OIH_WebApi/ItemDistributionHub2Facility', { params })
   },
@@ -1346,6 +1392,7 @@ export const POD_WebApi = {
     ModeCode?: string
     ProgramCode?: string
     FiscalYear?: string
+    ProductSN?: string
   }): Promise<AxiosResponse<ItemProcurerResult>> {
     return fanosClient.get('/api/POD_WebApi/ItemProcurer', { params })
   },
@@ -1354,6 +1401,7 @@ export const POD_WebApi = {
     ModeCode?: string
     ProgramCode?: string
     FiscalYear?: string
+    ProductSN?: string
   }): Promise<AxiosResponse<ItemProcurerResult>> {
     return fanosClient.get('/api/POD_WebApi/ItemFundingSourceAndProcurer', { params })
   },
@@ -1387,6 +1435,15 @@ export const POHRIHRCH_WebApi = {
   }): Promise<AxiosResponse<CenterPipeline3Result>> {
     return fanosClient.get('/api/POHRIHRCH_WebApi/CenterPipeline3', { params })
   },
+
+  getHubPipelineByEnvironment(params?: {
+    ModeCode?: string
+    EnvironmentGroupCode?: string
+    ProductSN?: string
+    OrderBy?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/POHRIHRCH_WebApi/HubPipelineByEnvironment', { params })
+  },
 }
 
 // ─── BinCard_WebApi ────────────────────────────────────────────────────────────
@@ -1418,6 +1475,7 @@ export const RCD_WebApi = {
     FiscalYear?: string
     OrderBy?: string
     ProgramCode?: string
+    ProductSN?: string
   }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
     return fanosClient.get('/api/RCD_WebApi/ItemByManufacturer', { params })
   },
@@ -1425,6 +1483,7 @@ export const RCD_WebApi = {
     ModeCode?: string
     FiscalYear?: string
     ProgramCode?: string
+    ProductSN?: string
   }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
     return fanosClient.get('/api/RCD_WebApi/ItemBySupplier', { params })
   },
@@ -1433,6 +1492,7 @@ export const RCD_WebApi = {
     FiscalYear?: string
     ProgramCode?: string
     OrderBy?: string
+    ProductSN?: string
   }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
     return fanosClient.get('/api/RCD_WebApi/ItemCountry', { params })
   },
@@ -1471,6 +1531,19 @@ export const IUBVIUI_WebApi = {
     ProgramCode?: string
   }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
     return fanosClient.get('/api/IUBVIUI_WebApi/ProgramProducts', { params })
+  },
+}
+
+// ─── OIDRCD_WebApi ──────────────────────────────────────────────────────────
+
+export const OIDRCD_WebApi = {
+  getByDateIU_MostRecentIssueReceive(params?: {
+    ModeCode?: string
+    ProductSN?: string
+    From?: string
+    To?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/OIDRCD_WebApi/ByDateIU_MostRecentIssueReceive', { params })
   },
 }
 

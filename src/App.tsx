@@ -59,10 +59,14 @@ function AppContent() {
   }, [activeSection]);
 
   useEffect(() => {
+    let frameId: number;
     const onResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (!mobile && window.innerWidth < 1280) setSidebarVisible(false);
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        const mobile = window.innerWidth < 768;
+        setIsMobile(mobile);
+        if (!mobile && window.innerWidth < 1280) setSidebarVisible(false);
+      });
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);

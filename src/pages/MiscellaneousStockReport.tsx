@@ -108,6 +108,40 @@ function MiscellaneousStockReport() {
   // Row Expansion (for dashboard summary view)
   const [expandedRow, setExpandedRow] = useState(null);
 
+  // Mobile fullscreen + landscape mode
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [useCSSRotation, setUseCSSRotation] = useState(false); // CSS fallback for iOS
+
+  const enterFullscreen = () => {
+    setIsFullscreen(true);
+    document.body.style.overflow = 'hidden';
+    try {
+      const lockPromise = (screen as any).orientation?.lock?.('landscape');
+      if (lockPromise && typeof lockPromise.then === 'function') {
+        lockPromise.catch(() => setUseCSSRotation(true));
+      } else {
+        setUseCSSRotation(true); // no API support — use CSS rotation
+      }
+    } catch {
+      setUseCSSRotation(true);
+    }
+  };
+
+  const exitFullscreen = () => {
+    setIsFullscreen(false);
+    setUseCSSRotation(false);
+    document.body.style.overflow = '';
+    try { (screen as any).orientation?.unlock?.(); } catch (_) {}
+  };
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') exitFullscreen(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFullscreen]);
+
   // Track the scroll container's visible width so the expanded row never stretches beyond the viewport
   const scrollRef = useRef(null);
   const [visibleWidth, setVisibleWidth] = useState(null);
@@ -1277,18 +1311,141 @@ function MiscellaneousStockReport() {
           );
           
           if (isMobile) {
-            return (
-              <div className="relative">
-                <div ref={scrollRef} tabIndex={0}
-                  className="overflow-x-auto -webkit-overflow-scrolling:touch outline-none focus:ring-2 focus:ring-primary/20"
-                  style={{ scrollBehavior: 'smooth' }}
+            const scrollContent = (
+              <div className="relative h-full">
+                <div
+                  ref={isFullscreen ? undefined : scrollRef}
+                  tabIndex={0}
+                  className={`overflow-x-auto outline-none focus:ring-2 focus:ring-primary/20 ${
+                    isFullscreen ? 'h-full overflow-y-auto' : ''
+                  }`}
+                  style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' } as any}
                 >
                   <div style={{ minWidth: '960px' }}>
                     {stockTable}
                   </div>
                 </div>
-                <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white/80 to-transparent pointer-events-none" />
+                {!isFullscreen && (
+                  <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white/80 to-transparent pointer-events-none" />
+                )}
               </div>
+            );
+
+            return (
+              <>
+                {/* Normal (non-fullscreen) mobile table */}
+                {!isFullscreen && (
+                  <div className="relative">
+                    {scrollContent}
+                    {/* Fullscreen / landscape open button */}
+                    <button
+                      type="button"
+                      onClick={enterFullscreen}
+                      className="md:hidden absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold shadow-md hover:bg-primary-dark active:scale-95 transition-all"
+                      aria-label="View table in landscape fullscreen"
+                    >
+                      <i className="fa-solid fa-rotate text-[11px]" />
+                      Landscape
+                    </button>
+                  </div>
+                )}
+
+                {/* Landscape fullscreen overlay */}
+                {isFullscreen && (
+                  <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Stock Report Table — Landscape"
+                    style={useCSSRotation ? {
+                      // CSS forced-landscape: rotate the overlay 90° and swap dimensions
+                      position: 'fixed' as const,
+                      zIndex: 9999,
+                      width: '100vh',   // device height becomes landscape width
+                      height: '100vw',  // device width becomes landscape height
+                      top: '50%',
+                      left: '50%',
+                      marginTop: '-50vw',
+                      marginLeft: '-50vh',
+                      transform: 'rotate(90deg)',
+                      transformOrigin: 'center center',
+                      backgroundColor: 'white',
+                      display: 'flex',
+                      flexDirection: 'column' as const,
+                      overflow: 'hidden',
+                    } : {
+                      position: 'fixed' as const,
+                      inset: 0,
+                      zIndex: 9999,
+                      backgroundColor: 'white',
+                      display: 'flex',
+                      flexDirection: 'column' as const,
+                    }}
+                  >
+                    {/* Header bar */}
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-primary text-white shrink-0 shadow-md">
+                      <div className="flex items-center gap-2">
+                        <i className="fa-solid fa-table text-sm" />
+                        <span className="text-sm font-bold tracking-wide">Stock Report</span>
+                        <span className="text-xs opacity-70 font-medium ml-1">{filteredData.length} items</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={exitFullscreen}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-semibold active:scale-95 transition-all"
+                        aria-label="Exit landscape view"
+                      >
+                        <i className="fa-solid fa-compress text-[11px]" />
+                        Exit
+                      </button>
+                    </div>
+
+                    {/* Scrollable table area */}
+                    <div className="flex-1 overflow-auto" ref={scrollRef}>
+                      <div style={{ minWidth: '960px' }}>
+                        {stockTable}
+                      </div>
+                    </div>
+
+                    {/* Pagination footer */}
+                    <div className="flex items-center justify-between gap-3 py-2 px-4 bg-surface border-t border-outline-variant shrink-0">
+                      <select
+                        value={mobilePageSize}
+                        onChange={(e) => { setMobilePageSize(Number(e.target.value)); setCurrentPage(1); }}
+                        className="h-7 rounded border border-outline-variant bg-white px-1.5 text-xs text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                      </select>
+                      <span className="text-xs text-on-surface-variant font-medium tabular-nums">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="p-2 rounded border border-outline-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
+                          aria-label="Previous page"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className="p-2 rounded border border-outline-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
+                          aria-label="Next page"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             );
           }
           

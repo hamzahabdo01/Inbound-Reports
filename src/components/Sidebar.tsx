@@ -104,7 +104,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
           if (onNavigate) onNavigate(item.label);
           if (onClose) onClose();
         }}
-        className={`${linkBase} justify-start ${active ? linkActive : linkDefault}`}
+        className={`${linkBase} ${collapsed ? 'justify-center px-0' : 'justify-start'} ${active ? linkActive : linkDefault}`}
         title={collapsed ? item.label : undefined}
       >
         <i className={`fa-solid ${item.icon} text-sm w-4 text-center shrink-0 transition-colors ${
@@ -123,19 +123,24 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
         <button
           onClick={() => {
             if (collapsed) {
-              if (onNavigate) onNavigate(item.label);
+              if (onToggleCollapse) onToggleCollapse();
+              // expand sidebar first, then open the menu after the transition starts
+              requestAnimationFrame(() => {
+                toggle(item.label);
+                setExpanded(prev => ({ ...prev, [item.label]: true }));
+              });
             } else {
               toggle(item.label);
             }
           }}
-          className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 group ${
+          className={`w-full flex items-center ${collapsed ? 'justify-center px-0' : 'justify-between px-3'} py-2 rounded-lg text-sm font-medium transition-all duration-150 group ${
             (hasActiveChild(item) || item.label === activeSection)
               ? 'text-white bg-sidebar-active/30'
               : 'text-white/70 hover:bg-sidebar-hover hover:text-white'
           }`}
           title={collapsed ? item.label : undefined}
         >
-          <span className="flex items-center gap-3 min-w-0">
+          <span className={`flex items-center ${collapsed ? 'gap-0' : 'gap-3'} min-w-0`}>
             <i className={`fa-solid ${item.icon} text-sm w-4 text-center shrink-0 transition-colors ${
               (hasActiveChild(item) || item.label === activeSection)
                 ? 'text-sidebar-accent'
@@ -201,7 +206,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
       </aside>
     </div>
   ) : (
-    <aside className={`${collapsed ? 'w-[60px]' : 'w-[240px]'} shrink-0 flex flex-col h-screen max-h-dvh sticky top-0 z-40 bg-sidebar-bg text-white transition-all duration-200 overscroll-contain`}>
+    <aside className={`${collapsed ? 'w-[60px]' : 'w-[240px]'} shrink-0 flex flex-col h-screen max-h-dvh sticky top-0 z-40 bg-sidebar-bg text-white overscroll-contain`}>
       <div className="flex-1 overflow-y-auto px-2 xl:px-4 py-5 scrollbar-thin">
           <div className={`flex items-center mb-8 justify-between`}>
           <div className="flex items-center gap-3 min-w-0">
@@ -229,7 +234,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
       <div className="px-2 xl:px-3 py-2 border-t border-white/10 space-y-2">
         <button
           onClick={onLogout}
-          className={`w-full flex items-center gap-3 py-2 rounded-lg text-sm text-white/50 hover:text-error hover:bg-white/5 transition-all duration-150 px-3`}
+          className={`w-full flex items-center ${collapsed ? 'justify-center gap-0' : 'justify-start gap-3'} py-2 rounded-lg text-sm text-white/50 hover:text-error hover:bg-white/5 transition-all duration-150 ${collapsed ? 'px-0' : 'px-3'}`}
           title="Logout"
         >
           <i className="fa-solid fa-right-from-bracket text-sm w-4 text-center shrink-0"></i>

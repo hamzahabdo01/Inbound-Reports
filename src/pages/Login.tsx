@@ -17,9 +17,17 @@ export default function Login() {
   const [envPanelClosing, setEnvPanelClosing] = useState(false)
   const [loadingEnvs, setLoadingEnvs] = useState(true)
 
+  const submitRef = useRef<HTMLButtonElement>(null)
+
   const closeEnvPanel = () => {
     setEnvPanelClosing(true)
     setTimeout(() => { setShowEnvPanel(false); setEnvPanelClosing(false) }, 250)
+  }
+
+  const selectEnv = (env) => {
+    setSelectedEnv(env)
+    closeEnvPanel()
+    setTimeout(() => submitRef.current?.focus(), 300)
   }
 
   const fetched = useRef(false)
@@ -138,7 +146,7 @@ export default function Login() {
             <p className="mt-1.5 text-body-md text-[#6B7280]">Sign in to access Fanos Dashboard</p>
           </div>
 
-          <div className="space-y-5">
+          <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-5">
             <div>
               <div className={`relative rounded-lg border transition-all duration-200 bg-white ${error && !username.trim() ? 'border-error ring-2 ring-error/10' : focusedField === 'username' ? 'border-[#1a4a47] shadow-[0_0_0_3px_rgba(26,74,71,0.15)]' : 'border-[#B8C4CA] lg:border-[#CFD8DC] hover:border-[#1a4a47]/40'}`}>
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -151,6 +159,7 @@ export default function Login() {
                   onChange={(e) => { setUsername(e.target.value); setError(''); }}
                   onFocus={() => setFocusedField('username')}
                   onBlur={() => setFocusedField(null)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
                   placeholder="Username"
                   autoComplete="off"
                   className="w-full h-12 pl-10 pr-4 bg-white text-body-md text-on-surface placeholder:text-[#9CA3AF] focus:outline-none"
@@ -170,6 +179,7 @@ export default function Login() {
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
                   placeholder="Password"
                   autoComplete="off"
                   className="w-full h-12 pl-10 pr-10 bg-white text-body-md text-on-surface placeholder:text-[#9CA3AF] focus:outline-none"
@@ -204,11 +214,11 @@ export default function Login() {
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={handleLogin}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
-              disabled={loading}
+              <button
+                  ref={submitRef}
+                  type="submit"
+                  onClick={handleLogin}
+                  disabled={loading}
               className="relative w-full h-12 rounded-lg bg-[#1a4a47] text-white text-label-sm hover:bg-[#1f5a56] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150 overflow-hidden"
             >
               {loading ? (
@@ -220,7 +230,7 @@ export default function Login() {
                 'Sign in'
               )}
             </button>
-          </div>
+          </form>
 
           {/* Mobile footer */}
           <div className="lg:hidden mt-8 text-center space-y-3">
@@ -264,7 +274,7 @@ export default function Login() {
               ) : environments.map((env, i) => (
                 <button
                   key={env.EnvironmentCode || `env-${i}`}
-                  onClick={() => { setSelectedEnv(env); closeEnvPanel() }}
+                  onClick={() => selectEnv(env)}
                   className={`w-full flex items-center gap-3 px-6 py-3 text-left text-body-md transition-colors hover:bg-white/10 ${env.EnvironmentCode === selectedEnv?.EnvironmentCode ? 'bg-white/15 text-white font-semibold' : 'text-white/70'}`}
                 >
                   <i className={`fa-solid fa-location-dot text-sm w-4 ${env.EnvironmentCode === selectedEnv?.EnvironmentCode ? 'text-white' : 'text-white/40'}`} />

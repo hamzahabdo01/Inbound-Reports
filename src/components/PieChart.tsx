@@ -83,7 +83,7 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
           <div className="w-[260px] shrink-0 space-y-2">
             {slices.map((slice, index) => (
               <button
-                key={slice.label}
+                key={`${slice.label}-${index}`}
                 type="button"
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
@@ -104,7 +104,7 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
               if (isFullCircle) {
                 return (
                   <circle
-                    key={slice.label}
+                    key={`${slice.label}-${index}`}
                     cx={cx}
                     cy={cy}
                     r={r}
@@ -121,7 +121,7 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
               const path = describeSlice(cx, cy, r, slice.startAngle, slice.endAngle, activeSlice ? (isCompact ? 5 : 7) : 2);
               return (
                 <path
-                  key={slice.label}
+                  key={`${slice.label}-${index}`}
                   d={path}
                   fill={slice.color}
                   stroke="#ffffff"
@@ -159,10 +159,10 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
       </div>
 
       {!legendLeft && (
-        <div className={`flex flex-nowrap items-center justify-center overflow-x-auto ${isCompact ? 'gap-x-3 gap-y-0' : 'gap-x-5 gap-y-0'}`} style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className={`flex flex-wrap items-center justify-center ${isCompact ? 'gap-x-3 gap-y-1.5' : 'gap-x-5 gap-y-2'}`}>
           {slices.map((slice, index) => (
             <button
-              key={slice.label}
+              key={`${slice.label}-${index}`}
               type="button"
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}

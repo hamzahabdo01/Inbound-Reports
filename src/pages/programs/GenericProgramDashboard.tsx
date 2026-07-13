@@ -44,6 +44,7 @@ function processStockRows(apiStock) {
   const sohAmtKey = sampleKeys.find((k) => /SOHAmtBirr/i.test(k));
   const expiredAmtKey = sampleKeys.find((k) => /ExpiredAmtBirr/i.test(k));
   const issuedAmtKey = sampleKeys.find((k) => /IssuedAmtBirr/i.test(k));
+  const productSNKey = sampleKeys.find((k) => /^ProductSN|ItemSN|SN$/i.test(k)) || 'ProductSN';
 
   return apiStock.map((r) => {
     const soh = Number(r[sohKey]) || 0;
@@ -52,6 +53,7 @@ function processStockRows(apiStock) {
     const ss = ssKey ? String(r[ssKey] || '') : (soh > 0 ? (amc > 0 && soh / amc < 3 ? 'Below EOP' : 'Normal') : 'Stocked Out');
     return {
       ProductCN: String(r[productCNKey] || ''),
+      ProductSN: Number(r[productSNKey]) || 0,
       SS: ss,
       SOH: soh,
       AMC: amc,
@@ -1042,8 +1044,10 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
   if (selectedProduct && selectedStockRow) {
     return (
       <ProgramItemDetail
+        programCode={programCode}
         programName={programName}
         productName={selectedProduct}
+        productSN={selectedStockRow.ProductSN}
         itemOptions={stockRows.map((row: any) => ({ label: row.ProductCN, status: row.SS }))}
         stockRow={selectedStockRow}
         purchaseOrders={purchaseOrders}

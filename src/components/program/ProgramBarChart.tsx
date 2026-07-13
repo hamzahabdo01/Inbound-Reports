@@ -1,8 +1,11 @@
 function ProgramBarChart({ data, valueFormatter = (value) => value }: any) {
   const max = Math.max(...data.map((item) => item.value), 1);
+  const BAR_MAX_W = 64;
+  const BAR_GAP = 12;
+  const barsMaxWidth = Math.min(data.length * BAR_MAX_W + (data.length - 1) * BAR_GAP, 9999);
 
   return (
-    <div className="h-64 flex items-end gap-3 px-2 pt-4 pb-2">
+    <div className="h-64 flex items-end gap-3 px-2 pt-4 pb-2" style={{ maxWidth: barsMaxWidth, margin: '0 auto' }}>
       {data.map((item) => (
         <div key={item.label} className="flex-1 min-w-0 flex flex-col items-center gap-2">
           <div className="w-full h-44 flex items-end justify-center rounded bg-surface-container-low overflow-hidden">
