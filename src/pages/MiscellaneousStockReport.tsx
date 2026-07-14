@@ -682,6 +682,21 @@ function MiscellaneousStockReport() {
 
       </div>
 
+      {/* Landscape hint (mobile only) */}
+      {isMobile && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg mb-3 text-xs text-amber-800">
+          <i className="fa-solid fa-rotate text-amber-600 shrink-0" />
+          <span className="flex-1">Rotate your device to landscape for the best experience</span>
+          <button
+            type="button"
+            onClick={enterFullscreen}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-200/80 hover:bg-amber-300 text-amber-900 font-semibold transition-colors shrink-0"
+          >
+            <i className="fa-solid fa-expand text-[10px]" /> Landscape
+          </button>
+        </div>
+      )}
+
       {/* Main Stock Table */}
       <div className={`bg-white rounded-xl border border-outline-variant shadow-level-1 ${isMobile ? '' : 'overflow-hidden'}`}>
         {(() => {
@@ -798,7 +813,7 @@ function MiscellaneousStockReport() {
                         <td className={`py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant ${isMobile ? '' : 'sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
                           {item.sn}
                         </td>
-                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky ${isMobile ? 'left-0' : 'left-12'} bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>
+                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky ${isMobile ? 'left-0 break-words whitespace-normal' : 'left-12'} bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>
                           {item.item}
                         </td>
                         <td className={`py-4 px-4 border-r border-outline-variant/60 text-center sticky ${isMobile ? 'left-[240px]' : 'left-[285px]'} bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>
@@ -1337,16 +1352,7 @@ function MiscellaneousStockReport() {
                 {!isFullscreen && (
                   <div className="relative">
                     {scrollContent}
-                    {/* Fullscreen / landscape open button */}
-                    <button
-                      type="button"
-                      onClick={enterFullscreen}
-                      className="md:hidden absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold shadow-md hover:bg-primary-dark active:scale-95 transition-all"
-                      aria-label="View table in landscape fullscreen"
-                    >
-                      <i className="fa-solid fa-rotate text-[11px]" />
-                      Landscape
-                    </button>
+
                   </div>
                 )}
 
