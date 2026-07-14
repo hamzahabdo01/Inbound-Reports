@@ -108,39 +108,12 @@ function MiscellaneousStockReport() {
   // Row Expansion (for dashboard summary view)
   const [expandedRow, setExpandedRow] = useState(null);
 
-  // Mobile fullscreen + landscape mode
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [useCSSRotation, setUseCSSRotation] = useState(false); // CSS fallback for iOS
+  // Mobile cell expander (Item / Stock Status)
+  const [expandedCell, setExpandedCell] = useState<string | null>(null);
 
-  const enterFullscreen = () => {
-    setIsFullscreen(true);
-    document.body.style.overflow = 'hidden';
-    try {
-      const lockPromise = (screen as any).orientation?.lock?.('landscape');
-      if (lockPromise && typeof lockPromise.then === 'function') {
-        lockPromise.catch(() => setUseCSSRotation(true));
-      } else {
-        setUseCSSRotation(true); // no API support — use CSS rotation
-      }
-    } catch {
-      setUseCSSRotation(true);
-    }
-  };
-
-  const exitFullscreen = () => {
-    setIsFullscreen(false);
-    setUseCSSRotation(false);
-    document.body.style.overflow = '';
-    try { (screen as any).orientation?.unlock?.(); } catch (_) {}
-  };
-
-  useEffect(() => {
-    if (!isFullscreen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') exitFullscreen(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFullscreen]);
+  // Mobile landscape mode
+  const [mobileLandscape, setMobileLandscape] = useState(false);
+  const [amcLandscape, setAmcLandscape] = useState(false);
 
   // Track the scroll container's visible width so the expanded row never stretches beyond the viewport
   const scrollRef = useRef(null);
@@ -243,6 +216,12 @@ function MiscellaneousStockReport() {
   }, [filteredData, currentPage, effectiveRowsPerPage]);
 
   const totalPages = Math.ceil(filteredData.length / effectiveRowsPerPage);
+
+  // Derive the currently expanded item for the mobile bottom-sheet
+  const expandedItem = useMemo(
+    () => expandedRow != null ? stockData.find((i: any) => i.sn === expandedRow) ?? null : null,
+    [expandedRow]
+  );
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -466,7 +445,7 @@ function MiscellaneousStockReport() {
               <div className="flex-1">
                 <SearchInput value={searchQuery} onChange={(v) => { setSearchQuery(v); setCurrentPage(1); }} placeholder="Search by SN or Item Description..." />
               </div>
-              <IconButton variant="info" contentId={activeTab === 'stock-report' ? 'main-stock-report' : 'national-amc-report'} />
+              <IconButton variant="info" contentId="main-stock-report" />
               <ExportDropdown headers={exportHeaders} rows={exportRows} filename="miscellaneous-stock-report" />
             </div>
 
@@ -580,7 +559,7 @@ function MiscellaneousStockReport() {
             <div className="flex-1">
               <SearchInput value={searchQuery} onChange={(v) => { setSearchQuery(v); setCurrentPage(1); }} placeholder="Search by SN or Item Description..." />
             </div>
-            <IconButton variant="info" contentId={activeTab === 'stock-report' ? 'main-stock-report' : 'national-amc-report'} />
+            <IconButton variant="info" contentId="main-stock-report" />
             <ExportDropdown headers={exportHeaders} rows={exportRows} filename="miscellaneous-stock-report" />
           </div>
 
@@ -682,17 +661,24 @@ function MiscellaneousStockReport() {
 
       </div>
 
-      {/* Landscape hint (mobile only) */}
+      {/* Mobile table toolbar: item count + view toggle */}
       {isMobile && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg mb-3 text-xs text-amber-800">
-          <i className="fa-solid fa-rotate text-amber-600 shrink-0" />
-          <span className="flex-1">Rotate your device to landscape for the best experience</span>
+        <div className="flex items-center justify-between gap-2 px-1">
+          <span className="text-xs text-on-surface-variant font-medium">
+            {filteredData.length} of {stockData.length} items
+          </span>
           <button
             type="button"
-            onClick={enterFullscreen}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-200/80 hover:bg-amber-300 text-amber-900 font-semibold transition-colors shrink-0"
+            onClick={() => setMobileLandscape(v => !v)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all duration-150 ${
+              mobileLandscape
+                ? 'bg-primary text-white border-primary shadow-sm'
+                : 'bg-white text-on-surface-variant border-outline hover:bg-surface-container'
+            }`}
+            aria-pressed={mobileLandscape}
           >
-            <i className="fa-solid fa-expand text-[10px]" /> Landscape
+            <i className={`fa-solid ${mobileLandscape ? 'fa-compress' : 'fa-expand'} text-[10px]`} />
+            {mobileLandscape ? 'Compact' : 'Landscape'}
           </button>
         </div>
       )}
@@ -701,11 +687,11 @@ function MiscellaneousStockReport() {
       <div className={`bg-white rounded-xl border border-outline-variant shadow-level-1 ${isMobile ? '' : 'overflow-hidden'}`}>
         {(() => {
           const stockTable = (
-            <table className={`text-left border-collapse border border-outline-variant ${isMobile ? 'whitespace-nowrap' : 'w-full'}`}>
+            <table className={`text-left border-collapse border border-outline-variant ${isMobile && !mobileLandscape ? 'whitespace-nowrap' : 'w-full'}`}>
             <thead>
               {/* Grouped Headers (Row 1) */}
               <tr className="bg-surface border-b border-outline-variant text-[11px] font-bold text-primary-dark uppercase tracking-wider text-center">
-                <th colSpan={5} className={`py-2.5 px-4 border-r border-outline-variant ${isMobile ? '' : 'sticky left-0 bg-surface z-10'}`}>Item Description</th>
+                <th colSpan={isMobile && !mobileLandscape ? 4 : 5} className={`py-2.5 px-4 border-r border-outline-variant ${!isMobile ? 'sticky left-0 bg-surface z-10' : ''}`}>Item Description</th>
                 <th colSpan={6} className="py-2.5 px-4 border-r border-outline-variant bg-surface-low">National SOH & Consumption</th>
                 {showContract && <th colSpan={2} className="py-2.5 px-4 border-r border-outline-variant bg-slate-50">Contract</th>}
                 {showOrdered && <th colSpan={3} className="py-2.5 px-4 border-r border-outline-variant bg-sky-50/50">Ordered</th>}
@@ -720,11 +706,17 @@ function MiscellaneousStockReport() {
               {/* Sub Columns (Row 2) */}
               <tr className="bg-surface border-b border-outline-variant text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
                 {/* Item Description Sub Headers */}
-                <th className={`py-3 px-4 border-r border-outline-variant w-12 ${isMobile ? '' : 'sticky left-0 bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>SN</th>
-                <th className={`py-3 px-4 border-r border-outline-variant min-w-[240px] sticky ${isMobile ? 'left-0' : 'left-12'} bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>Item</th>
-                <th className={`py-3 px-4 border-r border-outline-variant w-32 text-center sticky ${isMobile ? 'left-[240px]' : 'left-[285px]'} bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>Stock Status</th>
-                <th className={`py-3 px-4 border-r border-outline-variant w-24 ${isMobile ? '' : 'sticky left-[413px] bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>Unit</th>
-                <th className={`py-3 px-4 border-r border-outline-variant w-16 text-center ${isMobile ? '' : 'sticky left-[482px] bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>VEN</th>
+                <th className={`py-3 px-4 border-r border-outline-variant w-12 ${!isMobile ? 'sticky left-0 bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]' : ''}`}>SN</th>
+                {isMobile && !mobileLandscape ? (
+                  <th className="py-3 px-4 border-r border-outline-variant min-w-[200px] sticky left-0 bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Item / Status</th>
+                ) : (
+                  <>
+                    <th className={`py-3 px-4 border-r border-outline-variant min-w-[240px] ${!isMobile ? 'sticky left-12 bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]' : ''}`}>Item</th>
+                    <th className={`py-3 px-4 border-r border-outline-variant text-center w-32 ${!isMobile ? 'sticky left-[285px] bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]' : ''}`}>Stock Status</th>
+                  </>
+                )}
+                <th className={`py-3 px-4 border-r border-outline-variant w-24 ${!isMobile ? 'sticky left-[413px] bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]' : ''}`}>Unit</th>
+                <th className={`py-3 px-4 border-r border-outline-variant w-16 text-center ${!isMobile ? 'sticky left-[482px] bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]' : ''}`}>VEN</th>
                 
                 {/* National Sub Headers */}
                 <th className="py-3 px-4 border-r border-outline-variant w-24 text-right">SOH</th>
@@ -797,7 +789,7 @@ function MiscellaneousStockReport() {
               {paginatedData.length > 0 ? (
                 paginatedData.map((item) => {
                   const isExpanded = expandedRow === item.sn;
-                  const activeTab = activeTabs[item.sn] || 'pipeline';
+                  const itemTab = activeTabs[item.sn] || 'pipeline';
                   const status = getStockStatus(item.national.mos);
                   
                   return (
@@ -810,21 +802,28 @@ function MiscellaneousStockReport() {
                         }`}
                       >
                         {/* Item Description Values */}
-                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant ${isMobile ? '' : 'sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
+                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant ${!isMobile ? 'sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]' : ''}`}>
                           {item.sn}
                         </td>
-                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky ${isMobile ? 'left-0 break-words whitespace-normal' : 'left-12'} bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>
-                          {item.item}
-                        </td>
-                        <td className={`py-4 px-4 border-r border-outline-variant/60 text-center sticky ${isMobile ? 'left-[240px]' : 'left-[285px]'} bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>
-                          <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full border ${status.color}`}>
-                            {status.label}
-                          </span>
-                        </td>
-                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${isMobile ? '' : 'sticky left-[413px] bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
+                        {isMobile && !mobileLandscape ? (
+                          <td className="py-3 px-3 border-r border-outline-variant/60 sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] min-w-[200px] max-w-[200px]">
+                            <div className="font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm truncate leading-snug" title={item.item}>{item.item}</div>
+                            <span className={`inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-full border ${status.color}`}>{status.label}</span>
+                          </td>
+                        ) : (
+                          <>
+                            <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${!isMobile ? 'sticky left-12 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]' : ''}`} title={item.item}>
+                              {item.item}
+                            </td>
+                            <td className={`py-4 px-4 border-r border-outline-variant/60 text-center ${!isMobile ? 'sticky left-[285px] bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]' : ''}`}>
+                              <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full border ${status.color}`}>{status.label}</span>
+                            </td>
+                          </>
+                        )}
+                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${!isMobile ? 'sticky left-[413px] bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]' : ''}`}>
                           {item.unit}
                         </td>
-                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${isMobile ? '' : 'sticky left-[482px] bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
+                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${!isMobile ? 'sticky left-[482px] bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]' : ''}`}>
                           <span className={`inline-block px-2 py-0.5 text-[10px] font-extrabold rounded ${
                             item.ven === 'V' ? 'bg-purple-100 text-purple-700' :
                             item.ven === 'E' ? 'bg-sky-100 text-sky-700' :
@@ -945,8 +944,8 @@ function MiscellaneousStockReport() {
                         </td>
                       </tr>
 
-                      {/* Detail Accordion Row */}
-                      {isExpanded && (
+                      {/* Detail Accordion Row — desktop only */}
+                      {isExpanded && !isMobile && (
                         <tr>
                           <td colSpan={maxTotalCols} className="py-0 px-0 bg-surface-container-lowest border-y border-outline-variant no-row-expand">
                             <div
@@ -958,13 +957,13 @@ function MiscellaneousStockReport() {
                                 <button
                                   onClick={() => setTab(item.sn, 'pipeline')}
                                   role="tab"
-                                  aria-selected={activeTab === 'pipeline'}
+                                  aria-selected={itemTab === 'pipeline'}
                                   className={`${
                                     isMobile
                                       ? 'flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] font-bold tracking-wide border-b-2 -mb-[2px]'
                                       : 'px-4 py-2 text-xs font-bold tracking-wide border-b-2 -mb-[2px]'
                                   } ${
-                                    activeTab === 'pipeline'
+                                    itemTab === 'pipeline'
                                       ? 'border-primary text-primary'
                                       : 'border-transparent text-on-surface-variant hover:text-on-surface'
                                   }`}
@@ -975,13 +974,13 @@ function MiscellaneousStockReport() {
                                 <button
                                   onClick={() => setTab(item.sn, 'hubs')}
                                   role="tab"
-                                  aria-selected={activeTab === 'hubs'}
+                                  aria-selected={itemTab === 'hubs'}
                                   className={`${
                                     isMobile
                                       ? 'flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] font-bold tracking-wide border-b-2 -mb-[2px]'
                                       : 'px-4 py-2 text-xs font-bold tracking-wide border-b-2 -mb-[2px]'
                                   } ${
-                                    activeTab === 'hubs'
+                                    itemTab === 'hubs'
                                       ? 'border-primary text-primary'
                                       : 'border-transparent text-on-surface-variant hover:text-on-surface'
                                   }`}
@@ -992,13 +991,13 @@ function MiscellaneousStockReport() {
                                 <button
                                   onClick={() => setTab(item.sn, 'expiries')}
                                   role="tab"
-                                  aria-selected={activeTab === 'expiries'}
+                                  aria-selected={itemTab === 'expiries'}
                                   className={`${
                                     isMobile
                                       ? 'flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] font-bold tracking-wide border-b-2 -mb-[2px]'
                                       : 'px-4 py-2 text-xs font-bold tracking-wide border-b-2 -mb-[2px]'
                                   } ${
-                                    activeTab === 'expiries'
+                                    itemTab === 'expiries'
                                       ? 'border-primary text-primary'
                                       : 'border-transparent text-on-surface-variant hover:text-on-surface'
                                   }`}
@@ -1009,7 +1008,7 @@ function MiscellaneousStockReport() {
                               </div>
 
                               {/* Tab Content 1: Pipeline Summary */}
-                              {activeTab === 'pipeline' && (
+                              {itemTab === 'pipeline' && (
                                 isMobile ? (
                                   <div className="pt-2">
                                     <div
@@ -1119,7 +1118,7 @@ function MiscellaneousStockReport() {
                               )}
 
                               {/* Tab Content 2: Hub Inventory Breakdown */}
-                              {activeTab === 'hubs' && (
+                              {itemTab === 'hubs' && (
                                 <div className="space-y-4 pt-2">
                                   {isMobile ? (
                                     <div
@@ -1231,7 +1230,7 @@ function MiscellaneousStockReport() {
                               )}
 
                               {/* Tab Content 3: Expiries */}
-                              {activeTab === 'expiries' && (
+                              {itemTab === 'expiries' && (
                                 <div className="space-y-4 pt-2">
                                   {item.expiry_list && item.expiry_list.length > 0 ? (
                                     isMobile ? (
@@ -1326,132 +1325,20 @@ function MiscellaneousStockReport() {
           );
           
           if (isMobile) {
-            const scrollContent = (
-              <div className="relative h-full">
+            return (
+              <div className="relative">
                 <div
-                  ref={isFullscreen ? undefined : scrollRef}
+                  ref={scrollRef}
                   tabIndex={0}
-                  className={`overflow-x-auto outline-none focus:ring-2 focus:ring-primary/20 ${
-                    isFullscreen ? 'h-full overflow-y-auto' : ''
-                  }`}
+                  className="overflow-x-auto outline-none focus:ring-2 focus:ring-primary/20"
                   style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' } as any}
                 >
-                  <div style={{ minWidth: '960px' }}>
+                  <div style={{ minWidth: mobileLandscape ? '1200px' : '960px', transition: 'min-width 180ms ease' }}>
                     {stockTable}
                   </div>
                 </div>
-                {!isFullscreen && (
-                  <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white/80 to-transparent pointer-events-none" />
-                )}
+                <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white/80 to-transparent pointer-events-none" />
               </div>
-            );
-
-            return (
-              <>
-                {/* Normal (non-fullscreen) mobile table */}
-                {!isFullscreen && (
-                  <div className="relative">
-                    {scrollContent}
-
-                  </div>
-                )}
-
-                {/* Landscape fullscreen overlay */}
-                {isFullscreen && (
-                  <div
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Stock Report Table — Landscape"
-                    style={useCSSRotation ? {
-                      // CSS forced-landscape: rotate the overlay 90° and swap dimensions
-                      position: 'fixed' as const,
-                      zIndex: 9999,
-                      width: '100vh',   // device height becomes landscape width
-                      height: '100vw',  // device width becomes landscape height
-                      top: '50%',
-                      left: '50%',
-                      marginTop: '-50vw',
-                      marginLeft: '-50vh',
-                      transform: 'rotate(90deg)',
-                      transformOrigin: 'center center',
-                      backgroundColor: 'white',
-                      display: 'flex',
-                      flexDirection: 'column' as const,
-                      overflow: 'hidden',
-                    } : {
-                      position: 'fixed' as const,
-                      inset: 0,
-                      zIndex: 9999,
-                      backgroundColor: 'white',
-                      display: 'flex',
-                      flexDirection: 'column' as const,
-                    }}
-                  >
-                    {/* Header bar */}
-                    <div className="flex items-center justify-between px-4 py-2.5 bg-primary text-white shrink-0 shadow-md">
-                      <div className="flex items-center gap-2">
-                        <i className="fa-solid fa-table text-sm" />
-                        <span className="text-sm font-bold tracking-wide">Stock Report</span>
-                        <span className="text-xs opacity-70 font-medium ml-1">{filteredData.length} items</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={exitFullscreen}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs font-semibold active:scale-95 transition-all"
-                        aria-label="Exit landscape view"
-                      >
-                        <i className="fa-solid fa-compress text-[11px]" />
-                        Exit
-                      </button>
-                    </div>
-
-                    {/* Scrollable table area */}
-                    <div className="flex-1 overflow-auto" ref={scrollRef}>
-                      <div style={{ minWidth: '960px' }}>
-                        {stockTable}
-                      </div>
-                    </div>
-
-                    {/* Pagination footer */}
-                    <div className="flex items-center justify-between gap-3 py-2 px-4 bg-surface border-t border-outline-variant shrink-0">
-                      <select
-                        value={mobilePageSize}
-                        onChange={(e) => { setMobilePageSize(Number(e.target.value)); setCurrentPage(1); }}
-                        className="h-7 rounded border border-outline-variant bg-white px-1.5 text-xs text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-                      >
-                        <option value={5}>5</option>
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                      </select>
-                      <span className="text-xs text-on-surface-variant font-medium tabular-nums">
-                        Page {currentPage} of {totalPages}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 1}
-                          className="p-2 rounded border border-outline-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
-                          aria-label="Previous page"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                          className="p-2 rounded border border-outline-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
-                          aria-label="Next page"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
             );
           }
           
@@ -1500,6 +1387,171 @@ function MiscellaneousStockReport() {
           />
         )}
       </div>
+
+      {/* Mobile bottom-sheet detail modal */}
+      {isMobile && expandedItem && (() => {
+        const sheetItem = expandedItem as any;
+        const sheetStatus = getStockStatus(sheetItem.national.mos);
+        const sheetTab = activeTabs[sheetItem.sn] || 'pipeline';
+        return (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed z-40 bg-black/50"
+              style={{ inset: '-100px -100px 0 -100px' }}
+              onClick={() => setExpandedRow(null)}
+              aria-hidden="true"
+            />
+            {/* Sheet */}
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Detail: ${sheetItem.item}`}
+              className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl flex flex-col animate-slide-up"
+              style={{ maxHeight: '82vh', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)' }}
+            >
+              {/* Drag handle */}
+              <div className="flex justify-center pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 rounded-full bg-outline-variant" />
+              </div>
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 px-4 pb-3 shrink-0 border-b border-outline-variant">
+                <div className="flex-1 min-w-0">
+                  <p className="text-body-sm font-extrabold text-primary-dark truncate leading-snug">{sheetItem.item}</p>
+                  <span className={`inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-full border ${sheetStatus.color}`}>{sheetStatus.label}</span>
+                </div>
+                <button type="button" onClick={() => setExpandedRow(null)}
+                  className="shrink-0 p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" aria-label="Close">
+                  <i className="fa-solid fa-xmark text-sm" />
+                </button>
+              </div>
+              {/* Tabs */}
+              <div className="flex border-b border-outline-variant shrink-0" role="tablist">
+                {[
+                  { key: 'pipeline', icon: 'fa-route',          label: 'Pipeline' },
+                  { key: 'hubs',     icon: 'fa-hospital-user',  label: 'Hubs' },
+                  { key: 'expiries', icon: 'fa-hourglass-half', label: 'Expiry' },
+                ].map(t => (
+                  <button key={t.key} onClick={() => setTab(sheetItem.sn, t.key)} role="tab"
+                    aria-selected={sheetTab === t.key}
+                    className={`flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] font-bold tracking-wide border-b-2 -mb-[2px] transition-colors ${sheetTab === t.key ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant'}`}>
+                    <i className={`fa-solid ${t.icon} text-sm`} />
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              {/* Content */}
+              <div className="overflow-y-auto flex-1 p-4 space-y-4">
+                {sheetTab === 'pipeline' && (
+                  <div>
+                    <div onScroll={() => { if (!dismissedHints[sheetItem.sn]) setDismissedHints(p => ({ ...p, [sheetItem.sn]: true })); }}
+                      className="flex overflow-x-auto gap-2 pb-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' } as any}>
+                      {[
+                        { num: '1', label: 'Contracted',     qty: sheetItem.contract.quantity,     mos: sheetItem.contract.mos },
+                        { num: '2', label: 'Ordered',        qty: sheetItem.ordered.quantity,      mos: sheetItem.ordered.mos,   po: sheetItem.ordered.po },
+                        { num: '3', label: 'Shipped',        qty: sheetItem.shipped.quantity,      mos: sheetItem.shipped.mos,   po: sheetItem.shipped.po },
+                        { num: '4', label: 'Delivered',      qty: sheetItem.delivered.quantity,    mos: sheetItem.delivered.mos, po: sheetItem.delivered.po },
+                        { num: '5', label: 'Remaining Left', qty: sheetItem.quantity_left.quantity,mos: sheetItem.quantity_left.mos },
+                      ].map(card => (
+                        <div key={card.num} className="w-[130px] shrink-0 snap-start bg-surface-container-low p-md rounded-lg border border-outline-variant/60">
+                          <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-xs">{card.num}. {card.label}</div>
+                          <div className="text-body-md font-extrabold text-slate-800 font-mono">{formatNumber(card.qty)}</div>
+                          <div className="text-xs text-on-surface-variant font-medium mt-1">{formatNumber(card.mos)} MOS</div>
+                          {card.po && <div className="text-[10px] bg-white border border-outline-variant px-1.5 py-0.5 rounded text-on-surface-variant font-mono mt-2 truncate" title={card.po}>PO: {card.po}</div>}
+                        </div>
+                      ))}
+                    </div>
+                    {!dismissedHints[sheetItem.sn] && <p className="text-center text-[10px] text-on-surface-variant mt-2">← swipe for more stages →</p>}
+                  </div>
+                )}
+                {sheetTab === 'hubs' && (
+                  <div className="space-y-4">
+                    <div onScroll={() => { if (!dismissedHints[sheetItem.sn]) setDismissedHints(p => ({ ...p, [sheetItem.sn]: true })); }}
+                      className="flex overflow-x-auto gap-3 pb-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' } as any}>
+                      <div className="w-[220px] shrink-0 snap-start bg-slate-50 p-lg rounded-lg border border-outline-variant flex justify-between items-center">
+                        <div>
+                          <div className="text-xs font-bold text-on-surface-variant uppercase">Central Warehouse (SOH)</div>
+                          <div className="text-headline-md font-extrabold font-mono text-primary-dark mt-1">{formatNumber(sheetItem.hubs.center)}</div>
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-lg"><i className="fa-solid fa-warehouse" /></div>
+                      </div>
+                      <div className="w-[220px] shrink-0 snap-start bg-slate-50 p-lg rounded-lg border border-outline-variant flex justify-between items-center">
+                        <div>
+                          <div className="text-xs font-bold text-on-surface-variant uppercase">In Transit (GIT)</div>
+                          <div className="text-headline-md font-extrabold font-mono text-sky-700 mt-1">{formatNumber(sheetItem.hubs.git)}</div>
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 text-lg"><i className="fa-solid fa-truck-ramp-box" /></div>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Hub Distribution</h4>
+                      {(() => {
+                        const hubList = Object.entries(sheetItem.hubs)
+                          .filter(([k]) => k !== 'center' && k !== 'git')
+                          .map(([k, v]) => ({ name: k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), value: v as number }))
+                          .filter(h => h.value > 0).sort((a, b) => b.value - a.value);
+                        if (!hubList.length) return <div className="text-center py-6 text-xs text-on-surface-variant/70 border border-dashed border-outline-variant rounded-lg">No SOH recorded across any regional hubs.</div>;
+                        const mx = Math.max(...hubList.map(h => h.value), 1);
+                        return (
+                          <div className="space-y-2">
+                            {hubList.map((h, i) => (
+                              <div key={i} className="flex items-center gap-3 text-xs">
+                                <div className="w-24 font-bold text-on-surface-variant truncate" title={h.name}>{h.name}</div>
+                                <div className="flex-1 h-5 bg-surface-low rounded overflow-hidden relative border border-outline-variant/30">
+                                  <div className="h-full bg-primary/20 border-r-2 border-primary" style={{ width: `${(h.value / mx) * 100}%` }} />
+                                  <span className="absolute right-2 top-1/2 -translate-y-1/2 font-mono font-bold text-[10px] text-slate-800">{formatNumber(h.value)}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+                {sheetTab === 'expiries' && (
+                  <div>
+                    {sheetItem.expiry_list && sheetItem.expiry_list.length > 0 ? (
+                      <div onScroll={() => { if (!dismissedHints[sheetItem.sn]) setDismissedHints(p => ({ ...p, [sheetItem.sn]: true })); }}
+                        className="flex overflow-x-auto gap-3 pb-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' } as any}>
+                        {sheetItem.expiry_list.map((batch: any, idx: number) => {
+                          let bs = 'border-emerald-200 bg-emerald-50 text-emerald-800';
+                          if (batch.date) {
+                            if (batch.date.includes('2024') || batch.date.includes('2025')) bs = 'border-red-200 bg-red-50/70 text-red-800';
+                            else if (batch.date.includes('2026')) bs = 'border-amber-200 bg-amber-50 text-amber-800';
+                          }
+                          return (
+                            <div key={idx} className={`w-[180px] shrink-0 snap-start p-md rounded-lg border flex flex-col justify-between ${bs}`}>
+                              <div>
+                                <div className="text-[10px] uppercase font-bold tracking-wider opacity-80">Batch Expiry</div>
+                                <div className="text-header-sm font-extrabold mt-1">{batch.date || 'Unknown Date'}</div>
+                              </div>
+                              <div className="mt-4 flex justify-between items-baseline">
+                                <span className="text-[10px] opacity-80">Quantity:</span>
+                                <span className="font-mono font-extrabold text-body-md">{formatNumber(batch.quantity)}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-xs text-on-surface-variant/70 border border-dashed border-outline-variant rounded-lg">
+                        <i className="fa-regular fa-calendar-xmark text-lg mb-2 block" />
+                        No specific expiry dates/batches logged in dataset.
+                        {sheetItem.expiry_raw && <div className="mt-2 text-[11px] font-mono bg-surface p-2 rounded max-w-lg mx-auto text-left">Raw Log: {sheetItem.expiry_raw}</div>}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        );
+      })()}
+
       </>}
 
       {activeTab === 'national-amc' && <>
@@ -1523,21 +1575,41 @@ function MiscellaneousStockReport() {
                 className="w-full pl-10 pr-4 py-2 border border-outline rounded-lg text-body-sm bg-white focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
-            <IconButton variant="info" contentId={activeTab === 'stock-report' ? 'main-stock-report' : 'national-amc-report'} />
+            <IconButton variant="info" contentId="national-amc-report" />
             <ExportDropdown headers={exportHeaders} rows={exportRows} filename="miscellaneous-stock-report" />
           </div>
         </div>
 
         {/* AMC Table */}
+        {isMobile && (
+          <div className="flex items-center justify-between gap-2 px-1">
+            <span className="text-xs text-on-surface-variant font-medium">
+              {filteredAmcData.length} of {amcData.length} items
+            </span>
+            <button
+              type="button"
+              onClick={() => setAmcLandscape(v => !v)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all duration-150 ${
+                amcLandscape
+                  ? 'bg-primary text-white border-primary shadow-sm'
+                  : 'bg-white text-on-surface-variant border-outline hover:bg-surface-container'
+              }`}
+              aria-pressed={amcLandscape}
+            >
+              <i className={`fa-solid ${amcLandscape ? 'fa-compress' : 'fa-expand'} text-[10px]`} />
+              {amcLandscape ? 'Compact' : 'Landscape'}
+            </button>
+          </div>
+        )}
         <div className={`bg-white rounded-xl border border-outline-variant shadow-level-1 ${isMobile ? '' : 'overflow-hidden'}`}>
           {(() => {
             const amcTable = (
-              <table className={`text-left border-collapse ${isMobile ? 'whitespace-nowrap' : 'w-full'}`}>
+              <table className={`text-left border-collapse ${isMobile && !amcLandscape ? 'whitespace-nowrap' : 'w-full'}`}>
               <thead>
                 <tr className="bg-surface-container border-b border-outline-variant text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
-                  <th className={`px-4 py-3 w-16 text-center ${isMobile ? 'sticky left-0 z-20 bg-surface-container-low shadow-[2px_0_4px_rgba(0,0,0,0.06)]' : ''}`}>#</th>
+                  <th className="px-4 py-3 w-16 text-center">#</th>
                   <th className="px-4 py-3 w-20 text-center">SN</th>
-                  <th className="px-4 py-3 min-w-[300px]">Item Name</th>
+                  <th className={`px-4 py-3 min-w-[300px] ${isMobile && !amcLandscape ? 'sticky left-0 z-20 bg-surface-container-low shadow-[2px_0_4px_rgba(0,0,0,0.06)] min-w-[150px]' : ''}`}>Item Name</th>
                   <th className="px-4 py-3 w-24">Unit</th>
                   <th className="px-4 py-3 w-40 text-right">National AMC</th>
                   <th className="px-4 py-3 w-20 text-center">Action</th>
@@ -1550,13 +1622,14 @@ function MiscellaneousStockReport() {
                     const isEditing = amcEditing[globalIdx] === true;
                     return (
                       <tr key={globalIdx} className="hover:bg-surface-container-low transition-colors">
-                        <td className={`px-4 py-3 text-center text-xs text-on-surface-variant font-mono ${isMobile ? 'sticky left-0 z-10 bg-white shadow-[2px_0_4px_rgba(0,0,0,0.06)]' : ''}`}>
+                        <td className="px-4 py-3 text-center text-xs text-on-surface-variant font-mono">
                           {row.RowNumber}
                         </td>
                         <td className="px-4 py-3 text-center font-mono text-xs text-on-surface-variant">
                           {row.ItemSN}
                         </td>
-                        <td className="px-4 py-3 text-body-sm font-semibold text-primary-dark">
+                        <td className={`px-4 py-3 text-body-sm font-semibold text-primary-dark ${isMobile && !amcLandscape ? 'sticky left-0 z-10 bg-white shadow-[2px_0_4px_rgba(0,0,0,0.06)] max-w-[200px] whitespace-normal' : ''}`}
+                          title={row.ItemName}>
                           {row.ItemName}
                         </td>
                         <td className="px-4 py-3 text-xs text-on-surface-variant">
@@ -1650,10 +1723,10 @@ function MiscellaneousStockReport() {
               return (
                 <div className="relative">
                   <div tabIndex={0}
-                    className="overflow-x-auto -webkit-overflow-scrolling:touch outline-none focus:ring-2 focus:ring-primary/20"
-                    style={{ scrollBehavior: 'smooth' }}
+                    className="overflow-x-auto outline-none focus:ring-2 focus:ring-primary/20"
+                    style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' } as any}
                   >
-                    <div style={{ minWidth: '600px' }}>
+                    <div style={{ minWidth: amcLandscape ? '800px' : '600px', transition: 'min-width 180ms ease' }}>
                       {amcTable}
                     </div>
                   </div>
