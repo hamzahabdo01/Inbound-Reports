@@ -72,6 +72,16 @@ function AppContent() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isMobile && sidebarVisible) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isMobile, sidebarVisible]);
+
   if (validating) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">

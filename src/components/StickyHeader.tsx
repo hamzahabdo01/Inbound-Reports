@@ -42,7 +42,7 @@ function StickyHeader({ children, className = '' }: any) {
         <div className="bg-surface" style={{ height: headerHeight }} />
         <div
           ref={headerRef}
-          className={`flex flex-nowrap items-center justify-between gap-2 fixed left-0 right-0 top-[40px] z-30 bg-surface py-3 px-lg shadow-sm overflow-x-auto [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden ${className}`}
+          className={`flex flex-nowrap items-center justify-between gap-2 fixed left-0 right-0 top-[36px] z-30 bg-surface py-3 px-lg shadow-sm overflow-x-auto [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden ${className}`}
         >
           {children}
         </div>

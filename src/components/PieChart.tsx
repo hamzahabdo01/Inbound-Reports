@@ -169,7 +169,7 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
               className={`inline-flex items-center gap-2 ${isCompact ? 'text-[11px]' : 'text-body-sm'} text-on-surface-variant hover:text-on-surface`}
             >
               <span className={`${isCompact ? 'h-2.5 w-2.5' : 'h-3 w-3'} rounded`} style={{ backgroundColor: slice.color }} />
-              <span className="whitespace-nowrap">{slice.label}</span>
+              <span className={isCompact ? '' : 'whitespace-nowrap'}>{slice.label}</span>
             </button>
           ))}
         </div>

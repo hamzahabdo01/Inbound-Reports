@@ -209,7 +209,6 @@ function ShipmentTable({ rows, page, setPage }: any) {
   };
 
   const headers = [
-    { key: 'sn', label: 'SN' },
     { key: 'PurchaseOrderNumber', label: 'PO Number' },
     { key: 'PurchaseOrderType', label: 'PO Type' },
     { key: 'PurchaseOrderDate', label: 'PO Date' },
@@ -277,7 +276,6 @@ function ShipmentTable({ rows, page, setPage }: any) {
           const sn = idx != null ? idx + 1 : 0;
           return (
             <>
-              <Td className="text-center text-xs font-semibold text-[#707979]">{sn}</Td>
               <Td className="font-bold text-[#0B4F54]">{row.PurchaseOrderNumber}</Td>
               <Td><POTypeBadge type={row.PurchaseOrderType} /></Td>
               <Td className="whitespace-nowrap">{row.PurchaseOrderDate}</Td>

@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react';
 import KPICard from '../../components/KPICard';
 import KpiCarousel from '../../components/KpiCarousel';
 import IconButton from '../../components/IconButton';
@@ -28,6 +29,11 @@ const fmtDuration = (days) => {
 };
 
 export default function PerformanceComplianceTab({ data, activeSections, tp, sp }: any) {
+  const [supplierPerfLandscape, setSupplierPerfLandscape] = useState(false);
+  const [supplierRiskLandscape, setSupplierRiskLandscape] = useState(false);
+  const supplierPerfScrollRef = useRef<HTMLDivElement>(null);
+  const supplierRiskScrollRef = useRef<HTMLDivElement>(null);
+
   return (
     <>
       {activeSections.includes('ppc-leadtime') && (
@@ -90,10 +96,33 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                     <KPICard variant="detailed" icon="fa-clock" iconBg="bg-error/10" iconColor="text-error" label="Open Amount" value={`${formatAmount(s.totalOpenAmount)} ETB`} subtitle={`${formatAmount(s.totalOverdueOpenAmount)} overdue`} />
                   </KpiCarousel>
                 )}
-                <Table page={tp('supplier-perf')} setPage={sp('supplier-perf')}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs text-on-surface-variant font-medium">
+                    {data.supplierPerformanceLeaderboard?.length || 0} suppliers
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSupplierPerfLandscape(v => !v)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all duration-150 ${
+                      supplierPerfLandscape
+                        ? 'bg-primary text-white border-primary shadow-sm'
+                        : 'bg-white text-on-surface-variant border-outline hover:bg-surface-container'
+                    }`}
+                    aria-pressed={supplierPerfLandscape}
+                  >
+                    <i className={`fa-solid ${supplierPerfLandscape ? 'fa-compress' : 'fa-expand'} text-[10px]`} />
+                    {supplierPerfLandscape ? 'Compact' : 'Landscape'}
+                  </button>
+                </div>
+                <div
+                  ref={supplierPerfScrollRef}
+                  className="overflow-x-auto relative"
+                  style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' } as any}
+                >
+                  <div style={{ minWidth: supplierPerfLandscape ? '1200px' : 'auto', transition: 'min-width 180ms ease' }}>
+                    <Table page={tp('supplier-perf')} setPage={sp('supplier-perf')}
                   headers={[
-                    { key: 'rank', label: 'Rank', className: 'text-center w-12' },
-                    { key: 'supplier', label: 'Supplier' },
+                    { key: 'supplier', label: 'Supplier', className: 'truncate' },
                     { key: 'country', label: 'Country', className: 'text-center' },
                     { key: 'pos', label: 'POs', className: 'text-right' },
                     { key: 'items', label: 'Items', className: 'text-right' },
@@ -103,6 +132,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                     { key: 'maxOverdue', label: 'Max Overdue', className: 'text-right' },
                   ]}
                   rows={data.supplierPerformanceLeaderboard}
+                  mobileMinWidth="auto"
                   renderRow={(row) => {
                     const pctColor = row.favorableDeliveryRatePercent != null
                       ? row.favorableDeliveryRatePercent >= 80 ? 'text-success'
@@ -111,8 +141,9 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                       : 'text-on-surface-variant';
                     return (
                       <>
-                        <Td className="text-center font-bold text-on-surface-variant">#{row.rank}</Td>
-                        <Td className="font-bold max-w-[120px] sm:max-w-[220px] truncate" title={row.supplierName}>{row.supplierName}</Td>
+                        <Td className="font-bold" title={row.supplierName}>
+                          <span className={`block ${supplierPerfLandscape ? '' : 'truncate max-w-[100px] md:max-w-none'}`}>{row.supplierName}</span>
+                        </Td>
                         <Td className="text-center">
                           <span className="inline-block px-2 py-0.5 text-[10px] font-bold bg-surface-container rounded">{row.supplierCountryCode}</span>
                         </Td>
@@ -125,7 +156,10 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                       </>
                     );
                   }}
-                />
+                    />
+                  </div>
+                </div>
+                <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white/80 to-transparent pointer-events-none" />
               </SectionPanel>
             );
           })()}
@@ -138,34 +172,59 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
             const risk = data.supplierRiskRanking || [];
             return (
               <SectionPanel title="Supplier Risk Ranking" subtitle="Risk assessment based on overdue amounts, delivery rates, and max days overdue" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-supplier-risk" /><ExportDropdown headers={[{ key: 'rank', label: 'Rank' }, { key: 'supplierName', label: 'Supplier' }, { key: 'supplierCountryCode', label: 'Country' }, { key: 'purchaseOrderItemCount', label: 'PO Items' }, { key: 'favorableDeliveryRatePercent', label: 'Delivery Rate' }, { key: 'overdueOpenAmountPercent', label: 'Overdue %' }, { key: 'maximumDaysOverdue', label: 'Max Overdue' }, { key: 'totalOpenAmount', label: 'Open Amount' }, { key: 'riskLevel', label: 'Risk' }]} rows={risk} filename="supplier-risk" /></div>}>
-                <Table page={tp('supplier-risk')} setPage={sp('supplier-risk')}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs text-on-surface-variant font-medium">
+                    {risk?.length || 0} suppliers
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSupplierRiskLandscape(v => !v)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all duration-150 ${
+                      supplierRiskLandscape
+                        ? 'bg-primary text-white border-primary shadow-sm'
+                        : 'bg-white text-on-surface-variant border-outline hover:bg-surface-container'
+                    }`}
+                    aria-pressed={supplierRiskLandscape}
+                  >
+                    <i className={`fa-solid ${supplierRiskLandscape ? 'fa-compress' : 'fa-expand'} text-[10px]`} />
+                    {supplierRiskLandscape ? 'Compact' : 'Landscape'}
+                  </button>
+                </div>
+                <div
+                  ref={supplierRiskScrollRef}
+                  className="overflow-x-auto relative"
+                  style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' } as any}
+                >
+                  <div style={{ minWidth: supplierRiskLandscape ? '1200px' : 'auto', transition: 'min-width 180ms ease' }}>
+                    <Table page={tp('supplier-risk')} setPage={sp('supplier-risk')}
                   headers={[
-                    { key: 'rank', label: 'Rank', className: 'text-center w-12' },
-                    { key: 'supplier', label: 'Supplier' },
-                    { key: 'country', label: 'Country', className: 'text-center' },
-                    { key: 'poItems', label: 'PO Items', className: 'text-right' },
-                    { key: 'favorableRate', label: 'Delivery Rate', className: 'text-right' },
+                    { key: 'supplier', label: 'Supplier', className: 'truncate' },
+                    { key: 'country', label: 'Country', className: `text-center ${supplierRiskLandscape ? '' : 'hidden md:table-cell'}` },
+                    { key: 'poItems', label: 'PO Items', className: `text-right ${supplierRiskLandscape ? '' : 'hidden md:table-cell'}` },
+                    { key: 'favorableRate', label: 'Delivery Rate', className: `text-right ${supplierRiskLandscape ? '' : 'hidden lg:table-cell'}` },
                     { key: 'overduePct', label: 'Overdue %', className: 'text-right' },
-                    { key: 'maxOverdue', label: 'Max Overdue', className: 'text-right' },
-                    { key: 'openAmount', label: 'Open Amount', className: 'text-right' },
+                    { key: 'maxOverdue', label: 'Max Overdue', className: `text-right ${supplierRiskLandscape ? '' : 'hidden lg:table-cell'}` },
+                    { key: 'openAmount', label: 'Open Amount', className: `text-right ${supplierRiskLandscape ? '' : 'hidden lg:table-cell'}` },
                     { key: 'riskLevel', label: 'Risk', className: 'text-center' },
                   ]}
                   rows={risk}
+                  mobileMinWidth="auto"
                   renderRow={(row) => {
                     const levelColors = { LOW: 'bg-success/10 text-success', MODERATE: 'bg-warning/10 text-warning', HIGH: 'bg-orange-100 text-orange-700', CRITICAL: 'bg-error/10 text-error' };
                     const flag = row.supplierCountryCode;
                     return (
                       <>
-                        <Td className="text-center font-bold text-on-surface-variant">#{row.rank}</Td>
-                        <Td className="font-bold max-w-[120px] sm:max-w-[240px] truncate" title={row.supplierName}>{row.supplierName}</Td>
-                        <Td className="text-center">
+                        <Td className="font-bold" title={row.supplierName}>
+                          <span className={`block ${supplierRiskLandscape ? '' : 'truncate max-w-[100px] md:max-w-none'}`}>{row.supplierName}</span>
+                        </Td>
+                        <Td className={`text-center ${supplierRiskLandscape ? '' : 'hidden md:table-cell'}`}>
                           <span className="inline-block px-2 py-0.5 text-[10px] font-bold bg-surface-container rounded">{flag}</span>
                         </Td>
-                        <Td className="text-right">{row.purchaseOrderItemCount.toLocaleString()}</Td>
-                        <Td className="text-right">{row.favorableDeliveryRatePercent != null ? `${row.favorableDeliveryRatePercent}%` : '—'}</Td>
+                        <Td className={`text-right ${supplierRiskLandscape ? '' : 'hidden md:table-cell'}`}>{row.purchaseOrderItemCount.toLocaleString()}</Td>
+                        <Td className={`text-right ${supplierRiskLandscape ? '' : 'hidden lg:table-cell'}`}>{row.favorableDeliveryRatePercent != null ? `${row.favorableDeliveryRatePercent}%` : '—'}</Td>
                         <Td className="text-right">{row.overdueOpenAmountPercent}%</Td>
-                        <Td className="text-right font-mono">{fmtDuration(row.maximumDaysOverdue)}</Td>
-                        <Td className="text-right font-mono">{formatAmount(row.totalOpenAmount)}</Td>
+                        <Td className={`text-right font-mono ${supplierRiskLandscape ? '' : 'hidden lg:table-cell'}`}>{fmtDuration(row.maximumDaysOverdue)}</Td>
+                        <Td className={`text-right font-mono ${supplierRiskLandscape ? '' : 'hidden lg:table-cell'}`}>{formatAmount(row.totalOpenAmount)}</Td>
                         <Td className="text-center">
                           <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md ${levelColors[row.riskLevel] || 'bg-surface-container text-on-surface-variant'}`}>
                             {row.riskLevel}
@@ -174,7 +233,10 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                       </>
                     );
                   }}
-                />
+                    />
+                  </div>
+                </div>
+                <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white/80 to-transparent pointer-events-none" />
               </SectionPanel>
             );
           })()}

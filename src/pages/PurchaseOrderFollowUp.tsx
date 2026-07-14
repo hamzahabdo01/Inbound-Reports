@@ -5,7 +5,6 @@ import KPICard from '../components/KPICard';
 import SearchInput from '../components/SearchInput';
 import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
-import LoadingState from '../components/LoadingState';
 import SelectFilter from '../components/SelectFilter';
 import IconButton from '../components/IconButton';
 import ExportDropdown from '../components/ExportDropdown';
@@ -64,7 +63,6 @@ function StatusBadge({ status }: any) {
 
 function PurchaseOrderFollowUp() {
   const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [mobilePageSize, setMobilePageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,20 +84,14 @@ function PurchaseOrderFollowUp() {
   const effectiveRowsPerPage = isMobile ? mobilePageSize : ROWS_PER_PAGE;
 
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const parsed = parseCSV(purchaseOrderCSVData);
-      console.debug('parseCSV returned', parsed.length, 'rows');
-      const processed = parsed.map(row => ({
-        ...row,
-        POQuantity: parseInt(row.POQuantity, 10) || 0,
-        InvoicedQuantity: parseInt(row.InvoicedQuantity, 10) || 0,
-        RequestedQuantity: parseInt((row.RequestedQuantity || '').replace(/,/g, ''), 10) || 0,
-      }));
-      console.debug('processed rows', processed.length);
-      setData(processed);
-      setIsLoading(false);
-    }, 300);
+    const parsed = parseCSV(purchaseOrderCSVData);
+    const processed = parsed.map(row => ({
+      ...row,
+      POQuantity: parseInt(row.POQuantity, 10) || 0,
+      InvoicedQuantity: parseInt(row.InvoicedQuantity, 10) || 0,
+      RequestedQuantity: parseInt((row.RequestedQuantity || '').replace(/,/g, ''), 10) || 0,
+    }));
+    setData(processed);
   }, []);
 
   // Reset page 1 when filters change
@@ -236,10 +228,6 @@ function PurchaseOrderFollowUp() {
     return n.toLocaleString();
   };
 
-  if (isLoading) {
-    return <LoadingState message="Loading purchase order data..." />;
-  }
-
   return (
     <div ref={mainRef}>
       {/* Stats cards */}
@@ -331,8 +319,8 @@ function PurchaseOrderFollowUp() {
           <table className={isMobile ? '' : 'w-full'}>
             <thead className="bg-surface-container border-b border-[#D1D5DB]">
               <tr>
-                <th className="py-3 px-4 text-center text-label-caps text-on-surface-variant uppercase w-12 border-r border-outline-variant sticky left-0 bg-surface-container z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">#</th>
-                <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">Item</th>
+                <th className="py-3 px-4 text-center text-label-caps text-on-surface-variant uppercase w-12 border-r border-outline-variant">#</th>
+                <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase sticky left-0 bg-surface-container z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Item</th>
                 <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">Unit</th>
                 <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">Activity</th>
                 <th className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase">PO Number</th>
@@ -350,8 +338,8 @@ function PurchaseOrderFollowUp() {
                   const hasPO = row.PurchaseOrderNumber && row.PurchaseOrderNumber.trim() !== '';
                   return (
                     <tr key={i} className="group border-b border-[#D1D5DB] hover:bg-surface-container-low transition-colors">
-                      <td className="py-4 px-4 text-center border-r border-outline-variant/60 text-body-sm text-on-surface-variant sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">{(currentPage - 1) * effectiveRowsPerPage + i + 1}</td>
-                      <td className="px-4 py-2">
+                      <td className="py-4 px-4 text-center border-r border-outline-variant/60 text-body-sm text-on-surface-variant">{(currentPage - 1) * effectiveRowsPerPage + i + 1}</td>
+                      <td className="px-4 py-2 sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                         <div className="text-body-md font-semibold text-on-surface">{row.Item}</div>
                         {row.ProcurementRequestNo && (
                           <div className="text-body-sm text-on-surface-variant">PR: {row.ProcurementRequestNo}</div>

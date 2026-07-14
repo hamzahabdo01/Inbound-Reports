@@ -9,6 +9,7 @@ import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
 import SelectFilter from '../components/SelectFilter';
 import KPICard from '../components/KPICard';
+import KpiCarousel from '../components/KpiCarousel';
 import StickyHeader from '../components/StickyHeader';
 import IconButton from '../components/IconButton';
 
@@ -69,6 +70,18 @@ function Procurement() {
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
+  // Responsive state
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [tableLandscape, setTableLandscape] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   // Load and parse data
   useEffect(() => {
     // Parse Tender
@@ -128,6 +141,9 @@ function Procurement() {
   const currentData = activeTab === 'tender' ? tenderData : contractData;
   const selectedRow = activeTab === 'tender' ? selectedTenderRow : selectedContractRow;
   const setSelectedRow = activeTab === 'tender' ? setSelectedTenderRow : setSelectedContractRow;
+
+  const hideStages = isMobile && !tableLandscape;
+  const stageKeys = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
 
 
@@ -304,9 +320,7 @@ function Procurement() {
               Contract Process
             </button>
           </div>
-          <div className="flex items-center gap-2">
-            <IconButton variant="info" contentId={activeTab === 'tender' ? 'procurement-tender-process' : 'procurement-contract-process'} />
-          </div>
+          <div />  {/* spacer for flex justify-between */}
         </div>
       </StickyHeader>
 
@@ -347,17 +361,23 @@ function Procurement() {
       )}
 
       {/* KPI and Timeline Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-lg">
-        {/* KPI Cards */}
-        <div className="lg:col-span-2 grid grid-cols-3 gap-md">
+      {isMobile ? (
+        <KpiCarousel>
           <KPICard variant="detailed" icon="fa-folder-tree"   iconBg="bg-primary/10" iconColor="text-primary" label={activeTab === 'tender' ? 'Active Tenders' : 'Active Contracts'} value={activeTab === 'tender' ? '11' : '504'} subtitle="currently in process" />
           <KPICard variant="detailed" icon="fa-list-check"    iconBg="bg-primary/10" iconColor="text-primary" label={activeTab === 'tender' ? 'Total Tenders' : 'Total Contracts'} value={activeTab === 'tender' ? '11' : '525'} subtitle="total records" />
           <KPICard variant="detailed" icon="fa-sack-dollar"   iconBg="bg-warning/10" iconColor="text-warning" label="Total Value" value={activeTab === 'tender' ? '$8 B' : (contractTypeFilter === 'Air' ? '$3 B' : '$10.1 B')} subtitle="estimated budget" />
+          <KPICard variant="detailed" icon="fa-calendar-check" iconBg="bg-primary/10" iconColor="text-primary" label="Process Start Date" value={activeTab === 'tender' ? '30 Nov 2023' : '18 Jul 2023'} subtitle="baseline date" />
+        </KpiCarousel>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-lg">
+          <div className="lg:col-span-2 grid grid-cols-3 gap-md">
+            <KPICard variant="detailed" icon="fa-folder-tree"   iconBg="bg-primary/10" iconColor="text-primary" label={activeTab === 'tender' ? 'Active Tenders' : 'Active Contracts'} value={activeTab === 'tender' ? '11' : '504'} subtitle="currently in process" />
+            <KPICard variant="detailed" icon="fa-list-check"    iconBg="bg-primary/10" iconColor="text-primary" label={activeTab === 'tender' ? 'Total Tenders' : 'Total Contracts'} value={activeTab === 'tender' ? '11' : '525'} subtitle="total records" />
+            <KPICard variant="detailed" icon="fa-sack-dollar"   iconBg="bg-warning/10" iconColor="text-warning" label="Total Value" value={activeTab === 'tender' ? '$8 B' : (contractTypeFilter === 'Air' ? '$3 B' : '$10.1 B')} subtitle="estimated budget" />
+          </div>
+          <KPICard variant="detailed" icon="fa-calendar-check" iconBg="bg-primary/10" iconColor="text-primary" label="Process Start Date" value={activeTab === 'tender' ? '30 Nov 2023' : '18 Jul 2023'} subtitle="baseline date" />
         </div>
-
-        {/* Timeline start date info */}
-        <KPICard variant="detailed" icon="fa-calendar-check" iconBg="bg-primary/10" iconColor="text-primary" label="Process Start Date" value={activeTab === 'tender' ? '30 Nov 2023' : '18 Jul 2023'} subtitle="baseline date" />
-      </div>
+      )}
 
       {/* Visualizer card & sidebar dates panel */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2.05fr)_minmax(320px,1fr)] gap-lg">
@@ -370,6 +390,17 @@ function Procurement() {
                 <IconButton variant="expand" data={pieData} title="Stage Visualizer" />
               )}
               <IconButton variant="info" contentId="procurement-stage-visualizer" />
+              {isMobile ? (
+                <select
+                  value={visMode}
+                  onChange={(e) => setVisMode(e.target.value)}
+                  className="h-8 rounded-lg border border-outline-variant bg-white px-2 text-xs font-semibold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                >
+                  <option value="pipeline">Pipeline</option>
+                  <option value="chart">Delay Chart</option>
+                  <option value="trend">Delay Trend</option>
+                </select>
+              ) : (
               <div className="flex items-center gap-1 bg-surface-container-low p-0.5 rounded-lg border border-outline-variant/30">
               <button
                 onClick={() => setVisMode('pipeline')}
@@ -405,10 +436,11 @@ function Procurement() {
                 Delay Trend
               </button>
             </div>
+              )}
           </div>
           </div>
 
-          <div className="h-[460px]">
+          <div className="h-[380px] md:h-[520px]">
             {visMode === 'pipeline' && (
               <div className="h-full flex flex-col justify-around py-1">
                 {currentStages.filter(s => s.id <= 8).map((stage) => {
@@ -537,8 +569,9 @@ function Procurement() {
                     <div
                       className="absolute bg-[#00373B] text-white p-3 rounded-xl shadow-level-3 border border-white/10 z-50 w-56 pointer-events-none"
                       style={{
-                        left: `${Math.min(80 + hoveredMonthIdx * 100 - 90, 500)}px`,
+                        left: isMobile ? '50%' : `${Math.min(80 + hoveredMonthIdx * 100 - 90, 500)}px`,
                         top: '25px',
+                        transform: isMobile ? 'translateX(-50%)' : 'none',
                       }}
                     >
                       <div className="text-sm font-bold text-sidebar-accent border-b border-white/10 pb-2 mb-2">
@@ -626,7 +659,7 @@ function Procurement() {
       </div>
 
       {/* Search and Filters row */}
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-level-2 flex flex-col md:flex-row items-center gap-md">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-level-2 flex flex-col md:flex-row items-start md:items-center gap-md">
         <div className="flex-1 w-full">
           <SearchInput
             value={searchQuery}
@@ -644,6 +677,22 @@ function Procurement() {
             className="w-full md:w-56"
           />
         )}
+
+        {isMobile && (
+          <button
+            type="button"
+            onClick={() => setTableLandscape(v => !v)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-150 shrink-0 ${
+              tableLandscape
+                ? 'bg-primary text-white border-primary shadow-sm'
+                : 'bg-white text-on-surface-variant border-outline hover:bg-surface-container'
+            }`}
+            aria-pressed={tableLandscape}
+          >
+            <i className={`fa-solid ${tableLandscape ? 'fa-compress' : 'fa-expand'} text-[10px]`} />
+            {tableLandscape ? 'Compact' : 'Landscape'}
+          </button>
+        )}
       </div>
 
       {/* Table Container */}
@@ -653,13 +702,15 @@ function Procurement() {
             <thead className="bg-surface-container-low border-b border-outline-variant">
               {activeTab === 'tender' ? (
                 <tr>
-                  {['Tender No', 'Responsible', '1', '2', '3', '4', '5', '6', '7', '8', 'Days Consumed', 'Days Remaining', 'Days Saved'].map((col) => {
+                  {['Tender No', 'Responsible', ...stageKeys, 'Days Consumed', 'Days Remaining', 'Days Saved']
+                    .filter(col => !hideStages || !stageKeys.includes(col))
+                    .map((col, i) => {
                     const isSorted = sortConfig.key === col;
                     return (
                       <th
                         key={col}
                         onClick={() => requestSort(col)}
-                        className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none hover:bg-surface-container transition-colors whitespace-nowrap"
+                        className={`px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none hover:bg-surface-container transition-colors whitespace-nowrap ${i === 0 && isMobile ? 'sticky left-0 z-10 bg-surface-container-low shadow-[2px_0_4px_rgba(0,0,0,0.06)]' : ''}`}
                       >
                         <div className="flex items-center gap-1.5">
                           {col === '1' || col === '2' || col === '3' || col === '4' || col === '5' || col === '6' || col === '7' || col === '8' ? `Stage ${col}` : col}
@@ -671,13 +722,15 @@ function Procurement() {
                 </tr>
               ) : (
                 <tr>
-                  {['PO No', 'PO Type', 'Invoice No', 'Tender No', '1', '2', '3', '4', '5', '6', '7', '8', 'Days Consumed', 'Days Remaining', 'Days Saved'].map((col) => {
+                  {['PO No', 'PO Type', 'Invoice No', 'Tender No', ...stageKeys, 'Days Consumed', 'Days Remaining', 'Days Saved']
+                    .filter(col => !hideStages || !stageKeys.includes(col))
+                    .map((col, i) => {
                     const isSorted = sortConfig.key === col;
                     return (
                       <th
                         key={col}
                         onClick={() => requestSort(col)}
-                        className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none hover:bg-surface-container transition-colors whitespace-nowrap"
+                        className={`px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none hover:bg-surface-container transition-colors whitespace-nowrap ${i === 0 && isMobile ? 'sticky left-0 z-10 bg-surface-container-low shadow-[2px_0_4px_rgba(0,0,0,0.06)]' : ''}`}
                       >
                         <div className="flex items-center gap-1.5">
                           {col === '1' || col === '2' || col === '3' || col === '4' || col === '5' || col === '6' || col === '7' || col === '8' ? `Stage ${col}` : col}
@@ -691,7 +744,7 @@ function Procurement() {
             </thead>
             <tbody className="divide-y divide-outline-variant/30">
               {paginatedData.length === 0 ? (
-                <EmptyState colSpan={activeTab === 'tender' ? 13 : 15} message="No records found matching filters" icon="fa-box-open" />
+                <EmptyState colSpan={hideStages ? (activeTab === 'tender' ? 5 : 7) : (activeTab === 'tender' ? 13 : 15)} message="No records found matching filters" icon="fa-box-open" />
               ) : (
                 paginatedData.map((row, index) => {
                   const isSelected = selectedRow && (activeTab === 'tender' ? selectedRow['Tender No'] === row['Tender No'] : selectedRow['PO No'] === row['PO No']);
@@ -705,37 +758,45 @@ function Procurement() {
                     >
                       {activeTab === 'tender' ? (
                         <>
-                          <td className="px-4 py-3.5 text-body-md font-mono text-on-surface">{row['Tender No']}</td>
-                          <td className="px-4 py-3.5 text-body-md text-on-surface whitespace-nowrap">{row.Responsible}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['1'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['2'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['3'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['4'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['5'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['6'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['7'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['8'])}</td>
-                          <td className="px-4 py-3.5 text-body-md text-on-surface text-right pr-6 font-bold">{row['Days Consumed']}</td>
-                          <td className="px-4 py-3.5 text-body-md text-on-surface text-right pr-6 font-bold">{row['Days Remaining']}</td>
-                          <td className="px-4 py-3.5 text-right pr-6">{formatBadge(row['Days Saved'])}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} font-mono text-on-surface sticky left-0 bg-white z-10 shadow-[2px_0_4px_rgba(0,0,0,0.06)]`}>{row['Tender No']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} text-on-surface whitespace-nowrap`}>{row.Responsible}</td>
+                          {!hideStages && (
+                            <>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['1'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['2'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['3'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['4'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['5'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['6'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['7'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['8'])}</td>
+                            </>
+                          )}
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} text-on-surface text-right pr-6 font-bold`}>{row['Days Consumed']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} text-on-surface text-right pr-6 font-bold`}>{row['Days Remaining']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-right pr-6`}>{formatBadge(row['Days Saved'])}</td>
                         </>
                       ) : (
                         <>
-                          <td className="px-4 py-3.5 text-body-md font-mono text-on-surface">{row['PO No']}</td>
-                          <td className="px-4 py-3.5 text-body-md text-on-surface whitespace-nowrap">{row['PO Type']}</td>
-                          <td className="px-4 py-3.5 text-body-md text-on-surface max-w-xs truncate" title={row['Invoice No']}>{row['Invoice No'] || '—'}</td>
-                          <td className="px-4 py-3.5 text-body-md font-mono text-on-surface max-w-xs truncate" title={row['Tender No']}>{row['Tender No']}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['1'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['2'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['3'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['4'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['5'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['6'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['7'])}</td>
-                          <td className="px-4 py-3.5 text-center">{formatBadge(row['8'])}</td>
-                          <td className="px-4 py-3.5 text-body-md text-on-surface text-right pr-6 font-bold">{row['Days Consumed']}</td>
-                          <td className="px-4 py-3.5 text-body-md text-on-surface text-right pr-6 font-bold">{row['Days Remaining']}</td>
-                          <td className="px-4 py-3.5 text-right pr-6">{formatBadge(row['Days Saved'])}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} font-mono text-on-surface sticky left-0 bg-white z-10 shadow-[2px_0_4px_rgba(0,0,0,0.06)]`}>{row['PO No']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} text-on-surface whitespace-nowrap`}>{row['PO Type']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs max-w-[80px]' : 'px-4 py-3.5 text-body-md max-w-xs'} text-on-surface truncate`} title={row['Invoice No']}>{row['Invoice No'] || '—'}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs max-w-[80px]' : 'px-4 py-3.5 text-body-md max-w-xs'} font-mono text-on-surface truncate`} title={row['Tender No']}>{row['Tender No']}</td>
+                          {!hideStages && (
+                            <>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['1'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['2'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['3'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['4'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['5'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['6'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['7'])}</td>
+                              <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['8'])}</td>
+                            </>
+                          )}
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} text-on-surface text-right pr-6 font-bold`}>{row['Days Consumed']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} text-on-surface text-right pr-6 font-bold`}>{row['Days Remaining']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-right pr-6`}>{formatBadge(row['Days Saved'])}</td>
                         </>
                       )}
                     </tr>

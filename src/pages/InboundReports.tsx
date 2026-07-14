@@ -6,7 +6,6 @@ import KPICard from '../components/KPICard';
 import SearchInput from '../components/SearchInput';
 import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
-import LoadingState from '../components/LoadingState';
 import SelectFilter from '../components/SelectFilter';
 import ExportDropdown from '../components/ExportDropdown';
 import StickyHeader from '../components/StickyHeader';
@@ -28,7 +27,6 @@ const ALL_COLUMNS = [
 
 function InboundReports() {
   const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage] = useState(13);
   const [mobilePageSize, setMobilePageSize] = useState(10);
@@ -87,19 +85,12 @@ function InboundReports() {
 
   // Load data
   useEffect(() => {
-    setIsLoading(true);
-
-    setTimeout(() => {
-      const parsedData = parseCSV(shipmentCSVData);
-
-      const processedData = parsedData.map(row => ({
-        ...row,
-        DwellingTime: parseDwellingTime(row.DwellingTime)
-      }));
-
-      setData(processedData);
-      setIsLoading(false);
-    }, 500);
+    const parsedData = parseCSV(shipmentCSVData);
+    const processedData = parsedData.map(row => ({
+      ...row,
+      DwellingTime: parseDwellingTime(row.DwellingTime)
+    }));
+    setData(processedData);
   }, []);
 
   // Apply all filters to data
@@ -323,10 +314,6 @@ function InboundReports() {
 
   const hasActiveFilters = searchQuery.trim() || officerFilter || arrivalDateFilter || dwellingTimeFilter || quickFilter;
 
-  if (isLoading) {
-    return <LoadingState message="Loading shipment data..." fullScreen />;
-  }
-
   return (
     <div className="space-y-5 animate-fade-in">
       {/* Header */}
@@ -527,10 +514,9 @@ function InboundReports() {
           <table className={isMobile ? '' : 'w-full'}>
             <thead className="bg-surface-container border-b border-[#D1D5DB]">
               <tr>
-                    <th className="py-3 px-4 border-r border-outline-variant w-8"></th>
                     <th
                       onClick={() => toggleSort('PurchaseOrderNumber')}
-                      className="py-3 px-4 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group border-r border-outline-variant sticky left-0 bg-surface-container z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
+                      className="py-3 px-4 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group border-r border-outline-variant"
                     >
                       <div className="flex items-center gap-2">
                         <span className="flex-1">PO NUMBER {sortBy.key === 'PurchaseOrderNumber' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
@@ -551,7 +537,7 @@ function InboundReports() {
                     </th>
                     <th
                       onClick={() => toggleSort('Item')}
-                      className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group"
+                      className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group sticky left-0 bg-surface-container z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
                     >
                       <div className="flex items-center gap-2">
                         <span className="flex-1">ITEM & DETAILS {sortBy.key === 'Item' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
@@ -750,11 +736,8 @@ function InboundReports() {
 
                   return (
                     <tr key={index} className="group border-b border-[#D1D5DB] hover:bg-surface-container-low transition-colors">
-                      <td className="py-4 px-4 border-r border-outline-variant/60">
-                        <div className={`w-2 h-2 rounded-full ${isOver90 ? 'bg-error' : 'bg-success'}`}></div>
-                      </td>
-                      <td className="py-4 px-4 border-r border-outline-variant/60 text-body-md text-on-surface sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">{row.PurchaseOrderNumber}</td>
-                      <td className="px-4 py-2">
+                      <td className="py-4 px-4 border-r border-outline-variant/60 text-body-md text-on-surface">{row.PurchaseOrderNumber}</td>
+                      <td className="px-4 py-2 sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                         <div className="text-body-md font-semibold text-on-surface">{row.Item}</div>
                         <div className="text-body-sm text-on-surface-variant">Quantity: {row.InvoicedQuantity}</div>
                       </td>

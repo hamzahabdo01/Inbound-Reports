@@ -1628,7 +1628,7 @@ function MiscellaneousStockReport() {
                         <td className="px-4 py-3 text-center font-mono text-xs text-on-surface-variant">
                           {row.ItemSN}
                         </td>
-                        <td className={`px-4 py-3 text-body-sm font-semibold text-primary-dark ${isMobile && !amcLandscape ? 'sticky left-0 z-10 bg-white shadow-[2px_0_4px_rgba(0,0,0,0.06)] max-w-[200px] whitespace-normal' : ''}`}
+                        <td className={`px-4 py-3 text-body-sm font-semibold text-primary-dark ${isMobile && !amcLandscape ? 'sticky left-0 z-10 bg-white shadow-[2px_0_4px_rgba(0,0,0,0.06)] max-w-[150px] whitespace-normal' : ''}`}
                           title={row.ItemName}>
                           {row.ItemName}
                         </td>

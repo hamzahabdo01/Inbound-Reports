@@ -186,7 +186,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
     <div className={`fixed inset-0 z-50 flex transition-all duration-300 ${collapsed ? 'pointer-events-none' : ''}`}>
       <div className={`fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${collapsed ? 'opacity-0' : 'opacity-100'}`} onClick={onClose} />
       <aside className={`relative w-[240px] flex flex-col h-screen bg-sidebar-bg text-white shadow-2xl transition-transform duration-300 ${collapsed ? '-translate-x-full' : 'translate-x-0'}`}>
-        <div className="flex-1 overflow-y-auto px-4 py-5 scrollbar-thin">
+        <div className="flex-1 overflow-y-hidden px-4 py-5 scrollbar-thin">
           <div className="flex items-center justify-between mb-8">
             <div className="text-sm font-bold text-white tracking-tight truncate">Fanos Dashboard</div>
             <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-lg shadow-sm bg-sidebar-accent text-primary hover:brightness-110 transition-all shrink-0" aria-label="Close sidebar">
@@ -207,7 +207,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
     </div>
   ) : (
     <aside className={`${collapsed ? 'w-[60px]' : 'w-[240px]'} shrink-0 flex flex-col h-screen max-h-dvh sticky top-0 z-40 bg-sidebar-bg text-white overscroll-contain`}>
-      <div className="flex-1 overflow-y-auto px-2 xl:px-4 py-5 scrollbar-thin">
+      <div className="flex-1 overflow-y-hidden px-2 xl:px-4 py-5 scrollbar-thin">
           <div className={`flex items-center mb-8 justify-between`}>
           <div className="flex items-center gap-3 min-w-0">
             {!collapsed && (

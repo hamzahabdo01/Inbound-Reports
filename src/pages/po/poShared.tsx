@@ -9,7 +9,7 @@ export const formatAmount = (v) => {
   return String(v);
 };
 
-export function Table({ headers, rows, renderRow, className = '', page, setPage, rowsPerPage = 15, expandedRow, onRowClick, rowKey, renderExpanded, rowClassName = '', expandedRowClassName = '' }: any) {
+export function Table({ headers, rows, renderRow, className = '', page, setPage, rowsPerPage = 15, expandedRow, onRowClick, rowKey, renderExpanded, rowClassName = '', expandedRowClassName = '', mobileMinWidth }: any) {
   const scrollRef = useRef(null);
   const [visibleWidth, setVisibleWidth] = useState(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
@@ -108,7 +108,7 @@ export function Table({ headers, rows, renderRow, className = '', page, setPage,
             className="overflow-x-auto -webkit-overflow-scrolling:touch outline-none focus:ring-2 focus:ring-primary/20 rounded-lg"
             style={{ scrollBehavior: 'smooth' }}
           >
-            <div style={{ minWidth: `${Math.max(headers.length * 90, 500)}px` }}>
+            <div style={{ minWidth: mobileMinWidth ?? `${Math.max(headers.length * 90, 500)}px` }}>
               {tableEl}
             </div>
           </div>
