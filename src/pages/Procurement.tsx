@@ -710,7 +710,7 @@ function Procurement() {
                       <th
                         key={col}
                         onClick={() => requestSort(col)}
-                        className={`px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none hover:bg-surface-container transition-colors whitespace-nowrap ${i === 0 && isMobile ? 'sticky left-0 z-10 bg-surface-container-low shadow-[2px_0_4px_rgba(0,0,0,0.06)]' : ''}`}
+                        className={`px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none hover:bg-surface-container transition-colors whitespace-nowrap ${i === 0 ? 'sticky left-0 z-10 bg-surface-container-low shadow-[2px_0_4px_rgba(0,0,0,0.06)]' : ''}`}
                       >
                         <div className="flex items-center gap-1.5">
                           {col === '1' || col === '2' || col === '3' || col === '4' || col === '5' || col === '6' || col === '7' || col === '8' ? `Stage ${col}` : col}
@@ -730,7 +730,7 @@ function Procurement() {
                       <th
                         key={col}
                         onClick={() => requestSort(col)}
-                        className={`px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none hover:bg-surface-container transition-colors whitespace-nowrap ${i === 0 && isMobile ? 'sticky left-0 z-10 bg-surface-container-low shadow-[2px_0_4px_rgba(0,0,0,0.06)]' : ''}`}
+                        className={`px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none hover:bg-surface-container transition-colors whitespace-nowrap ${i === 0 ? 'sticky left-0 z-10 bg-surface-container-low shadow-[2px_0_4px_rgba(0,0,0,0.06)]' : ''}`}
                       >
                         <div className="flex items-center gap-1.5">
                           {col === '1' || col === '2' || col === '3' || col === '4' || col === '5' || col === '6' || col === '7' || col === '8' ? `Stage ${col}` : col}
@@ -747,14 +747,10 @@ function Procurement() {
                 <EmptyState colSpan={hideStages ? (activeTab === 'tender' ? 5 : 7) : (activeTab === 'tender' ? 13 : 15)} message="No records found matching filters" icon="fa-box-open" />
               ) : (
                 paginatedData.map((row, index) => {
-                  const isSelected = selectedRow && (activeTab === 'tender' ? selectedRow['Tender No'] === row['Tender No'] : selectedRow['PO No'] === row['PO No']);
                   return (
                     <tr
                       key={index}
-                      onClick={() => setSelectedRow(row)}
-                      className={`cursor-pointer transition-colors ${
-                        isSelected ? 'bg-primary/5 hover:bg-primary/10 font-medium' : 'hover:bg-surface-container-low'
-                      }`}
+                      className="transition-colors hover:bg-surface-container-low"
                     >
                       {activeTab === 'tender' ? (
                         <>
