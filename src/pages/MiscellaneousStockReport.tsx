@@ -10,6 +10,7 @@ import SelectFilter from '../components/SelectFilter';
 import ExportDropdown from '../components/ExportDropdown';
 import StickyHeader from '../components/StickyHeader';
 import IconButton from '../components/IconButton';
+import LandscapeToggle from '../components/LandscapeToggle';
 
 
 // Status styling & logic helper
@@ -667,19 +668,7 @@ function MiscellaneousStockReport() {
           <span className="text-xs text-on-surface-variant font-medium">
             {filteredData.length} of {stockData.length} items
           </span>
-          <button
-            type="button"
-            onClick={() => setMobileLandscape(v => !v)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all duration-150 ${
-              mobileLandscape
-                ? 'bg-primary text-white border-primary shadow-sm'
-                : 'bg-white text-on-surface-variant border-outline hover:bg-surface-container'
-            }`}
-            aria-pressed={mobileLandscape}
-          >
-            <i className={`fa-solid ${mobileLandscape ? 'fa-compress' : 'fa-expand'} text-[10px]`} />
-            {mobileLandscape ? 'Compact' : 'Landscape'}
-          </button>
+          <LandscapeToggle value={mobileLandscape} onChange={setMobileLandscape} />
         </div>
       )}
 
@@ -1586,19 +1575,7 @@ function MiscellaneousStockReport() {
             <span className="text-xs text-on-surface-variant font-medium">
               {filteredAmcData.length} of {amcData.length} items
             </span>
-            <button
-              type="button"
-              onClick={() => setAmcLandscape(v => !v)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all duration-150 ${
-                amcLandscape
-                  ? 'bg-primary text-white border-primary shadow-sm'
-                  : 'bg-white text-on-surface-variant border-outline hover:bg-surface-container'
-              }`}
-              aria-pressed={amcLandscape}
-            >
-              <i className={`fa-solid ${amcLandscape ? 'fa-compress' : 'fa-expand'} text-[10px]`} />
-              {amcLandscape ? 'Compact' : 'Landscape'}
-            </button>
+            <LandscapeToggle value={amcLandscape} onChange={setAmcLandscape} />
           </div>
         )}
         <div className={`bg-white rounded-xl border border-outline-variant shadow-level-1 ${isMobile ? '' : 'overflow-hidden'}`}>
@@ -1628,7 +1605,7 @@ function MiscellaneousStockReport() {
                         <td className="px-4 py-3 text-center font-mono text-xs text-on-surface-variant">
                           {row.ItemSN}
                         </td>
-                        <td className={`px-4 py-3 text-body-sm font-semibold text-primary-dark ${isMobile && !amcLandscape ? 'sticky left-0 z-10 bg-white shadow-[2px_0_4px_rgba(0,0,0,0.06)] max-w-[150px] whitespace-normal' : ''}`}
+                        <td className={`px-4 py-3 text-body-sm font-semibold text-primary-dark ${isMobile && !amcLandscape ? 'sticky left-0 z-10 bg-white shadow-[2px_0_4px_rgba(0,0,0,0.06)] max-w-[150px] whitespace-normal' : 'max-w-[300px] truncate'}`}
                           title={row.ItemName}>
                           {row.ItemName}
                         </td>

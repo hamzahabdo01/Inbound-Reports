@@ -12,6 +12,7 @@ import KPICard from '../components/KPICard';
 import KpiCarousel from '../components/KpiCarousel';
 import StickyHeader from '../components/StickyHeader';
 import IconButton from '../components/IconButton';
+import LandscapeToggle from '../components/LandscapeToggle';
 
 
 const TENDER_STAGES = [
@@ -66,6 +67,7 @@ function Procurement() {
   // Visualization modes
   const [visMode, setVisMode] = useState('pipeline'); // 'pipeline' | 'chart' | 'trend'
   const [hoveredMonthIdx, setHoveredMonthIdx] = useState(null);
+  const [trendTooltip, setTrendTooltip] = useState<{ x: number; y: number; idx: number } | null>(null);
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
@@ -478,117 +480,131 @@ function Procurement() {
             )}
 
             {visMode === 'trend' && (
-              <div className="h-full flex flex-col items-center justify-start gap-md py-1">
-                {/* SVG Interactive Area Chart */}
-                <div className="relative w-full flex-1 min-h-0 mt-2 bg-surface-container-lowest rounded-lg border border-outline-variant/30 p-4">
-                  <svg className="w-full h-full" viewBox="0 0 780 220" preserveAspectRatio="none">
-                    {[0, 200, 400, 600, 800, 1000].map((val) => {
-                      const y = 180 - (val / 1000) * 150;
-                      return (
-                        <line key={val} x1="60" y1={y} x2="740" y2={y} stroke="#EAEEF0" strokeWidth="1" />
-                      );
-                    })}
-
-                    {[0, 500, 1000].map((val) => {
-                      const y = 180 - (val / 1000) * 150;
-                      return (
-                        <text key={val} x="45" y={y + 4} className="text-[10px] font-bold text-on-surface-variant text-right" fill="currentColor">{val}d</text>
-                      );
-                    })}
-
-                    {['June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month, idx) => {
-                      const x = 80 + idx * 100;
-                      return (
-                        <text key={month} x={x} y="200" className="text-[10px] font-bold text-on-surface-variant text-center" fill="currentColor" textAnchor="middle">{month}</text>
-                      );
-                    })}
-
-                    <path
-                      d="M 80 180 L 80 180 L 180 160 L 280 140 L 380 90 L 480 60 L 580 40 L 680 30 L 680 180 Z"
-                      fill="#00373B"
-                      className="opacity-10"
-                    />
-
-                    <path
-                      d="M 80 180 L 180 160 L 280 140 L 380 90 L 480 60 L 580 40 L 680 30"
-                      fill="none"
-                      stroke="#00373B"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                    />
-
-                    {hoveredMonthIdx !== null && (
-                      <line
-                        x1={80 + hoveredMonthIdx * 100}
-                        y1="30"
-                        x2={80 + hoveredMonthIdx * 100}
-                        y2="180"
-                        stroke="#00373B"
-                        strokeWidth="1.5"
-                        strokeDasharray="4 4"
-                      />
-                    )}
-
+              <div className="h-full flex flex-col">
+                {isMobile ? (
+                  /* Mobile: accordion list */
+                  <div className="space-y-1.5 overflow-y-auto flex-1 min-h-0 pr-1">
                     {[
-                      { x: 80, y: 180 },
-                      { x: 180, y: 160 },
-                      { x: 280, y: 140 },
-                      { x: 380, y: 90 },
-                      { x: 480, y: 60 },
-                      { x: 580, y: 40 },
-                      { x: 680, y: 30 },
-                    ].map((pt, i) => (
-                      <circle
-                        key={i}
-                        cx={pt.x}
-                        cy={pt.y}
-                        r={hoveredMonthIdx === i ? '7' : '5'}
-                        fill="#00373B"
-                        stroke="#ffffff"
-                        strokeWidth="2"
-                        className="transition-all duration-150"
-                      />
-                    ))}
-
-                    {['June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month, idx) => (
-                      <rect
-                        key={idx}
-                        x={80 + idx * 100 - 50}
-                        y="20"
-                        width="100"
-                        height="165"
-                        fill="transparent"
-                        className="cursor-pointer"
-                        onMouseEnter={() => setHoveredMonthIdx(idx)}
-                        onMouseLeave={() => setHoveredMonthIdx(null)}
-                      />
-                    ))}
-                  </svg>
-
-                  {hoveredMonthIdx !== null && (
-                    <div
-                      className="absolute bg-[#00373B] text-white p-3 rounded-xl shadow-level-3 border border-white/10 z-50 w-56 pointer-events-none"
-                      style={{
-                        left: isMobile ? '50%' : `${Math.min(80 + hoveredMonthIdx * 100 - 90, 500)}px`,
-                        top: '25px',
-                        transform: isMobile ? 'translateX(-50%)' : 'none',
-                      }}
-                    >
-                      <div className="text-sm font-bold text-sidebar-accent border-b border-white/10 pb-2 mb-2">
-                        {['June 2023', 'July 2023', 'August 2023', 'September 2023', 'October 2023', 'November 2023', 'December 2023'][hoveredMonthIdx]}
-                      </div>
-                      <div className="text-xs leading-tight space-y-1.5">
-                        <div className="flex justify-between"><span>Avg Delay:</span> <span className="font-bold text-white">{[0, 130, 270, 600, 800, 930, 1000][hoveredMonthIdx]} days</span></div>
-                        <div className="flex justify-between"><span>Active Contracts:</span> <span className="font-bold text-white">{[0, 50, 150, 300, 450, 500, filteredData.length][hoveredMonthIdx]}</span></div>
-                        <div className="flex justify-between"><span>Status:</span> <span className="font-bold text-warning">{hoveredMonthIdx >= 3 ? 'Critical Delays' : 'On Track'}</span></div>
-                      </div>
+                      { month: 'June', value: 0, contracts: 0 },
+                      { month: 'July', value: 130, contracts: 50 },
+                      { month: 'August', value: 270, contracts: 150 },
+                      { month: 'September', value: 600, contracts: 300 },
+                      { month: 'October', value: 800, contracts: 450 },
+                      { month: 'November', value: 930, contracts: 500 },
+                      { month: 'December', value: 1000, contracts: filteredData.length },
+                    ].map((d, idx) => {
+                      const isExpanded = hoveredMonthIdx === idx;
+                      const isCritical = idx >= 3;
+                      return (
+                        <div key={d.month} className="rounded-xl border border-outline-variant bg-white overflow-hidden">
+                          <button
+                            onClick={() => setHoveredMonthIdx(prev => prev === idx ? null : idx)}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-container-low"
+                          >
+                            <div className={`w-2 h-8 rounded-full shrink-0 ${isCritical ? 'bg-error/60' : 'bg-primary/40'}`} />
+                            <span className="flex-1 min-w-0 text-sm font-semibold text-on-surface">{d.month} 2023</span>
+                            <span className="text-xs font-bold text-on-surface-variant tabular-nums">{d.value}d</span>
+                            <i className={`fa-solid fa-chevron-down text-[10px] text-on-surface-variant transition-transform duration-150 ${isExpanded ? 'rotate-180' : ''}`} />
+                          </button>
+                          {isExpanded && (
+                            <div className="px-4 pb-4 pt-0">
+                              <div className="h-px bg-outline-variant/50 mb-3" />
+                              <div className="bg-surface-container-low rounded-lg p-4 space-y-2 text-body-sm">
+                                <div className="flex justify-between"><span className="text-on-surface-variant">Avg Delay</span><span className="font-bold text-on-surface font-mono">{d.value} days</span></div>
+                                <div className="flex justify-between"><span className="text-on-surface-variant">Active Contracts</span><span className="font-bold text-on-surface font-mono">{d.contracts}</span></div>
+                                <div className="flex justify-between"><span className="text-on-surface-variant">Status</span><span className={`font-bold ${isCritical ? 'text-error' : 'text-success'}`}>{isCritical ? 'Critical Delays' : 'On Track'}</span></div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Desktop: bars + floating tooltip */
+                  <div className="flex-1 min-h-0 relative bg-surface-container-lowest rounded-lg border border-outline-variant/30">
+                    {/* Y-axis gridlines */}
+                    <div className="absolute inset-0 pointer-events-none flex flex-col justify-between py-8 pl-12 pr-4">
+                      {[1000, 800, 600, 400, 200, 0].map((val) => (
+                        <div key={val} className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-on-surface-variant/50 w-7 text-right shrink-0">{val}</span>
+                          <div className="flex-1 border-t border-outline-variant/30" />
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
 
-                <div className="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl p-md space-y-sm mt-auto text-center text-sm text-on-surface-variant font-medium">
-                  Hover over any month's data point on the chart to inspect average contract delay days.
-                </div>
+                    {/* Bars area */}
+                    <div className="absolute inset-0 pt-8 pl-14 pr-5 pb-8 flex items-end gap-2.5">
+                      {[
+                        { month: 'Jun', fullMonth: 'June', value: 0, contracts: 0 },
+                        { month: 'Jul', fullMonth: 'July', value: 130, contracts: 50 },
+                        { month: 'Aug', fullMonth: 'August', value: 270, contracts: 150 },
+                        { month: 'Sep', fullMonth: 'September', value: 600, contracts: 300 },
+                        { month: 'Oct', fullMonth: 'October', value: 800, contracts: 450 },
+                        { month: 'Nov', fullMonth: 'November', value: 930, contracts: 500 },
+                        { month: 'Dec', fullMonth: 'December', value: 1000, contracts: filteredData.length },
+                      ].map((d, idx) => {
+                        const maxVal = 1000;
+                        const pct = (d.value / maxVal) * 100;
+                        const isHovered = hoveredMonthIdx === idx;
+                        const isCritical = idx >= 3;
+                        return (
+                          <div key={d.month} className="flex-1 flex flex-col items-center h-full min-w-0">
+                            <div
+                              className="w-full flex-1 flex items-end cursor-pointer group/bar relative"
+                              onMouseEnter={(e) => setHoveredMonthIdx(idx)}
+                              onMouseMove={(e) => setTrendTooltip({ x: e.clientX, y: e.clientY, idx })}
+                              onMouseLeave={() => { setHoveredMonthIdx(null); setTrendTooltip(null); }}
+                              onClick={() => setHoveredMonthIdx(isHovered ? null : idx)}
+                            >
+                              <div
+                                className={`w-full rounded-t transition-all duration-200 ${
+                                  isHovered
+                                    ? 'bg-[#00373B]'
+                                    : isCritical
+                                      ? 'bg-[#00373B]/70 group-hover/bar:bg-[#00373B]'
+                                      : 'bg-[#00373B]/40 group-hover/bar:bg-[#00373B]/70'
+                                }`}
+                                style={pct > 0 ? { height: `${pct}%` } : { height: 0, opacity: 0 }}
+                              />
+                            </div>
+                            <div className={`text-[11px] font-bold text-center leading-none mt-1.5 ${isHovered ? 'text-[#00373B]' : 'text-on-surface-variant'}`}>
+                              {d.month}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Floating tooltip */}
+                    {trendTooltip && hoveredMonthIdx !== null && (() => {
+                      const d = [
+                        { fullMonth: 'June', value: 0, contracts: 0 },
+                        { fullMonth: 'July', value: 130, contracts: 50 },
+                        { fullMonth: 'August', value: 270, contracts: 150 },
+                        { fullMonth: 'September', value: 600, contracts: 300 },
+                        { fullMonth: 'October', value: 800, contracts: 450 },
+                        { fullMonth: 'November', value: 930, contracts: 500 },
+                        { fullMonth: 'December', value: 1000, contracts: filteredData.length },
+                      ][hoveredMonthIdx];
+                      const isCritical = hoveredMonthIdx >= 3;
+                      return (
+                        <div className="fixed pointer-events-none bg-white rounded-xl shadow-lg border border-outline-variant px-4 py-3 text-xs z-50"
+                          style={{ left: trendTooltip.x + 12, top: trendTooltip.y - 10 }}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isCritical ? 'bg-error' : 'bg-success'}`} />
+                            <span className="font-bold text-on-surface text-[13px]">{d.fullMonth} 2023</span>
+                          </div>
+                          <div className="space-y-1 text-on-surface-variant">
+                            <div className="flex justify-between gap-6"><span>Avg Delay</span><span className="font-semibold text-on-surface tabular-nums">{d.value} days</span></div>
+                            <div className="flex justify-between gap-6"><span>Active Contracts</span><span className="font-semibold text-on-surface tabular-nums">{d.contracts}</span></div>
+                            <div className="flex justify-between gap-6"><span>Status</span><span className={`font-semibold ${isCritical ? 'text-error' : 'text-success'}`}>{isCritical ? 'Critical Delays' : 'On Track'}</span></div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -679,26 +695,14 @@ function Procurement() {
         )}
 
         {isMobile && (
-          <button
-            type="button"
-            onClick={() => setTableLandscape(v => !v)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-150 shrink-0 ${
-              tableLandscape
-                ? 'bg-primary text-white border-primary shadow-sm'
-                : 'bg-white text-on-surface-variant border-outline hover:bg-surface-container'
-            }`}
-            aria-pressed={tableLandscape}
-          >
-            <i className={`fa-solid ${tableLandscape ? 'fa-compress' : 'fa-expand'} text-[10px]`} />
-            {tableLandscape ? 'Compact' : 'Landscape'}
-          </button>
+          <LandscapeToggle value={tableLandscape} onChange={setTableLandscape} />
         )}
       </div>
 
       {/* Table Container */}
       <div className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-level-2">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table className={`border-collapse ${isMobile && !tableLandscape ? 'whitespace-nowrap' : 'w-full'}`}>
             <thead className="bg-surface-container-low border-b border-outline-variant">
               {activeTab === 'tender' ? (
                 <tr>
@@ -754,8 +758,8 @@ function Procurement() {
                     >
                       {activeTab === 'tender' ? (
                         <>
-                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} font-mono text-on-surface sticky left-0 bg-white z-10 shadow-[2px_0_4px_rgba(0,0,0,0.06)]`}>{row['Tender No']}</td>
-                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} text-on-surface whitespace-nowrap`}>{row.Responsible}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-[11px]' : 'px-4 py-3.5 text-body-md'} font-mono text-on-surface sticky left-0 bg-white z-10 shadow-[2px_0_4px_rgba(0,0,0,0.06)]`}>{row['Tender No']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-[11px]' : 'px-4 py-3.5 text-body-md'} text-on-surface whitespace-nowrap`}>{row.Responsible}</td>
                           {!hideStages && (
                             <>
                               <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['1'])}</td>
@@ -768,16 +772,16 @@ function Procurement() {
                               <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['8'])}</td>
                             </>
                           )}
-                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} text-on-surface text-right pr-6 font-bold`}>{row['Days Consumed']}</td>
-                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} text-on-surface text-right pr-6 font-bold`}>{row['Days Remaining']}</td>
-                          <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-right pr-6`}>{formatBadge(row['Days Saved'])}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-[11px]' : 'px-4 py-3.5 text-body-md'} text-on-surface text-right pr-6 font-bold`}>{row['Days Consumed']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-[11px]' : 'px-4 py-3.5 text-body-md'} text-on-surface text-right pr-6 font-bold`}>{row['Days Remaining']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-[11px]' : 'px-4 py-3.5'} text-right pr-6`}>{formatBadge(row['Days Saved'])}</td>
                         </>
                       ) : (
                         <>
-                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} font-mono text-on-surface sticky left-0 bg-white z-10 shadow-[2px_0_4px_rgba(0,0,0,0.06)]`}>{row['PO No']}</td>
-                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} text-on-surface whitespace-nowrap`}>{row['PO Type']}</td>
-                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs max-w-[80px]' : 'px-4 py-3.5 text-body-md max-w-xs'} text-on-surface truncate`} title={row['Invoice No']}>{row['Invoice No'] || '—'}</td>
-                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs max-w-[80px]' : 'px-4 py-3.5 text-body-md max-w-xs'} font-mono text-on-surface truncate`} title={row['Tender No']}>{row['Tender No']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-[11px]' : 'px-4 py-3.5 text-body-md'} font-mono text-on-surface sticky left-0 bg-white z-10 shadow-[2px_0_4px_rgba(0,0,0,0.06)]`}>{row['PO No']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-[11px]' : 'px-4 py-3.5 text-body-md'} text-on-surface whitespace-nowrap`}>{row['PO Type']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-[11px] max-w-[80px]' : 'px-4 py-3.5 text-body-md max-w-xs'} text-on-surface truncate`} title={row['Invoice No']}>{row['Invoice No'] || '—'}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-[11px] max-w-[80px]' : 'px-4 py-3.5 text-body-md max-w-xs'} font-mono text-on-surface truncate`} title={row['Tender No']}>{row['Tender No']}</td>
                           {!hideStages && (
                             <>
                               <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['1'])}</td>
@@ -790,9 +794,9 @@ function Procurement() {
                               <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-center`}>{formatBadge(row['8'])}</td>
                             </>
                           )}
-                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} text-on-surface text-right pr-6 font-bold`}>{row['Days Consumed']}</td>
-                          <td className={`${isMobile ? 'px-2 py-2.5 text-body-xs' : 'px-4 py-3.5 text-body-md'} text-on-surface text-right pr-6 font-bold`}>{row['Days Remaining']}</td>
-                          <td className={`${isMobile ? 'px-2 py-2.5' : 'px-4 py-3.5'} text-right pr-6`}>{formatBadge(row['Days Saved'])}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-[11px]' : 'px-4 py-3.5 text-body-md'} text-on-surface text-right pr-6 font-bold`}>{row['Days Consumed']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-[11px]' : 'px-4 py-3.5 text-body-md'} text-on-surface text-right pr-6 font-bold`}>{row['Days Remaining']}</td>
+                          <td className={`${isMobile ? 'px-2 py-2.5 text-[11px]' : 'px-4 py-3.5'} text-right pr-6`}>{formatBadge(row['Days Saved'])}</td>
                         </>
                       )}
                     </tr>

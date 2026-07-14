@@ -5,6 +5,7 @@ import IconButton from '../../components/IconButton';
 import LeadtimeMilestoneTracker from '../../components/LeadtimeMilestoneTracker';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 import ExportDropdown from '../../components/ExportDropdown';
+import LandscapeToggle from '../../components/LandscapeToggle';
 
 const fmtDuration = (days) => {
   if (days == null || days < 0) return null;
@@ -100,19 +101,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                   <span className="text-xs text-on-surface-variant font-medium">
                     {data.supplierPerformanceLeaderboard?.length || 0} suppliers
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setSupplierPerfLandscape(v => !v)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all duration-150 ${
-                      supplierPerfLandscape
-                        ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-white text-on-surface-variant border-outline hover:bg-surface-container'
-                    }`}
-                    aria-pressed={supplierPerfLandscape}
-                  >
-                    <i className={`fa-solid ${supplierPerfLandscape ? 'fa-compress' : 'fa-expand'} text-[10px]`} />
-                    {supplierPerfLandscape ? 'Compact' : 'Landscape'}
-                  </button>
+                  <LandscapeToggle value={supplierPerfLandscape} onChange={setSupplierPerfLandscape} />
                 </div>
                 <div
                   ref={supplierPerfScrollRef}
@@ -176,19 +165,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                   <span className="text-xs text-on-surface-variant font-medium">
                     {risk?.length || 0} suppliers
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setSupplierRiskLandscape(v => !v)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all duration-150 ${
-                      supplierRiskLandscape
-                        ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-white text-on-surface-variant border-outline hover:bg-surface-container'
-                    }`}
-                    aria-pressed={supplierRiskLandscape}
-                  >
-                    <i className={`fa-solid ${supplierRiskLandscape ? 'fa-compress' : 'fa-expand'} text-[10px]`} />
-                    {supplierRiskLandscape ? 'Compact' : 'Landscape'}
-                  </button>
+                  <LandscapeToggle value={supplierRiskLandscape} onChange={setSupplierRiskLandscape} />
                 </div>
                 <div
                   ref={supplierRiskScrollRef}

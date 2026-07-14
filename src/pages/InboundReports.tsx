@@ -537,7 +537,7 @@ function InboundReports() {
                     </th>
                     <th
                       onClick={() => toggleSort('Item')}
-                      className="px-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group sticky left-0 bg-surface-container z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
+                      className="pl-2 pr-4 py-3 text-left text-label-caps text-on-surface-variant uppercase cursor-pointer select-none relative group sticky left-0 bg-surface-container z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
                     >
                       <div className="flex items-center gap-2">
                         <span className="flex-1">ITEM & DETAILS {sortBy.key === 'Item' ? (sortBy.direction === 'asc' ? '▲' : '▼') : ''}</span>
@@ -737,7 +737,7 @@ function InboundReports() {
                   return (
                     <tr key={index} className="group border-b border-[#D1D5DB] hover:bg-surface-container-low transition-colors">
                       <td className="py-4 px-4 border-r border-outline-variant/60 text-body-md text-on-surface">{row.PurchaseOrderNumber}</td>
-                      <td className="px-4 py-2 sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                      <td className="pl-2 pr-4 py-2 sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                         <div className="text-body-md font-semibold text-on-surface">{row.Item}</div>
                         <div className="text-body-sm text-on-surface-variant">Quantity: {row.InvoicedQuantity}</div>
                       </td>
