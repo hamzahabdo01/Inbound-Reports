@@ -287,7 +287,7 @@ function MiscellaneousStockReport() {
     return Object.values(getColspans).reduce((sum, count) => sum + count, 0) + 2; // +2 for status badge & actions
   }, [getColspans]);
 
-  const maxTotalCols = 4 + 6 + 2 + 3 + 3 + 3 + 2 + 1 + HUB_KEYS.length + 2; // all columns always counted
+  const maxTotalCols = 5 + 6 + 2 + 3 + 3 + 3 + 2 + 1 + HUB_KEYS.length + 1; // all columns always counted
 
   const [kpiPage, setKpiPage] = useState(0);
   const [kpiCardsPerPage, setKpiCardsPerPage] = useState(() => window.innerWidth >= 1024 ? 5 : window.innerWidth >= 640 ? 2 : 1);
@@ -690,7 +690,7 @@ function MiscellaneousStockReport() {
             <thead>
               {/* Grouped Headers (Row 1) */}
               <tr className="bg-surface border-b border-outline-variant text-[11px] font-bold text-primary-dark uppercase tracking-wider text-center">
-                <th colSpan={4} className={`py-2.5 px-4 border-r border-outline-variant ${isMobile ? '' : 'sticky left-0 bg-surface z-10'}`}>Item Description</th>
+                <th colSpan={5} className={`py-2.5 px-4 border-r border-outline-variant ${isMobile ? '' : 'sticky left-0 bg-surface z-10'}`}>Item Description</th>
                 <th colSpan={6} className="py-2.5 px-4 border-r border-outline-variant bg-surface-low">National SOH & Consumption</th>
                 {showContract && <th colSpan={2} className="py-2.5 px-4 border-r border-outline-variant bg-slate-50">Contract</th>}
                 {showOrdered && <th colSpan={3} className="py-2.5 px-4 border-r border-outline-variant bg-sky-50/50">Ordered</th>}
@@ -699,16 +699,17 @@ function MiscellaneousStockReport() {
                 {showQtyLeft && <th colSpan={2} className="py-2.5 px-4 border-r border-outline-variant bg-indigo-50/40">Quantity Left</th>}
                 {showExpiries && <th colSpan={1} className="py-2.5 px-4 border-r border-outline-variant bg-purple-50/40">Expiries</th>}
                 {showHubColumns && <th colSpan={HUB_KEYS.length} className="py-2.5 px-4 border-r border-outline-variant bg-amber-50/30">Hub Stock Distribution</th>}
-                <th colSpan={2} className="py-2.5 px-4 bg-surface">Summary</th>
+                <th className="py-2.5 px-4 bg-surface"></th>
               </tr>
 
               {/* Sub Columns (Row 2) */}
               <tr className="bg-surface border-b border-outline-variant text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
                 {/* Item Description Sub Headers */}
-                <th className="py-3 px-4 border-r border-outline-variant w-12 sticky left-0 bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">SN</th>
-                <th className={`py-3 px-4 border-r border-outline-variant min-w-[240px] ${isMobile ? '' : 'sticky left-12 bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>Item</th>
-                <th className={`py-3 px-4 border-r border-outline-variant w-24 ${isMobile ? '' : 'sticky left-[285px] bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>Unit</th>
-                <th className={`py-3 px-4 border-r border-outline-variant w-16 text-center ${isMobile ? '' : 'sticky left-[354px] bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>VEN</th>
+                <th className={`py-3 px-4 border-r border-outline-variant w-12 ${isMobile ? '' : 'sticky left-0 bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>SN</th>
+                <th className={`py-3 px-4 border-r border-outline-variant min-w-[240px] sticky ${isMobile ? 'left-0' : 'left-12'} bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>Item</th>
+                <th className={`py-3 px-4 border-r border-outline-variant w-32 text-center sticky ${isMobile ? 'left-[240px]' : 'left-[285px]'} bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>Stock Status</th>
+                <th className={`py-3 px-4 border-r border-outline-variant w-24 ${isMobile ? '' : 'sticky left-[413px] bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>Unit</th>
+                <th className={`py-3 px-4 border-r border-outline-variant w-16 text-center ${isMobile ? '' : 'sticky left-[482px] bg-surface z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>VEN</th>
                 
                 {/* National Sub Headers */}
                 <th className="py-3 px-4 border-r border-outline-variant w-24 text-right">SOH</th>
@@ -773,8 +774,7 @@ function MiscellaneousStockReport() {
                   </th>
                 ))}
 
-                {/* Summary Badges Headers */}
-                <th className="py-3 px-4 border-r border-outline-variant w-32 text-center">Stock Status</th>
+                {/* Chevron */}
                 <th className="py-3 px-4 w-10"></th>
               </tr>
             </thead>
@@ -795,16 +795,21 @@ function MiscellaneousStockReport() {
                         }`}
                       >
                         {/* Item Description Values */}
-                        <td className="py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-mono text-xs text-on-surface-variant ${isMobile ? '' : 'sticky left-0 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
                           {item.sn}
                         </td>
-                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${isMobile ? '' : 'sticky left-12 bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
+                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm sticky ${isMobile ? 'left-0' : 'left-12'} bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>
                           {item.item}
                         </td>
-                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${isMobile ? '' : 'sticky left-[285px] bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
+                        <td className={`py-4 px-4 border-r border-outline-variant/60 text-center sticky ${isMobile ? 'left-[240px]' : 'left-[285px]'} bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>
+                          <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full border ${status.color}`}>
+                            {status.label}
+                          </span>
+                        </td>
+                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${isMobile ? '' : 'sticky left-[413px] bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
                           {item.unit}
                         </td>
-                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${isMobile ? '' : 'sticky left-[354px] bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
+                        <td className={`py-4 px-4 border-r border-outline-variant/60 font-semibold text-primary-dark group-hover:text-primary transition-colors text-body-sm ${isMobile ? '' : 'sticky left-[482px] bg-white group-hover:bg-surface-container-low z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'}`}>
                           <span className={`inline-block px-2 py-0.5 text-[10px] font-extrabold rounded ${
                             item.ven === 'V' ? 'bg-purple-100 text-purple-700' :
                             item.ven === 'E' ? 'bg-sky-100 text-sky-700' :
@@ -917,12 +922,7 @@ function MiscellaneousStockReport() {
                           </td>
                         ))}
 
-                        {/* Summary Badges & Collapse chevron */}
-                        <td className="py-4 px-4 border-r border-outline-variant/60 text-center">
-                          <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full border ${status.color}`}>
-                            {status.label}
-                          </span>
-                        </td>
+                        {/* Chevron */}
                         <td className="py-4 px-4 text-center text-on-surface-variant">
                           <i className={`fa-solid fa-chevron-down text-xs transition-transform duration-200 ${
                             isExpanded ? 'rotate-180 text-primary' : ''
