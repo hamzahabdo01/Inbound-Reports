@@ -2,7 +2,8 @@ import { useState, useRef } from 'react';
 import KPICard from '../../components/KPICard';
 import KpiCarousel from '../../components/KpiCarousel';
 import IconButton from '../../components/IconButton';
-import LeadtimeMilestoneTracker from '../../components/LeadtimeMilestoneTracker';
+import MilestoneRingStepper from '../../components/MilestoneRingStepper';
+import { LEADTIME_MILESTONE_STEPS } from '../../utils/leadtimeMilestones';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 import ExportDropdown from '../../components/ExportDropdown';
 import LandscapeToggle from '../../components/LandscapeToggle';
@@ -34,19 +35,53 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
   const [supplierRiskLandscape, setSupplierRiskLandscape] = useState(false);
   const supplierPerfScrollRef = useRef<HTMLDivElement>(null);
   const supplierRiskScrollRef = useRef<HTMLDivElement>(null);
+  const [milestoneVariant, setMilestoneVariant] = useState<'level-1' | 'level-5' | 'level-max'>('level-1');
 
   return (
     <>
       {activeSections.includes('ppc-leadtime') && (
         <section id="ppc-leadtime">
           <SectionPanel title="Leadtime Analysis" subtitle="Average processing times across procurement stages" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-leadtime" /><ExportDropdown headers={[{ key: 'poNo', label: 'PO No' }, { key: 'supplier', label: 'Supplier' }, { key: 'contractToPO', label: 'C→PO' }, { key: 'poToLCOpening', label: 'PO→LC' }, { key: 'lcToPortArrival', label: 'LC→Port' }, { key: 'portToCleared', label: 'Port→Clr' }, { key: 'clearedToReceive', label: 'Clr→Rcv' }, { key: 'totalLeadtime', label: 'Total' }]} rows={data.leadtime.details} filename="leadtime" /></div>}>
-            {data.leadtime.milestone && (
-              <LeadtimeMilestoneTracker
-                counts={data.leadtime.milestone.counts}
-                percentages={data.leadtime.milestone.percentages}
-                totalCount={data.leadtime.milestone.totalCount}
-              />
-            )}
+            {data.leadtime.milestone && (() => {
+              const MILESTONE_ICONS = [
+                'fa-file-pen', 'fa-gavel', 'fa-trophy', 'fa-handshake',
+                'fa-clipboard-list', 'fa-coins', 'fa-ship', 'fa-box-open', 'fa-check-double',
+              ];
+              const merged = LEADTIME_MILESTONE_STEPS.map((step, i) => ({
+                key: `step-${i}`,
+                label: step.label,
+                icon: MILESTONE_ICONS[i] || 'fa-circle',
+                count: data.leadtime.milestone.counts[i] || 0,
+                percent: data.leadtime.milestone.percentages[i] || 0,
+                hasData: step.dataAvailable && (data.leadtime.milestone.counts[i] || 0) > 0,
+              }));
+              return (
+                <div className="mb-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
+                      Stepper: <span className="text-on-surface">{milestoneVariant === 'level-1' ? 'Level 1' : milestoneVariant === 'level-5' ? 'Level 5' : 'Level Max'}</span>
+                    </span>
+                    <div className="flex items-center gap-0.5 bg-surface-container-low rounded-lg p-0.5">
+                      {(['level-1', 'level-5', 'level-max'] as const).map((lvl) => (
+                        <button
+                          key={lvl}
+                          type="button"
+                          onClick={() => setMilestoneVariant(lvl)}
+                          className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all duration-150 ${
+                            milestoneVariant === lvl
+                              ? 'bg-white text-on-surface shadow-sm'
+                              : 'text-on-surface-variant hover:text-on-surface'
+                          }`}
+                        >
+                          {lvl === 'level-1' ? 'L1' : lvl === 'level-5' ? 'L5' : 'MAX'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <MilestoneRingStepper milestones={merged} variant={milestoneVariant} />
+                </div>
+              );
+            })()}
             <KpiCarousel>
               <KPICard variant="detailed" icon="fa-file-signature" iconBg="bg-primary/10" iconColor="text-primary" label="Contract → PO" value={fmtDuration(data.leadtime.summary.contractToPO)} subtitle="Tender process" />
               <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="PO → LC Opening" value={fmtDuration(data.leadtime.summary.poToLCOpening)} subtitle="Contract management" />

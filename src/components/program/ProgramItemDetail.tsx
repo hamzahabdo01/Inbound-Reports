@@ -178,21 +178,21 @@ function ProgramItemSwitcher({ items = [], selectedItem, onSelectItem }: any) {
 }
 
 function StockStatusTable({ stockRow }: any) {
-  const rows = stockRow ? [stockRow] : [];
   return (
     <ProgramPanel title="Stock Status" action={<TinySelect label="06/18/2026" />}>
       <BaseTable
         columns={[
           { key: 'site', label: 'Site' },
-          { key: 'SOH', label: 'SOH', render: (row) => formatNumber(row.SOH) },
-          { key: 'MOS', label: 'MOS', render: (row) => row.MOS.toFixed(1) },
-          { key: 'QuantityPurchaseOrder', label: 'Ordered', render: (row) => formatNumber(row.QuantityPurchaseOrder) },
-          { key: 'GIT', label: 'GIT', render: (row) => formatNumber(row.GIT) },
-          { key: 'Min', label: 'Min', render: (row) => formatNumber(row.Min) },
-          { key: 'Max', label: 'Max', render: (row) => formatNumber(row.Max) },
-          { key: 'need', label: 'Need', render: (row) => formatNumber(Math.max(row.Max - row.SOH - row.GIT - row.QuantityPurchaseOrder, 0)) },
+          { key: 'SOH', label: 'SOH' },
+          { key: 'MOS', label: 'MOS' },
+          { key: 'QuantityPurchaseOrder', label: 'Ordered' },
+          { key: 'GIT', label: 'GIT' },
+          { key: 'Min', label: 'Min' },
+          { key: 'Max', label: 'Max' },
+          { key: 'need', label: 'Need' },
         ]}
-        rows={rows.map((row) => ({ ...row, site: 'National' }))}
+        rows={[]}
+        emptyMessage="No stock status data"
         headerBg="bg-[#CFD8DC]"
         minWidth="520px"
         rowKey={(row, index) => row.id || index}
@@ -268,12 +268,33 @@ function ProgramItemDetail({
   const [currentDate, setCurrentDate] = useState('');
   const [loading, setLoading] = useState(true);
 
+  const [procurerYear, setProcurerYear] = useState('2016');
+  const [yearOptions, setYearOptions] = useState<string[]>(['2016']);
+
   useEffect(() => {
     LookUp.getCurrentDate().then((res) => {
       const d = res?.data?.Data?.[0]?.CurrentDate;
       if (d) setCurrentDate(d);
     }).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    LookUp.getFiscalYearList().then((res) => {
+      const list = (res?.data?.Data || []).map((y: any) => y.FiscalYear).filter(Boolean);
+      if (list.length > 0) {
+        setYearOptions(list);
+        const current = res?.data?.Data?.find((fy: any) => fy.IsCurrent);
+        if (current) setProcurerYear(current.FiscalYear);
+      }
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!productSN) return;
+    POD_WebApi.getItemProcurer({ ModeCode: 'HPR', FiscalYear: procurerYear, ProductSN: String(productSN) })
+      .then(r => setApiProcurer(r?.data?.Data || []))
+      .catch(() => setApiProcurer([]));
+  }, [productSN, procurerYear]);
 
   const formatDateForApi = (dateStr, fmt: 'slash' | 'dash') => {
     if (!dateStr) return '';
@@ -340,22 +361,19 @@ function ProgramItemDetail({
     const p12 = POD_WebApi.getItemFundingSourceAndProcurer({ ModeCode: 'HPR', ProductSN: String(productSN) })
       .then(r => setApiFunding(r?.data?.Data || [])).catch(() => {});
 
-    const p13 = POD_WebApi.getItemProcurer({ ModeCode: 'HPR', FiscalYear: '2016', ProductSN: String(productSN) })
-      .then(r => setApiProcurer(r?.data?.Data || [])).catch(() => {});
-
-    const p14 = OIH_WebApi.getDistributionByFacilityType({ ModeCode: 'HPR', ProductSN: String(productSN) })
+    const p13 = OIH_WebApi.getDistributionByFacilityType({ ModeCode: 'HPR', ProductSN: String(productSN) })
       .then(r => setApiFacilityDist(r?.data?.Data || [])).catch(() => {});
 
-    const p15 = OIH_WebApi.getDistributionByOwnershipType({ ModeCode: 'HPR', ProductSN: String(productSN) })
+    const p14 = OIH_WebApi.getDistributionByOwnershipType({ ModeCode: 'HPR', ProductSN: String(productSN) })
       .then(r => setApiOwnershipDist(r?.data?.Data || [])).catch(() => {});
 
-    const p16 = SS_WebApi.getSOHByRegion({ ModeCode: 'HPR', ProductSN: String(productSN) })
+    const p15 = SS_WebApi.getSOHByRegion({ ModeCode: 'HPR', ProductSN: String(productSN) })
       .then(r => setApiRegionDist(r?.data?.Data || [])).catch(() => {});
 
-    const p17 = OIDRCD_WebApi.getByDateIU_MostRecentIssueReceive({ ModeCode: 'hpr', ProductSN: String(productSN), From: fromDash, To: todayDash })
+    const p16 = OIDRCD_WebApi.getByDateIU_MostRecentIssueReceive({ ModeCode: 'hpr', ProductSN: String(productSN), From: fromDash, To: todayDash })
       .then(r => setApiBinCard(r?.data?.Data || [])).catch(() => {});
 
-    await Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17]);
+    await Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16]);
     setLoading(false);
   }, [productSN, currentDate]);
 
@@ -484,15 +502,15 @@ function ProgramItemDetail({
     const damagedKey = findKey([/^QuantityDamaged$/i, /^Damaged$/i, /Damaged/i]);
     const suspendedKey = findKey([/^QuantitySuspended$/i, /^Suspended$/i, /Suspended/i]);
 
-    return apiStockUtil.slice(0, 20).map((r) => {
-      const segments = [
-        { label: 'Issued', value: Number(issuedKey ? r[issuedKey] : 0) || 0, color: '#14B8A6' },
-        { label: 'Reserved', value: Number(reservedKey ? r[reservedKey] : 0) || 0, color: '#A5D8DB' },
-        { label: 'Soh', value: Number(sohKey ? r[sohKey] : 0) || 0, color: '#61A582' },
-        { label: 'Expired', value: Number(expiredKey ? r[expiredKey] : 0) || 0, color: '#1A3644' },
-        { label: 'Damaged', value: Number(damagedKey ? r[damagedKey] : 0) || 0, color: '#FCD5B5' },
-        { label: 'Suspended', value: Number(suspendedKey ? r[suspendedKey] : 0) || 0, color: '#E65100' },
-      ];
+      return apiStockUtil.slice(0, 20).map((r) => {
+        const segments = [
+          { label: 'Issued', value: Number(issuedKey ? r[issuedKey] : 0) || 0, color: '#0B4F54' },
+          { label: 'Reserved', value: Number(reservedKey ? r[reservedKey] : 0) || 0, color: '#86BFC5' },
+          { label: 'Soh', value: Number(sohKey ? r[sohKey] : 0) || 0, color: '#059669' },
+          { label: 'Expired', value: Number(expiredKey ? r[expiredKey] : 0) || 0, color: '#BA1A1A' },
+          { label: 'Damaged', value: Number(damagedKey ? r[damagedKey] : 0) || 0, color: '#D97706' },
+          { label: 'Suspended', value: Number(suspendedKey ? r[suspendedKey] : 0) || 0, color: '#404849' },
+        ];
       return {
         label: String(r[envKey] || ''),
         segments,
@@ -749,7 +767,15 @@ function ProgramItemDetail({
           )}
         </DetailChartPanel>
 
-        <DetailChartPanel title="Procurement Agents">
+        <DetailChartPanel title="Procurement Agents" action={
+          <div className="relative">
+            <select value={procurerYear} onChange={(e) => setProcurerYear(e.target.value)}
+              className="appearance-none h-7 min-w-[72px] rounded-md border border-outline-variant bg-white pl-2 pr-5 text-xs font-semibold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
+              {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <i className="fa-solid fa-chevron-down -ml-4 text-[8px] text-primary pointer-events-none" />
+          </div>
+        }>
           <div className="flex items-center justify-center py-6">
             <div className="w-[380px]">
               {procurerChart.length > 0 ? (

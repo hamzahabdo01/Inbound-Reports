@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { getChartColor } from '../../utils/chartUtils';
 
 // Y-axis grid lines config
@@ -9,7 +9,6 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
   const ticks = yTicks || Y_TICKS;
   const [hoveredBar, setHoveredBar] = useState(null);
   const [tooltip, setTooltip] = useState(null);
-  const rootRef = useRef(null);
 
   if (!data.length) {
     return (
@@ -32,19 +31,19 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
   const handleBarEnter = (item, e) => {
     const total = item.segments.reduce((sum, s) => sum + s.value, 0);
     setHoveredBar(item.label);
-    const rect = rootRef.current?.getBoundingClientRect();
-    const barRect = e.currentTarget.getBoundingClientRect();
-    if (rect) {
-      setTooltip({
-        x: barRect.left - rect.left + barRect.width / 2,
-        y: barRect.top - rect.top,
-        barLabel: item.label,
-        segments: item.segments.map((s) => ({
-          ...s,
-          pct: total > 0 ? ((s.value / total) * 100).toFixed(1) : '0',
-        })),
-      });
-    }
+    setTooltip({
+      x: e.clientX,
+      y: e.clientY,
+      barLabel: item.label,
+      segments: item.segments.map((s) => ({
+        ...s,
+        pct: total > 0 ? ((s.value / total) * 100).toFixed(1) : '0',
+      })),
+    });
+  };
+
+  const handleBarMove = (e) => {
+    setTooltip((prev) => (prev ? { ...prev, x: e.clientX, y: e.clientY } : null));
   };
 
   const handleBarLeave = () => {
@@ -54,7 +53,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
 
   return (
     <div className="px-4 pt-3 pb-2 select-none">
-      <div className="flex gap-0" data-chart-root ref={rootRef} style={{ position: 'relative' }}>
+      <div className="flex gap-0" style={{ position: 'relative' }}>
         {/* Y-axis */}
         <div className="flex flex-col justify-between shrink-0 pr-2 pb-6" style={{ width: CHART_LEFT_OFFSET }}>
           {yLabel && (
@@ -132,6 +131,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
                       className="absolute inset-0 cursor-pointer"
                       style={{ bottom: 0 }}
                       onMouseEnter={(e) => handleBarEnter(item, e)}
+                      onMouseMove={handleBarMove}
                       onMouseLeave={handleBarLeave}
                     />
                   </div>
@@ -161,22 +161,18 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
           {/* Tooltip */}
           {tooltip && (
             <div
-              className="absolute z-50 pointer-events-none bg-[#00373B] text-white rounded-lg shadow-lg px-3 py-2 text-xs"
-              style={{
-                left: Math.min(Math.max(tooltip.x - 80, 0), 9999),
-                top: Math.max(tooltip.y - 80, 0),
-                minWidth: 180,
-              }}
+              className="fixed z-50 pointer-events-none bg-white rounded-xl shadow-lg border border-outline-variant px-4 py-3 text-xs"
+              style={{ left: tooltip.x + 12, top: tooltip.y - 10, minWidth: 200 }}
             >
-              <div className="font-bold text-[#86BFC5] mb-1.5 truncate max-w-[200px]">{tooltip.barLabel}</div>
+              <div className="font-bold text-on-surface text-[13px] mb-2 truncate max-w-[220px]">{tooltip.barLabel}</div>
               {tooltip.segments.map((seg) => {
                 const color = seg.color || getChartColor(labels.indexOf(seg.label));
                 return (
-                  <div key={seg.label} className="flex items-center gap-1.5 mt-1 first:mt-0">
+                  <div key={seg.label} className="flex items-center gap-1.5 mt-1.5 first:mt-0">
                     <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
-                    <span className="font-semibold">{seg.label}:</span>
-                    <span>{seg.value.toLocaleString()}</span>
-                    <span className="text-white/60">({seg.pct}%)</span>
+                    <span className="font-semibold text-on-surface-variant">{seg.label}:</span>
+                    <span className="tabular-nums text-on-surface">{seg.value.toLocaleString()}</span>
+                    {seg.pct !== '0' && <span className="text-on-surface-variant/60">({seg.pct}%)</span>}
                   </div>
                 );
               })}
