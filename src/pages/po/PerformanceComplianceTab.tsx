@@ -35,7 +35,6 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
   const [supplierRiskLandscape, setSupplierRiskLandscape] = useState(false);
   const supplierPerfScrollRef = useRef<HTMLDivElement>(null);
   const supplierRiskScrollRef = useRef<HTMLDivElement>(null);
-  const [milestoneVariant, setMilestoneVariant] = useState<'level-1' | 'level-5' | 'level-max'>('level-1');
 
   return (
     <>
@@ -52,33 +51,21 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                 label: step.label,
                 icon: MILESTONE_ICONS[i] || 'fa-circle',
                 count: data.leadtime.milestone.counts[i] || 0,
-                percent: data.leadtime.milestone.percentages[i] || 0,
-                hasData: step.dataAvailable && (data.leadtime.milestone.counts[i] || 0) > 0,
+                percent: i < 3 ? 0 : (data.leadtime.milestone.percentages[i] || 0),
+                hasData: i < 3 ? true : step.dataAvailable && (data.leadtime.milestone.counts[i] || 0) > 0,
               }));
+              const connectorAverages: (number | null)[] = [
+                null, null, null,
+                data.leadtime.summary.contractToPO,
+                data.leadtime.summary.poToLCOpening,
+                data.leadtime.summary.lcToPortArrival,
+                data.leadtime.summary.portToCleared,
+                data.leadtime.summary.clearedToReceive,
+              ];
+              const connectorTargets: (number | null)[] = [null, null, null, 45, 20, 90, 30, 15];
               return (
-                <div className="mb-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
-                      Stepper: <span className="text-on-surface">{milestoneVariant === 'level-1' ? 'Level 1' : milestoneVariant === 'level-5' ? 'Level 5' : 'Level Max'}</span>
-                    </span>
-                    <div className="flex items-center gap-0.5 bg-surface-container-low rounded-lg p-0.5">
-                      {(['level-1', 'level-5', 'level-max'] as const).map((lvl) => (
-                        <button
-                          key={lvl}
-                          type="button"
-                          onClick={() => setMilestoneVariant(lvl)}
-                          className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-all duration-150 ${
-                            milestoneVariant === lvl
-                              ? 'bg-white text-on-surface shadow-sm'
-                              : 'text-on-surface-variant hover:text-on-surface'
-                          }`}
-                        >
-                          {lvl === 'level-1' ? 'L1' : lvl === 'level-5' ? 'L5' : 'MAX'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <MilestoneRingStepper milestones={merged} variant={milestoneVariant} />
+                <div className="mb-5">
+                  <MilestoneRingStepper milestones={merged} connectorAverages={connectorAverages} connectorTargets={connectorTargets} />
                 </div>
               );
             })()}
