@@ -8,23 +8,6 @@ import ExportDropdown from '../../components/ExportDropdown';
 
 const fmtDuration = (days) => {
   if (days == null || days < 0) return null;
-  if (days === 0) return '0d';
-  if (days >= 365) {
-    const y = Math.round(days / 365);
-    const rem = Math.round((days % 365) / 30);
-    return rem ? `${y}y ${rem}mo` : `${y}y`;
-  }
-  if (days >= 90) return `${Math.round(days / 30)}mo`;
-  if (days >= 30) {
-    const mo = Math.floor(days / 30);
-    const d = days % 30;
-    return d ? `${mo}mo ${d}d` : `${mo}mo`;
-  }
-  if (days >= 7) {
-    const w = Math.floor(days / 7);
-    const d = days % 7;
-    return d ? `${w}w ${d}d` : `${w}w`;
-  }
   return `${days}d`;
 };
 

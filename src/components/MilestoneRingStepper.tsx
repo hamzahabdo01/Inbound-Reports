@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 interface Milestone {
   key: string;
@@ -16,68 +17,80 @@ interface MilestoneRingStepperProps {
   connectorTargets?: number[];
 }
 
-const SUCCESS_COLOR = '#059669';
-const WARN_COLOR = '#D97706';
-const ERROR_COLOR = '#DC2626';
-const TRACK_COLOR = '#CFD8DC';
-
-const MANUAL_COLORS: Record<number, string> = {
-  0: TRACK_COLOR,
-  1: TRACK_COLOR,
-  2: TRACK_COLOR,
-  3: SUCCESS_COLOR,
-  4: WARN_COLOR,
-  5: ERROR_COLOR,
-  7: SUCCESS_COLOR,
-  8: SUCCESS_COLOR,
-};
-
 const fmtDuration = (days: number | null | undefined) => {
   if (days == null || days < 0) return null;
-  if (days === 0) return '0d';
-  if (days >= 365) {
-    const y = Math.round(days / 365);
-    const rem = Math.round((days % 365) / 30);
-    return rem ? `${y}y ${rem}mo` : `${y}y`;
-  }
-  if (days >= 90) return `${Math.round(days / 30)}mo`;
-  if (days >= 30) {
-    const mo = Math.floor(days / 30);
-    const d = days % 30;
-    return d ? `${mo}mo ${d}d` : `${mo}mo`;
-  }
-  if (days >= 7) {
-    const w = Math.floor(days / 7);
-    const d = days % 7;
-    return d ? `${w}w ${d}d` : `${w}w`;
-  }
   return `${days}d`;
 };
 
-function getConnectorColor(avg: number | null, target: number | null): string {
-  if (avg == null || target == null || target <= 0) return SUCCESS_COLOR;
+type ColorToken = 'error' | 'warning' | 'success' | 'track';
+
+const MANUAL_TOKENS: Record<number, ColorToken> = {
+  0: 'track',
+  1: 'track',
+  2: 'track',
+  3: 'success',
+  4: 'warning',
+  5: 'error',
+  7: 'success',
+  8: 'success',
+};
+
+const TOKEN_TAILWIND_MAP: Record<ColorToken, { bg: string; stroke: string; fill: string }> = {
+  error: { bg: 'bg-error', stroke: 'stroke-error', fill: 'fill-error' },
+  warning: { bg: 'bg-warning', stroke: 'stroke-warning', fill: 'fill-warning' },
+  success: { bg: 'bg-success', stroke: 'stroke-success', fill: 'fill-success' },
+  track: { bg: 'bg-outline-variant', stroke: 'stroke-outline-variant', fill: 'fill-outline-variant' },
+};
+
+function getConnectorToken(avg: number | null, target: number | null): ColorToken {
+  if (avg == null || target == null || target <= 0) return 'success';
   const diffPct = ((avg - target) / target) * 100;
-  if (diffPct > 40) return ERROR_COLOR;
-  if (diffPct > 0) return WARN_COLOR;
-  return SUCCESS_COLOR;
+  if (diffPct > 40) return 'error';
+  if (diffPct > 0) return 'warning';
+  return 'success';
 }
 
-function getMilestoneColor(idx: number, connectorAverages: (number | null)[], connectorTargets?: number[]): string {
-  if (MANUAL_COLORS[idx] !== undefined) return MANUAL_COLORS[idx];
-  if (idx === 0) return SUCCESS_COLOR;
+function getMilestoneToken(idx: number, connectorAverages: (number | null)[], connectorTargets?: number[]): ColorToken {
+  if (MANUAL_TOKENS[idx] !== undefined) return MANUAL_TOKENS[idx];
+  if (idx === 0) return 'success';
   const avg = connectorAverages[idx - 1];
   const target = connectorTargets?.[idx - 1] ?? null;
-  return getConnectorColor(avg, target);
+  return getConnectorToken(avg, target);
 }
 
 function MilestoneRingStepper({ milestones, onMilestoneClick, connectorAverages, connectorTargets }: MilestoneRingStepperProps) {
   const [tooltip, setTooltip] = useState<{ data: Milestone; x: number; y: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [layout, setLayout] = useState<{ x: number; yTop: number; yBot: number }[]>([]);
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
-  if (!milestones.length) return null;
+  useEffect(() => {
+    if (!containerRef.current || isMobile) { setLayout([]); return; }
+    const update = () => {
+      const cols = containerRef.current?.querySelectorAll<HTMLDivElement>('[data-zigzag-col]');
+      if (!cols) return;
+      const parentRect = containerRef.current!.getBoundingClientRect();
+      const points: { x: number; yTop: number; yBot: number }[] = [];
+      cols.forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        points.push({
+          x: rect.left + rect.width / 2 - parentRect.left,
+          yTop: rect.top - parentRect.top,
+          yBot: rect.top + rect.height - parentRect.top,
+        });
+      });
+      setLayout(points);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [milestones, isMobile]);
 
   const renderMilestone = (m: Milestone, idx: number) => {
-    const fillColor = getMilestoneColor(idx, connectorAverages ?? [], connectorTargets);
-
+    const token = getMilestoneToken(idx, connectorAverages ?? [], connectorTargets);
+    const { bg } = TOKEN_TAILWIND_MAP[token];
+    const iconTextCls = m.hasData ? 'text-primary' : 'text-on-surface-variant/40';
     return (
       <div key={m.key} className="relative z-10 flex flex-col items-center shrink-0">
         <button
@@ -94,81 +107,116 @@ function MilestoneRingStepper({ milestones, onMilestoneClick, connectorAverages,
           className="flex flex-col items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
           aria-label={`${m.label}: ${m.hasData ? `${m.count} POs` : 'No data yet'}`}
         >
-                  <div
-                    id={`ring-${m.key}`}
-                    className={`relative rounded-full transition-all duration-200 hover:scale-105 focus-visible:scale-105 ${
-                      !m.hasData ? 'border-2 border-dashed border-outline-variant' : ''
-                    }`}
-                    style={{
-                      width: 120,
-                      height: 120,
-                      background: m.hasData ? fillColor : 'transparent',
-                    }}
-                  >
-                    <div className="absolute inset-[11px] rounded-full bg-white flex flex-col items-center justify-center overflow-hidden">
-                      <i className={`fa-solid ${m.icon} text-[26px] ${m.hasData ? 'text-primary' : 'text-on-surface-variant/40'}`} />
-                      <span className={`text-[14px] font-semibold leading-tight text-center px-0.5 mt-1.5 ${
-                        m.hasData ? 'text-on-surface' : 'text-on-surface-variant/40'
-                      }`}>
-                        {m.label}
-                      </span>
-                    </div>
-                  </div>
+          <div
+            id={`ring-${m.key}`}
+            className={`relative rounded-full transition-all duration-200 hover:scale-105 focus-visible:scale-105 ${
+              !m.hasData ? 'border-[0.5px] border-dashed border-outline-variant' : bg
+            }`}
+            style={{
+              width: 84,
+              height: 84,
+              background: m.hasData ? undefined : 'transparent',
+            }}
+          >
+            <div className="absolute inset-[6px] rounded-full bg-white flex flex-col items-center justify-center overflow-hidden">
+              <i className={`fa-solid ${m.icon} text-[19px] ${iconTextCls}`} />
+              <span className={`text-[10px] font-semibold leading-tight text-center px-0.5 mt-0.5 ${iconTextCls}`}>
+                {m.label}
+              </span>
+            </div>
+          </div>
         </button>
       </div>
     );
   };
 
-  const renderConnector = (globalConnIdx: number) => {
-    const avg = connectorAverages?.[globalConnIdx] ?? null;
-    const target = connectorTargets?.[globalConnIdx] ?? null;
-    const avgStr = fmtDuration(avg);
-    const targetStr = fmtDuration(target);
+  if (!milestones.length) return null;
+
+  if (isMobile) {
     return (
-      <div className="self-center shrink-0 flex flex-col items-center gap-1">
-        {targetStr ? (
-          <span className="text-[11px] font-semibold text-on-surface tabular-nums whitespace-nowrap leading-tight">
-            Target: ~{targetStr}
-          </span>
-        ) : (
-          <span className="text-[11px] font-semibold text-on-surface-variant/50 tabular-nums whitespace-nowrap leading-tight">
-            No data
-          </span>
-        )}
-        <div className="w-[120px] h-0.5 bg-primary rounded-full" />
-        {avgStr ? (
-          <span className="text-[11px] font-semibold text-on-surface tabular-nums whitespace-nowrap leading-tight">
-            Average: ~{avgStr}
-          </span>
-        ) : (
-          <span className="text-[11px] font-semibold text-on-surface-variant/50 tabular-nums whitespace-nowrap leading-tight">
-            No data
-          </span>
-        )}
+      <div className="py-5 flex flex-col items-center gap-6">
+        {milestones.map((m, idx) => (
+          <div key={m.key} className="flex items-center gap-4">
+            {renderMilestone(m, idx)}
+          </div>
+        ))}
       </div>
     );
+  }
+
+  const labelOffX = (x1: number, y1: number, x2: number, y2: number, dist: number): [number, number] => {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    return [-dy / len * dist, dx / len * dist];
   };
 
-  const renderRow = (items: Milestone[], connOffset: number, globalStartIdx: number, prependConnIdx?: number) => (
-    <div className="flex justify-center items-start gap-4">
-      {prependConnIdx != null && renderConnector(prependConnIdx)}
-      {items.flatMap((m, idx) => {
-        const node = renderMilestone(m, globalStartIdx + idx);
-        if (idx < items.length - 1) {
-          return [node, renderConnector(connOffset + idx)];
-        }
-        return [node];
-      })}
-    </div>
-  );
-
-  const mid = Math.ceil(milestones.length / 2);
-
   return (
-    <>
-      <div className="-mx-5 px-5 py-5 flex flex-col items-center gap-6">
-        {renderRow(milestones.slice(0, mid), 0, 0)}
-        {renderRow(milestones.slice(mid), mid, mid, mid - 1)}
+    <div className="relative">
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none z-0"
+        style={{ overflow: 'visible' }}
+      >
+        {layout.map((p, i) => {
+          if (i >= milestones.length - 1) return null;
+          const x1 = p.x;
+          const y1 = (p.yTop + p.yBot) / 2;
+          const x2 = layout[i + 1].x;
+          const y2 = (layout[i + 1].yTop + layout[i + 1].yBot) / 2;
+          const token = getConnectorToken(connectorAverages?.[i] ?? null, connectorTargets?.[i] ?? null);
+          const strokeCls = TOKEN_TAILWIND_MAP[token].stroke;
+          const fillCls = TOKEN_TAILWIND_MAP[token].fill;
+          const midX = (x1 + x2) / 2;
+          const midY = (y1 + y2) / 2;
+          const [nx, ny] = labelOffX(x1, y1, x2, y2, 12);
+          const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+          const avg = connectorAverages?.[i] ?? null;
+          const target = connectorTargets?.[i] ?? null;
+          const avgStr = fmtDuration(avg);
+          const targetStr = fmtDuration(target);
+          return (
+            <g key={`conn-${i}`}>
+              <line x1={x1} y1={y1} x2={x2} y2={y2} className={strokeCls} strokeWidth={2} />
+              {!targetStr && !avgStr ? (
+                <text x={midX} y={midY} textAnchor="middle" dominantBaseline="central" transform={`rotate(${angle}, ${midX}, ${midY})`} className="text-[10px] font-semibold fill-on-surface-variant/50" style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                  No data
+                </text>
+              ) : (
+                <>
+                  {targetStr ? (
+                    <text x={midX + nx} y={midY + ny} textAnchor="middle" dominantBaseline="central" transform={`rotate(${angle}, ${midX + nx}, ${midY + ny})`} className="text-[10px] font-semibold fill-on-surface" style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                      Target: {targetStr}
+                    </text>
+                  ) : (
+                    <text x={midX + nx} y={midY + ny} textAnchor="middle" dominantBaseline="central" transform={`rotate(${angle}, ${midX + nx}, ${midY + ny})`} className="text-[10px] font-semibold fill-on-surface-variant/50" style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                      No data
+                    </text>
+                  )}
+                  {avgStr ? (
+                    <text x={midX - nx} y={midY - ny} textAnchor="middle" dominantBaseline="central" transform={`rotate(${angle}, ${midX - nx}, ${midY - ny})`} className={`text-[10px] font-semibold ${fillCls}`} style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                      Avg: {avgStr}
+                    </text>
+                  ) : (
+                    <text x={midX - nx} y={midY - ny} textAnchor="middle" dominantBaseline="central" transform={`rotate(${angle}, ${midX - nx}, ${midY - ny})`} className="text-[10px] font-semibold fill-on-surface-variant/50" style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                      No data
+                    </text>
+                  )}
+                </>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+      <div ref={containerRef} className="flex w-full items-start gap-2 py-5">
+        {milestones.map((m, idx) => (
+          <div
+            key={m.key}
+            data-zigzag-col
+            className={`flex flex-col items-center flex-1 min-w-0 ${idx % 2 === 0 ? '' : 'mt-14'}`}
+          >
+            {renderMilestone(m, idx)}
+          </div>
+        ))}
       </div>
 
       {tooltip && (
@@ -185,7 +233,7 @@ function MilestoneRingStepper({ milestones, onMilestoneClick, connectorAverages,
           )}
         </div>
       )}
-    </>
+    </div>
   );
 }
 

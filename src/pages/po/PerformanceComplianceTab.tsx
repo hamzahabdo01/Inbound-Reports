@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
-import KPICard from '../../components/KPICard';
-import KpiCarousel from '../../components/KpiCarousel';
+import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
 import IconButton from '../../components/IconButton';
 import MilestoneRingStepper from '../../components/MilestoneRingStepper';
 import { LEADTIME_MILESTONE_STEPS } from '../../utils/leadtimeMilestones';
@@ -10,23 +9,6 @@ import LandscapeToggle from '../../components/LandscapeToggle';
 
 const fmtDuration = (days) => {
   if (days == null || days < 0) return null;
-  if (days === 0) return '0d';
-  if (days >= 365) {
-    const y = Math.round(days / 365);
-    const rem = Math.round((days % 365) / 30);
-    return rem ? `${y}y ${rem}mo` : `${y}y`;
-  }
-  if (days >= 90) return `${Math.round(days / 30)}mo`;
-  if (days >= 30) {
-    const mo = Math.floor(days / 30);
-    const d = days % 30;
-    return d ? `${mo}mo ${d}d` : `${mo}mo`;
-  }
-  if (days >= 7) {
-    const w = Math.floor(days / 7);
-    const d = days % 7;
-    return d ? `${w}w ${d}d` : `${w}w`;
-  }
   return `${days}d`;
 };
 
@@ -41,7 +23,24 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
       {activeSections.includes('ppc-leadtime') && (
         <section id="ppc-leadtime">
           <SectionPanel title="Leadtime Analysis" subtitle="Average processing times across procurement stages" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-leadtime" /><ExportDropdown headers={[{ key: 'poNo', label: 'PO No' }, { key: 'supplier', label: 'Supplier' }, { key: 'contractToPO', label: 'C→PO' }, { key: 'poToLCOpening', label: 'PO→LC' }, { key: 'lcToPortArrival', label: 'LC→Port' }, { key: 'portToCleared', label: 'Port→Clr' }, { key: 'clearedToReceive', label: 'Clr→Rcv' }, { key: 'totalLeadtime', label: 'Total' }]} rows={data.leadtime.details} filename="leadtime" /></div>}>
-            {data.leadtime.milestone && (() => {
+
+            <AutoScrollKPIRow cards={[
+              { icon: 'fa-file-signature', iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Contract → PO', value: fmtDuration(data.leadtime.summary.contractToPO), subtitle: 'Tender process' },
+              { icon: 'fa-file-invoice', iconBg: 'bg-[#4A8EA5]/10', iconColor: 'text-[#4A8EA5]', label: 'PO → LC Opening', value: fmtDuration(data.leadtime.summary.poToLCOpening), subtitle: 'Contract management' },
+              { icon: 'fa-ship', iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'LC → Port Arrival', value: fmtDuration(data.leadtime.summary.lcToPortArrival), subtitle: 'Supplier lead' },
+              { icon: 'fa-check-circle', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Port → Cleared', value: fmtDuration(data.leadtime.summary.portToCleared), subtitle: 'Customs & clearance' },
+              { icon: 'fa-warehouse', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Cleared → Received', value: fmtDuration(data.leadtime.summary.clearedToReceive), subtitle: 'Inbound delivery' },
+            ]} />
+            <div className="flex items-center gap-3 my-5">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-outline-variant to-outline-variant" />
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest whitespace-nowrap select-none">
+                <i className="fa-solid fa-ellipsis-h text-[8px] opacity-50" />
+                Pipeline Overview
+                <i className="fa-solid fa-ellipsis-h text-[8px] opacity-50" />
+              </span>
+              <div className="flex-1 h-px bg-gradient-to-l from-transparent via-outline-variant to-outline-variant" />
+            </div>
+                        {data.leadtime.milestone && (() => {
               const MILESTONE_ICONS = [
                 'fa-file-pen', 'fa-gavel', 'fa-trophy', 'fa-handshake',
                 'fa-clipboard-list', 'fa-coins', 'fa-ship', 'fa-box-open', 'fa-check-double',
@@ -69,13 +68,6 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
                 </div>
               );
             })()}
-            <KpiCarousel>
-              <KPICard variant="detailed" icon="fa-file-signature" iconBg="bg-primary/10" iconColor="text-primary" label="Contract → PO" value={fmtDuration(data.leadtime.summary.contractToPO)} subtitle="Tender process" />
-              <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="PO → LC Opening" value={fmtDuration(data.leadtime.summary.poToLCOpening)} subtitle="Contract management" />
-              <KPICard variant="detailed" icon="fa-ship" iconBg="bg-warning/10" iconColor="text-warning" label="LC → Port Arrival" value={fmtDuration(data.leadtime.summary.lcToPortArrival)} subtitle="Supplier lead" />
-              <KPICard variant="detailed" icon="fa-check-circle" iconBg="bg-success/10" iconColor="text-success" label="Port → Cleared" value={fmtDuration(data.leadtime.summary.portToCleared)} subtitle="Customs & clearance" />
-              <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-success/10" iconColor="text-success" label="Cleared → Received" value={fmtDuration(data.leadtime.summary.clearedToReceive)} subtitle="Inbound delivery" />
-            </KpiCarousel>
             <Table page={tp('leadtime')} setPage={sp('leadtime')}
               headers={[
                 { key: 'poNo', label: 'PO No' },
@@ -112,12 +104,12 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
             return (
               <SectionPanel title="Supplier Performance Tracking" subtitle="Delivery performance leaderboard based on evaluated delivery records" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-supplier-perf" /><ExportDropdown headers={[{ key: 'rank', label: 'Rank' }, { key: 'supplierName', label: 'Supplier' }, { key: 'supplierCountryCode', label: 'Country' }, { key: 'purchaseOrderCount', label: 'POs' }, { key: 'purchaseOrderItemCount', label: 'Items' }, { key: 'favorableDeliveryRatePercent', label: 'Delivery Rate' }, { key: 'secondaryPerformanceRatePercent', label: 'Perf. Rate' }, { key: 'overdueScheduleLineCount', label: 'Overdue Lines' }, { key: 'maximumDaysOverdue', label: 'Max Overdue' }]} rows={data.supplierPerformanceLeaderboard} filename="supplier-performance" /></div>}>
                 {s && (
-                  <KpiCarousel>
-                    <KPICard variant="detailed" icon="fa-building" iconBg="bg-primary/10" iconColor="text-primary" label="Suppliers" value={s.supplierCount.toLocaleString()} subtitle={`${s.purchaseOrderCount.toLocaleString()} POs`} />
-                    <KPICard variant="detailed" icon="fa-truck" iconBg="bg-success/10" iconColor="text-success" label="Favorable Rate" value={`${s.performanceRatesPercent.favorableRate}%`} subtitle={`${s.performanceMeasurementCounts.favorableRecordCount.toLocaleString()} of ${s.performanceMeasurementCounts.evaluatedRecordCount.toLocaleString()}`} />
-                    <KPICard variant="detailed" icon="fa-exclamation-circle" iconBg="bg-warning/10" iconColor="text-warning" label="Overdue Schedule" value={s.overdueScheduleLineCount.toLocaleString()} subtitle={`${s.overdueOpenAmountPercent}% overdue amount`} />
-                    <KPICard variant="detailed" icon="fa-clock" iconBg="bg-error/10" iconColor="text-error" label="Open Amount" value={`${formatAmount(s.totalOpenAmount)} ETB`} subtitle={`${formatAmount(s.totalOverdueOpenAmount)} overdue`} />
-                  </KpiCarousel>
+                  <AutoScrollKPIRow cards={[
+                    { icon: 'fa-building', iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Suppliers', value: s.supplierCount.toLocaleString(), subtitle: `${s.purchaseOrderCount.toLocaleString()} POs` },
+                    { icon: 'fa-truck', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Favorable Rate', value: `${s.performanceRatesPercent.favorableRate}%`, subtitle: `${s.performanceMeasurementCounts.favorableRecordCount.toLocaleString()} of ${s.performanceMeasurementCounts.evaluatedRecordCount.toLocaleString()}` },
+                    { icon: 'fa-exclamation-circle', iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Overdue Schedule', value: s.overdueScheduleLineCount.toLocaleString(), subtitle: `${s.overdueOpenAmountPercent}% overdue amount` },
+                    { icon: 'fa-clock', iconBg: 'bg-error/10', iconColor: 'text-error', label: 'Open Amount', value: `${formatAmount(s.totalOpenAmount)} ETB`, subtitle: `${formatAmount(s.totalOverdueOpenAmount)} overdue` },
+                  ]} />
                 )}
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs text-on-surface-variant font-medium">
@@ -257,12 +249,12 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
               const expiredCount = (statusGroups['Expired']?.count || 0) + (statusGroups['Confiscated']?.count || 0);
               return (
                 <>
-                  <KpiCarousel>
-                    <KPICard variant="detailed" icon="fa-file-contract" iconBg="bg-primary/10" iconColor="text-primary" label="Total Bonds" value={bonds.length.toLocaleString()} subtitle={`Value: $${formatAmount(totalAmount)}`} />
-                    <KPICard variant="detailed" icon="fa-check-circle" iconBg="bg-success/10" iconColor="text-success" label="Verified / Active" value={((statusGroups['Verified']?.count || 0) + (statusGroups['Received']?.count || 0)).toLocaleString()} subtitle="in good standing" />
-                    <KPICard variant="detailed" icon="fa-clock" iconBg="bg-warning/10" iconColor="text-warning" label="Extended" value={(statusGroups['Extended']?.count || 0).toLocaleString()} subtitle="term extended" />
-                    <KPICard variant="detailed" icon="fa-exclamation-triangle" iconBg="bg-error/10" iconColor="text-error" label="Expired / Confiscated" value={expiredCount.toLocaleString()} subtitle="requires action" />
-                  </KpiCarousel>
+                  <AutoScrollKPIRow cards={[
+                    { icon: 'fa-file-contract', iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Total Bonds', value: bonds.length.toLocaleString(), subtitle: `Value: $${formatAmount(totalAmount)}` },
+                    { icon: 'fa-check-circle', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Verified / Active', value: ((statusGroups['Verified']?.count || 0) + (statusGroups['Received']?.count || 0)).toLocaleString(), subtitle: 'in good standing' },
+                    { icon: 'fa-clock', iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Extended', value: (statusGroups['Extended']?.count || 0).toLocaleString(), subtitle: 'term extended' },
+                    { icon: 'fa-exclamation-triangle', iconBg: 'bg-error/10', iconColor: 'text-error', label: 'Expired / Confiscated', value: expiredCount.toLocaleString(), subtitle: 'requires action' },
+                  ]} />
                   <Table page={tp('bond')} setPage={sp('bond')}
                     headers={[
                       { key: 'bondNo', label: 'Bond No' },

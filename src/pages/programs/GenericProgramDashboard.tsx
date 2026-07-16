@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
-import KPICard from '../../components/KPICard';
+import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
 import ProgramFilters from '../../components/program/ProgramFilters';
 import ProgramPanel from '../../components/program/ProgramPanel';
 import ProgramChartRow from '../../components/program/ProgramChartRow';
@@ -270,7 +270,6 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
   const [hubTypeFilter, setHubTypeFilter] = useState('All');
   const [yearFilter, setYearFilter] = useState('2016');
   const [selectedProduct, setSelectedProduct] = useState('');
-  const [kpiPage, setKpiPage] = useState(0);
 
   // ── API state ──────────────────────────────────────────────────────────
   const [apiStockRows, setApiStockRows] = useState([]);
@@ -1066,56 +1065,14 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
 
       {/* ── Overview: KPI cards + filters ────────────────────────────────── */}
       <section id="ch-kpis" className="space-y-5">
-        {(() => {
-          const kpiCards = [
-            { icon: 'fa-boxes-stacked',      iconBg: 'bg-success/10',        iconColor: 'text-success',     label: 'SOH',       value: kpiData.soh,     subtitle: pageReady ? `${stockRows.length} SKUs` : '—' },
-            { icon: 'fa-truck-ramp-box',     iconBg: 'bg-[#4A8EA5]/10',      iconColor: 'text-[#4A8EA5]',   label: 'Issued',    value: kpiData.issued,  subtitle: 'total issued' },
-            { icon: 'fa-layer-group',        iconBg: 'bg-surface-container',  iconColor: 'text-primary',     label: 'Planned',   value: kpiData.planned, subtitle: pageReady ? `${purchaseOrders.length} PO lines` : '—' },
-            { icon: 'fa-route',              iconBg: 'bg-success/10',         iconColor: 'text-success',     label: 'GIT',       value: kpiData.git,     subtitle: 'in transit' },
-            { icon: 'fa-circle-exclamation', iconBg: 'bg-error/10',           iconColor: 'text-error',       label: 'Expired',   value: kpiData.expired, subtitle: 'expired value' },
-            { icon: 'fa-clock-rotate-left',  iconBg: 'bg-warning/10',         iconColor: 'text-warning',     label: 'Near Exp.', value: kpiData.nExpiry, subtitle: 'MOS < 3 months' },
-          ];
-          const kpiTotalPages = Math.ceil(kpiCards.length / 4);
-          return (
-            <div className="space-y-3">
-              <div className="relative pl-12 pr-12">
-                <div className="overflow-hidden w-full">
-                  <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${kpiPage * 100}%)` }}>
-                    {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
-                      <div key={pageIdx} className="grid grid-cols-4 gap-3 w-full shrink-0">
-                        {kpiCards.slice(pageIdx * 4, pageIdx * 4 + 4).map((c, cardIdx) => (
-                          <KPICard key={c.label || cardIdx} variant="detailed" {...c} />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {kpiTotalPages > 1 && (
-                  <>
-                    <button type="button" onClick={() => setKpiPage((p) => Math.max(p - 1, 0))} disabled={kpiPage === 0}
-                      className="absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
-                      aria-label="Previous KPI page"
-                    ><i className="fa-solid fa-chevron-left text-[10px]" /></button>
-                    <button type="button" onClick={() => setKpiPage((p) => Math.min(p + 1, kpiTotalPages - 1))} disabled={kpiPage === kpiTotalPages - 1}
-                      className="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
-                      aria-label="Next KPI page"
-                    ><i className="fa-solid fa-chevron-right text-[10px]" /></button>
-                  </>
-                )}
-              </div>
-              {kpiTotalPages > 1 && (
-                <div className="flex items-center justify-center gap-1.5">
-                  {Array.from({ length: kpiTotalPages }, (_, i) => (
-                    <button key={i} type="button" onClick={() => setKpiPage(i)}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${i === kpiPage ? 'bg-primary w-5' : 'bg-outline-variant hover:bg-outline'}`}
-                      aria-label={`Go to page ${i + 1}`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })()}
+        <AutoScrollKPIRow cards={[
+          { icon: 'fa-boxes-stacked',      iconBg: 'bg-success/10',        iconColor: 'text-success',     label: 'SOH',       value: kpiData.soh,     subtitle: pageReady ? `${stockRows.length} SKUs` : '—' },
+          { icon: 'fa-truck-ramp-box',     iconBg: 'bg-[#4A8EA5]/10',      iconColor: 'text-[#4A8EA5]',   label: 'Issued',    value: kpiData.issued,  subtitle: 'total issued' },
+          { icon: 'fa-layer-group',        iconBg: 'bg-surface-container',  iconColor: 'text-primary',     label: 'Planned',   value: kpiData.planned, subtitle: pageReady ? `${purchaseOrders.length} PO lines` : '—' },
+          { icon: 'fa-route',              iconBg: 'bg-success/10',         iconColor: 'text-success',     label: 'GIT',       value: kpiData.git,     subtitle: 'in transit' },
+          { icon: 'fa-circle-exclamation', iconBg: 'bg-error/10',           iconColor: 'text-error',       label: 'Expired',   value: kpiData.expired, subtitle: 'expired value' },
+          { icon: 'fa-clock-rotate-left',  iconBg: 'bg-warning/10',         iconColor: 'text-warning',     label: 'Near Exp.', value: kpiData.nExpiry, subtitle: 'MOS < 3 months' },
+        ]} />
         <ProgramFilters
           query={query}           onQueryChange={setQuery}
           status={statusFilter}   onStatusChange={setStatusFilter}

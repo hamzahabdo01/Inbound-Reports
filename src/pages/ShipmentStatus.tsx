@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import StickyHeader from '../components/StickyHeader';
 import IconButton from '../components/IconButton';
 
 import { shipmentStatusHPRData, shipmentStatusRDFData } from '../data/shipmentStatusData';
 import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../data/purchaseOrderDetailData';
-import KPICard from '../components/KPICard';
+import AutoScrollKPIRow from '../components/AutoScrollKPIRow';
 import PieChart from '../components/PieChart';
 import HBarChart from '../components/HBarChart';
 import { Table, Td } from './po/poShared';
@@ -380,9 +380,6 @@ function ShipmentStatus() {
 
   const isMobile = useMediaQuery('(max-width: 767px)');
 
-  const [kpiPage, setKpiPage] = useState(0);
-  const [cardsPerPage, setCardsPerPage] = useState(() => window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1);
-
   // Load data when org changes
   useEffect(() => {
     setIsLoading(true);
@@ -419,37 +416,12 @@ function ShipmentStatus() {
     return { total, zeroGRNF, highGRNF, fullGRNF };
   }, [shipmentRows]);
 
-  useEffect(() => {
-    const onResize = () => {
-      const next = window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1;
-      setCardsPerPage(prev => {
-        if (prev !== next) setKpiPage(0);
-        return next;
-      });
-    };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
   const kpiCards = useMemo(() => [
     { icon: 'fa-truck-fast', iconBg: 'bg-[#0B4F54]/10', iconColor: 'text-[#0B4F54]', label: 'Total Shipments', value: stats.total, valueColor: 'text-[#0B4F54]', subtitle: 'HPR active shipments' },
     { icon: 'fa-circle-check', iconBg: 'bg-[#059669]/10', iconColor: 'text-[#059669]', label: '≥99% GRNF', value: stats.highGRNF, valueColor: 'text-[#059669]', subtitle: `${((stats.highGRNF / stats.total) * 100).toFixed(0)}% of total` },
     { icon: 'fa-circle-xmark', iconBg: 'bg-[#BA1A1A]/10', iconColor: 'text-[#BA1A1A]', label: '0% GRNF', value: stats.zeroGRNF, valueColor: 'text-[#BA1A1A]', subtitle: 'Requires attention' },
     { icon: 'fa-trophy', iconBg: 'bg-[#059669]/10', iconColor: 'text-[#059669]', label: '100% Complete', value: stats.fullGRNF, valueColor: 'text-[#059669]', subtitle: 'Fully received' },
   ], [stats]);
-
-  const kpiTotalPages = Math.ceil(kpiCards.length / cardsPerPage);
-
-  const touchStartX = useRef(0);
-  const touchDeltaX = useRef(0);
-  const handleTouchStart = (e: any) => { touchStartX.current = e.touches[0].clientX; touchDeltaX.current = 0; };
-  const handleTouchMove = (e: any) => { touchDeltaX.current = e.touches[0].clientX - touchStartX.current; };
-  const handleTouchEnd = () => {
-    if (Math.abs(touchDeltaX.current) > 50) {
-      if (touchDeltaX.current < 0 && kpiPage < kpiTotalPages - 1) setKpiPage(p => p + 1);
-      else if (touchDeltaX.current > 0 && kpiPage > 0) setKpiPage(p => p - 1);
-    }
-  };
 
   // Donut chart data — GRNF distribution
   const donutData = useMemo(() => {
@@ -511,47 +483,7 @@ function ShipmentStatus() {
       {!isLoading && (
         <>
           {/* KPI Cards */}
-          {isMobile ? (
-            <div className="space-y-3">
-              <div className="relative">
-                <div className="relative overflow-hidden w-full" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-                  <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${kpiPage * 100}%)` }}>
-                    {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
-                      <div key={pageIdx} className="grid grid-cols-1 gap-3 w-full shrink-0">
-                        {kpiCards.slice(pageIdx * cardsPerPage, pageIdx * cardsPerPage + cardsPerPage).map((c, cardIdx) => (
-                          <div key={c.label || cardIdx}>
-                            <KPICard variant="detailed" {...c} />
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              {kpiTotalPages > 1 && (
-                <div className="flex flex-col items-center gap-1">
-                  <div className="flex items-center justify-center gap-1.5">
-                    {Array.from({ length: kpiTotalPages }, (_, i) => (
-                      <button key={i} type="button" onClick={() => setKpiPage(i)}
-                        className={`w-2 h-2 rounded-full transition-all duration-300 ${i === kpiPage ? 'bg-[#0B4F54] w-5' : 'bg-[#CFD8DC] hover:bg-[#707979]'}`}
-                        aria-label={`Go to page ${i + 1}`}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-[#707979]/50 font-semibold tracking-wider animate-pulse">
-                    <i className="fa-solid fa-chevron-left text-[8px]" /> SWIPE <i className="fa-solid fa-chevron-right text-[8px]" />
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <KPICard variant="detailed" icon="fa-truck-fast" iconBg="bg-[#0B4F54]/10" iconColor="text-[#0B4F54]" label="Total Shipments" value={stats.total} valueColor="text-[#0B4F54]" subtitle="HPR active shipments" />
-              <KPICard variant="detailed" icon="fa-circle-check" iconBg="bg-[#059669]/10" iconColor="text-[#059669]" label="≥99% GRNF" value={stats.highGRNF} valueColor="text-[#059669]" subtitle={`${((stats.highGRNF / stats.total) * 100).toFixed(0)}% of total`} />
-              <KPICard variant="detailed" icon="fa-circle-xmark" iconBg="bg-[#BA1A1A]/10" iconColor="text-[#BA1A1A]" label="0% GRNF" value={stats.zeroGRNF} valueColor="text-[#BA1A1A]" subtitle="Requires attention" />
-              <KPICard variant="detailed" icon="fa-trophy" iconBg="bg-[#059669]/10" iconColor="text-[#059669]" label="100% Complete" value={stats.fullGRNF} valueColor="text-[#059669]" subtitle="Fully received" />
-            </div>
-          )}
+          <AutoScrollKPIRow cards={kpiCards} />
 
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">

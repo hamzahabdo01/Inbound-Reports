@@ -2,7 +2,7 @@ import { useState, useMemo, Fragment, useEffect, useRef } from 'react';
 import stockData from '../data/NationalStockStatus.json';
 import { parseCSV } from '../utils/csvParser';
 import { nationalAMCCSVData } from '../data/nationalAMCData';
-import KPICard from '../components/KPICard';
+import AutoScrollKPIRow from '../components/AutoScrollKPIRow';
 import SearchInput from '../components/SearchInput';
 import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
@@ -269,33 +269,6 @@ function MiscellaneousStockReport() {
 
   const maxTotalCols = 5 + 6 + 2 + 3 + 3 + 3 + 2 + 1 + HUB_KEYS.length + 1; // all columns always counted
 
-  const [kpiPage, setKpiPage] = useState(0);
-  const [kpiCardsPerPage, setKpiCardsPerPage] = useState(() => window.innerWidth >= 1024 ? 5 : window.innerWidth >= 640 ? 2 : 1);
-  const kpiTotalPages = Math.ceil(5 / kpiCardsPerPage);
-
-  useEffect(() => {
-    const onResize = () => {
-      const next = window.innerWidth >= 1024 ? 5 : window.innerWidth >= 640 ? 2 : 1;
-      setKpiCardsPerPage(prev => {
-        if (prev !== next) setKpiPage(0);
-        return next;
-      });
-    };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  const kpiTouchStartX = useRef(0);
-  const kpiTouchDeltaX = useRef(0);
-  const handleKpiTouchStart = (e: any) => { kpiTouchStartX.current = e.touches[0].clientX; kpiTouchDeltaX.current = 0; };
-  const handleKpiTouchMove = (e: any) => { kpiTouchDeltaX.current = e.touches[0].clientX - kpiTouchStartX.current; };
-  const handleKpiTouchEnd = () => {
-    if (Math.abs(kpiTouchDeltaX.current) > 50) {
-      if (kpiTouchDeltaX.current < 0 && kpiPage < kpiTotalPages - 1) setKpiPage(p => p + 1);
-      else if (kpiTouchDeltaX.current > 0 && kpiPage > 0) setKpiPage(p => p - 1);
-    }
-  };
-
   const kpiCardProps = [
     { icon: 'fa-boxes-stacked', iconBg: 'bg-slate-50', iconColor: 'text-slate-500', label: 'Total Items', value: formatNumber(stats.total), valueColor: 'text-slate-900', subtitle: 'Monitored commodities' },
     { icon: 'fa-circle-exclamation', iconBg: 'bg-red-50', iconColor: 'text-red-500', label: 'Out of Stock', value: formatNumber(stats.outOfStock), valueColor: 'text-red-600', subtitle: 'MOS = 0 Months', trendIcon: 'text-red-500 font-semibold' },
@@ -390,49 +363,7 @@ function MiscellaneousStockReport() {
 
       {activeTab === 'stock-report' && <>
       {/* KPI Cards Grid */}
-      {kpiTotalPages <= 1 ? (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-md">
-          {kpiCardProps.map((card, i) => (
-            <KPICard key={card.label || i} variant="detailed" {...card} className={i === 4 ? 'col-span-2 lg:col-span-1' : ''} />
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <div className="relative lg:pl-12 lg:pr-12">
-            <div className="relative overflow-hidden w-full" onTouchStart={handleKpiTouchStart} onTouchMove={handleKpiTouchMove} onTouchEnd={handleKpiTouchEnd}>
-              <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${kpiPage * 100}%)` }}>
-                {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
-                  <div key={pageIdx} className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full shrink-0">
-                    {kpiCardProps.slice(pageIdx * kpiCardsPerPage, pageIdx * kpiCardsPerPage + kpiCardsPerPage).map((card, cardIdx) => (
-                      <KPICard key={card.label || cardIdx} variant="detailed" {...card} />
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-            {kpiTotalPages > 1 && (
-              <>
-                <button type="button" onClick={() => setKpiPage(p => Math.max(p - 1, 0))} disabled={kpiPage === 0}
-                  className="hidden lg:flex absolute left-0 top-0 bottom-0 w-8 items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
-                  aria-label="Previous KPI page"
-                ><i className="fa-solid fa-chevron-left text-[10px]"></i></button>
-                <button type="button" onClick={() => setKpiPage(p => Math.min(p + 1, kpiTotalPages - 1))} disabled={kpiPage === kpiTotalPages - 1}
-                  className="hidden lg:flex absolute right-0 top-0 bottom-0 w-8 items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
-                  aria-label="Next KPI page"
-                ><i className="fa-solid fa-chevron-right text-[10px]"></i></button>
-              </>
-            )}
-          </div>
-          <div className="flex items-center justify-center gap-1.5">
-            {Array.from({ length: kpiTotalPages }, (_, i) => (
-              <button key={i} type="button" onClick={() => setKpiPage(i)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${i === kpiPage ? 'bg-primary w-5' : 'bg-outline-variant hover:bg-outline'}`}
-                aria-label={`Go to page ${i + 1}`}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      <AutoScrollKPIRow cards={kpiCardProps} />
 
       {/* Control panel (Filters and search) */}
       <div className="bg-white p-md rounded-xl border border-outline-variant shadow-level-1">

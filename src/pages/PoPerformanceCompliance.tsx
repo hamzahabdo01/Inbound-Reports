@@ -16,7 +16,7 @@ const TABS = [
   { key: 'overview',     label: 'Overview',              icon: 'fa-gauge-high',        sections: ['ppc-overview', 'ppc-procurement-breakdown', 'ppc-supplier-share', 'ppc-funding', 'ppc-local-intl', 'ppc-trend'] },
   { key: 'procurement',  label: 'Procurement Breakdown',  icon: 'fa-cart-shopping',     sections: ['ppc-open-pos', 'ppc-open-po-items', 'ppc-overdue-pos', 'ppc-status'] },
   { key: 'contracts',    label: 'Contract Management',    icon: 'fa-file-signature',    sections: ['ppc-pipeline', 'ppc-contract-vs-po', 'ppc-contract-to-receive', 'ppc-yearly-contract-receipt', 'ppc-lc-cad'] },
-  { key: 'compliance',   label: 'Performance & Compliance', icon: 'fa-shield-halved',   sections: ['ppc-leadtime', 'ppc-supplier-perf', 'ppc-supplier-risk', 'ppc-bond'] },
+  { key: 'compliance',   label: 'Performance & Leadtime', icon: 'fa-shield-halved',   sections: ['ppc-leadtime', 'ppc-supplier-perf', 'ppc-supplier-risk', 'ppc-bond'] },
 ];
 
 const SECTION_LABELS = {
@@ -56,7 +56,6 @@ export default function PoPerformanceCompliance() {
   const [trendHover, setTrendHover] = useState(null);
   const [supplierHover, setSupplierHover] = useState(null);
   const [procurementStatusFilter, setProcurementStatusFilter] = useState('All');
-  const [kpiPage, setKpiPage] = useState(0);
   const [overviewSearch, setOverviewSearch] = useState('');
   const [overviewStatus, setOverviewStatus] = useState('All');
 
@@ -157,7 +156,6 @@ export default function PoPerformanceCompliance() {
       {activeTab === 'overview' && (
         <OverviewTab
           data={data} activeSections={activeSections}
-          kpiPage={kpiPage} setKpiPage={setKpiPage}
           kpiCards={kpiCards}
           supplierHover={supplierHover} setSupplierHover={setSupplierHover}
           trendYears={trendYears} trendYear={trendYear} setTrendYear={setTrendYear}

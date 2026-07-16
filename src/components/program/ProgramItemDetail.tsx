@@ -270,6 +270,7 @@ function ProgramItemDetail({
 
   const [procurerYear, setProcurerYear] = useState('2016');
   const [yearOptions, setYearOptions] = useState<string[]>(['2016']);
+  const [procurerLoading, setProcurerLoading] = useState(false);
 
   useEffect(() => {
     LookUp.getCurrentDate().then((res) => {
@@ -291,9 +292,11 @@ function ProgramItemDetail({
 
   useEffect(() => {
     if (!productSN) return;
+    setProcurerLoading(true);
     POD_WebApi.getItemProcurer({ ModeCode: 'HPR', FiscalYear: procurerYear, ProductSN: String(productSN) })
       .then(r => setApiProcurer(r?.data?.Data || []))
-      .catch(() => setApiProcurer([]));
+      .catch(() => setApiProcurer([]))
+      .finally(() => setProcurerLoading(false));
   }, [productSN, procurerYear]);
 
   const formatDateForApi = (dateStr, fmt: 'slash' | 'dash') => {
@@ -382,13 +385,51 @@ function ProgramItemDetail({
   const productPOs = useMemo(
     () => {
       if (apiPoRc.length > 0) {
+        const sampleKeys = Object.keys(apiPoRc[0]);
+        const poKey = sampleKeys.find((k) => /^PurchaseOrderNumber|^PONumber|^PO_/i.test(k)) || 'PONumber';
+        const dateKey = sampleKeys.find((k) => /^Date|^PODate|^OrderDate/i.test(k)) || 'Date';
+        const donorKey = sampleKeys.find((k) => /^Donor|^FundingSource|^Source/i.test(k)) || 'Donor';
+        const procurerKey = sampleKeys.find((k) => /^Procurer/i.test(k)) || 'Procurer';
+        const supplierKey = sampleKeys.find((k) => /^Supplier|^Vendor|^Manufacturer/i.test(k)) || 'Supplier';
+        const orderedKey = sampleKeys.find((k) => /^QuantityPurchaseOrder|^OrderQuantity|^OrderedQuantity|^QuantityOrdered/i.test(k)) || 'OrderQuantity';
+        const shippedKey = sampleKeys.find((k) => /^QuantityInvoiced|^Shipped/i.test(k)) || 'Shipped';
+        const receivedKey = sampleKeys.find((k) => /^QuantityReceived|^DeliveredQuantity|^ReceivedQuantity/i.test(k)) || 'QuantityReceived';
         return apiPoRc.map((r) => {
-          const ordered = Number(r.OrderQuantity || r.OrderedQuantity || 0);
-          const delivered = Number(r.DeliveredQuantity || r.QuantityReceived || 0);
-          return { ...r, deliveryProgress: ordered > 0 ? (delivered / ordered) * 100 : 0 };
+          const ordered = Number(r[orderedKey]) || 0;
+          const shipped = Number(r[shippedKey]) || 0;
+          const received = Number(r[receivedKey]) || 0;
+          const pending = Math.max(ordered - received, 0);
+          const completed = ordered > 0 ? ((received / ordered) * 100).toFixed(1) : '0.0';
+          return {
+            po: String(r[poKey] || ''),
+            date: String(r[dateKey] || ''),
+            donor: String(r[donorKey] || ''),
+            procurer: String(r[procurerKey] || ''),
+            supplier: String(r[supplierKey] || ''),
+            ordered,
+            shipped,
+            received,
+            pending,
+            completed,
+          };
         });
       }
-      return purchaseOrders.filter((row) => row.ProductCN === productName);
+      return purchaseOrders.filter((row) => row.ProductCN === productName).map((r) => ({
+        po: String(r.PurchaseOrderNumber || r.PONumber || ''),
+        date: String(r.Date || r.PODate || ''),
+        donor: String(r.Donor || r.FundingSource || ''),
+        procurer: String(r.Procurer || ''),
+        supplier: String(r.Supplier || r.Vendor || r.Manufacturer || ''),
+        ordered: Number(r.OrderQuantity || r.OrderedQuantity || 0),
+        shipped: Number(r.Shipped || 0),
+        received: Number(r.DeliveredQuantity || r.QuantityReceived || 0),
+        pending: Math.max(Number(r.OrderQuantity || r.OrderedQuantity || 0) - Number(r.DeliveredQuantity || r.QuantityReceived || 0), 0),
+        completed: (() => {
+          const o = Number(r.OrderQuantity || r.OrderedQuantity || 0);
+          const d = Number(r.DeliveredQuantity || r.QuantityReceived || 0);
+          return o > 0 ? ((d / o) * 100).toFixed(1) : '0.0';
+        })(),
+      }));
     },
     [apiPoRc, purchaseOrders, productName],
   );
@@ -458,10 +499,34 @@ function ProgramItemDetail({
     if (apiPipeline.length > 0) {
       const sampleKeys = Object.keys(apiPipeline[0]);
       const envKey = sampleKeys.find(k => /Environment|Site|Hub/i.test(k)) || sampleKeys[0];
-      const segKeys = sampleKeys.filter(k => k !== envKey && k !== 'RowNumber' && typeof apiPipeline[0][k] === 'number');
+
+      const findKey = (patterns: RegExp[]) => {
+        for (const pattern of patterns) {
+          const found = sampleKeys.find(k => pattern.test(k));
+          if (found) return found;
+        }
+        return null;
+      };
+
+      const poKey = findKey([/^PO$/i, /^PO /i, /OrderQuantity/i, /OrderedQuantity/i, /OrderQty/i, /PurchaseOrderQuantity/i]);
+      const gitKey = findKey([/^GIT$/i, /^GIT /i, /InTransit/i, /GoodsInTransit/i]);
+      const belowKey = findKey([/^Below Max$/i, /^Below$/i, /BelowMax/i, /BelowMaximum/i]);
+      const aboveKey = findKey([/^Above Max$/i, /^Above$/i, /AboveMax/i, /AboveMaximum/i, /OverMax/i]);
+      const pdosKey = findKey([/^pDOS$/i, /^pDOS /i, /^PDOS$/i, /^PDOS /i, /ProjectedDays/i, /DaysOfStock/i]);
+
+      const segmentDefs = [
+        { label: 'PO', key: poKey },
+        { label: 'GIT', key: gitKey },
+        { label: 'Below Max', key: belowKey },
+        { label: 'Above Max', key: aboveKey },
+        { label: 'pDOS', key: pdosKey },
+      ];
+
       return apiPipeline.slice(0, 20).map((r) => ({
         label: String(r[envKey] || ''),
-        segments: segKeys.map(k => ({ label: k, value: Number(r[k]) || 0 })).filter(s => s.value > 0),
+        segments: segmentDefs
+          .filter(s => s.key && Number(r[s.key]) > 0)
+          .map(s => ({ label: s.label, value: Number(r[s.key]) || 0 })),
       })).filter(item => item.segments.length > 0);
     }
     return hubRows
@@ -615,17 +680,16 @@ function ProgramItemDetail({
 
   const ownershipDistData = useMemo(() => {
     if (apiOwnershipDist.length === 0) return [];
-    const sampleKeys = Object.keys(apiOwnershipDist[0]);
-    const labelKey = sampleKeys.find(k => /Ownership|Type|Owner/i.test(k)) || sampleKeys.find(k => typeof apiOwnershipDist[0][k] === 'string');
-    const valKey = sampleKeys.find(k => /Birr|Amount|Value|Count|Total|ETB/i.test(k)) || sampleKeys.find(k => typeof apiOwnershipDist[0][k] === 'number');
-    if (labelKey && valKey) {
-      return apiOwnershipDist.map((r, i) => ({
-        label: String(r[labelKey] || 'Unknown'),
-        value: Number(r[valKey]) || 0,
-        color: CHART_COLORS[i % CHART_COLORS.length],
-      })).filter(r => r.value > 0);
-    }
-    return [];
+    const row = apiOwnershipDist[0];
+    const keys = Object.keys(row).filter(k => !/RowNumber|Row/i.test(k));
+    const labelKey = keys.find(k => typeof row[k] === 'string') || keys[0];
+    const valKey = keys.find(k => typeof row[k] === 'number') || keys[1];
+    if (!labelKey || !valKey) return [];
+    return apiOwnershipDist.map((r, i) => {
+      const rawLabel = String(r[labelKey] || '');
+      const label = /other/i.test(rawLabel) ? 'Others' : /private/i.test(rawLabel) ? 'Private' : /public/i.test(rawLabel) ? 'Public' : rawLabel;
+      return { label, value: Number(r[valKey]) || 0, color: CHART_COLORS[i % CHART_COLORS.length] };
+    }).filter(r => r.value > 0);
   }, [apiOwnershipDist]);
 
   const regionDistData = useMemo(() => {
@@ -778,7 +842,11 @@ function ProgramItemDetail({
         }>
           <div className="flex items-center justify-center py-6">
             <div className="w-[380px]">
-              {procurerChart.length > 0 ? (
+              {procurerLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <i className="fa-solid fa-spinner fa-spin text-primary text-xl" />
+                </div>
+              ) : procurerChart.length > 0 ? (
                 <PieChart data={procurerChart} totalLabel="Procurement agents" />
               ) : (
                 <div className="text-center text-body-sm text-on-surface-variant py-4">No data</div>

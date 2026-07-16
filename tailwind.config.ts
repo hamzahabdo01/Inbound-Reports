@@ -47,7 +47,7 @@ const config: Config = {
         tertiary: {
           DEFAULT: '#003734',
         },
-        error: '#BA1A1A',
+        error: '#8b0000c3',
         success: '#059669',
         warning: '#D97706',
         'on-primary': '#ffffff',

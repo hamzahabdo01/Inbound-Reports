@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PieChart from '../../components/PieChart';
 import FundingSourceChart from '../../components/FundingSourceChart';
-import KPICard from '../../components/KPICard';
+import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
 import IconButton from '../../components/IconButton';
 import { SectionPanel, formatAmount } from './poShared';
 
@@ -81,99 +81,21 @@ function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, b
   );
 }
 
-export default function OverviewTab({ data, activeSections, kpiPage, setKpiPage, kpiCards = [], supplierHover, setSupplierHover, trendYears, trendYear, setTrendYear, filteredTrend, trendHover, setTrendHover }: any) {
+export default function OverviewTab({ data, activeSections, kpiCards = [], supplierHover, setSupplierHover, trendYears, trendYear, setTrendYear, filteredTrend, trendHover, setTrendHover }: any) {
   const fundingYears = useMemo(() => data.fundingSources.map((d: any) => d.name), [data.fundingSources]);
   const [fundingYear, setFundingYear] = useState<string>(() => fundingYears[fundingYears.length - 1] || '');
-  const [cardsPerPage, setCardsPerPage] = useState(() => window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1);
   const [selectedTrendIdx, setSelectedTrendIdx] = useState(-1);
   const [fundOpenIdx, setFundOpenIdx] = useState(-1);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const isTrendMobile = useMediaQuery('(max-width: 767px)');
 
-  useEffect(() => {
-    let frameId: number;
-    const onResize = () => {
-      cancelAnimationFrame(frameId);
-      frameId = requestAnimationFrame(() => {
-        const next = window.innerWidth >= 1024 ? 4 : window.innerWidth >= 640 ? 2 : 1;
-        setCardsPerPage(prev => {
-          if (prev !== next) setKpiPage(0);
-          return next;
-        });
-      });
-    };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [setKpiPage]);
-
   useEffect(() => { setSelectedTrendIdx(filteredTrend.length - 1); }, [filteredTrend]);
-
-  const touchStartX = useRef(0);
-  const touchDeltaX = useRef(0);
-  const handleTouchStart = (e: any) => { touchStartX.current = e.touches[0].clientX; touchDeltaX.current = 0; };
-  const handleTouchMove = (e: any) => { touchDeltaX.current = e.touches[0].clientX - touchStartX.current; };
-  const handleTouchEnd = () => {
-    if (Math.abs(touchDeltaX.current) > 50) {
-      if (touchDeltaX.current < 0 && kpiPage < kpiTotalPages - 1) setKpiPage(p => p + 1);
-      else if (touchDeltaX.current > 0 && kpiPage > 0) setKpiPage(p => p - 1);
-    }
-  };
-
-  const kpiTotalPages = Math.ceil(kpiCards.length / cardsPerPage);
 
   return (
     <>
       {activeSections.includes('ppc-overview') && (
         <section id="ppc-overview">
-          <div className="space-y-3">
-            <div className="relative lg:pl-12 lg:pr-12">
-              <div className="relative overflow-hidden w-full" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-                <div 
-                  className="flex transition-transform duration-500 ease-in-out"
-                  style={{ transform: `translateX(-${kpiPage * 100}%)` }}
-                >
-                  {Array.from({ length: kpiTotalPages }).map((_, pageIdx) => (
-                    <div key={pageIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full shrink-0">
-                      {kpiCards.slice(pageIdx * cardsPerPage, pageIdx * cardsPerPage + cardsPerPage).map((c, cardIdx) => (
-                        <div key={c.label || cardIdx}>
-                          <KPICard variant="detailed" {...c} />
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {kpiTotalPages > 1 && (
-                <>
-                  <button type="button" onClick={() => setKpiPage((p) => Math.max(p - 1, 0))} disabled={kpiPage === 0}
-                    className="hidden lg:flex absolute left-0 top-0 bottom-0 w-8 items-center justify-center rounded-l-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
-                    aria-label="Previous KPI page"
-                  ><i className="fa-solid fa-chevron-left text-[10px]"></i></button>
-                  <button type="button" onClick={() => setKpiPage((p) => Math.min(p + 1, kpiTotalPages - 1))} disabled={kpiPage === kpiTotalPages - 1}
-                    className="hidden lg:flex absolute right-0 top-0 bottom-0 w-8 items-center justify-center rounded-r-xl bg-primary text-white hover:bg-primary-dark disabled:bg-[#0B4F54]/10 disabled:text-[#0B4F54]/30 disabled:cursor-not-allowed transition-all duration-200"
-                    aria-label="Next KPI page"
-                  ><i className="fa-solid fa-chevron-right text-[10px]"></i></button>
-                </>
-              )}
-            </div>
-            {kpiTotalPages > 1 && (
-              <div className="flex flex-col items-center gap-1">
-                <div className="flex items-center justify-center gap-1.5">
-                  {Array.from({ length: kpiTotalPages }, (_, i) => (
-                    <button key={i} type="button" onClick={() => setKpiPage(i)}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${i === kpiPage ? 'bg-primary w-5' : 'bg-outline-variant hover:bg-outline'}`}
-                      aria-label={`Go to page ${i + 1}`}
-                    />
-                  ))}
-                </div>
-                {isTrendMobile && (
-                  <div className="flex items-center gap-2 text-[10px] text-on-surface-variant/50 font-semibold tracking-wider animate-pulse">
-                    <i className="fa-solid fa-chevron-left text-[8px]" /> SWIPE <i className="fa-solid fa-chevron-right text-[8px]" />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <AutoScrollKPIRow cards={kpiCards} />
         </section>
       )}
 
