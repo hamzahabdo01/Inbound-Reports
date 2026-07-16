@@ -6,7 +6,7 @@ interface AutoScrollKPIRowProps {
   speed?: number;
 }
 
-export default function AutoScrollKPIRow({ cards, speed = 0.08 }: AutoScrollKPIRowProps) {
+export default function AutoScrollKPIRow({ cards, speed = 0.04 }: AutoScrollKPIRowProps) {
   const [paused, setPaused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);

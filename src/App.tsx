@@ -6,7 +6,7 @@ import InboundReports from './pages/InboundReports';
 import Procurement from './pages/Procurement';
 import MiscellaneousStockReport from './pages/MiscellaneousStockReport';
 import ShipmentStatus from './pages/ShipmentStatus';
-import PoPerformanceCompliance from './pages/PoPerformanceCompliance';
+import PerformanceAndLeadtime from './pages/PerformanceAndLeadtime';
 import ProgramDashboard from './pages/ProgramDashboard';
 
 function Placeholder({ title }: any) {
@@ -21,7 +21,7 @@ function Placeholder({ title }: any) {
     'Miscellaneous Stock Report': 'fa-boxes-stacked',
     'Shipment Status': 'fa-truck',
     Procurement: 'fa-cart-shopping',
-    'PO Performance and Compliance': 'fa-chart-bar',
+    'Performance and Leadtime': 'fa-chart-bar',
     RDF: 'fa-flag',
     'Facility Dashboard': 'fa-hospital',
     RRF: 'fa-clipboard-list',
@@ -111,8 +111,8 @@ function AppContent() {
         return <Procurement {...extraProps} />;
       case 'Shipment Status':
         return <ShipmentStatus {...extraProps} />;
-      case 'PO Performance and Compliance':
-        return <PoPerformanceCompliance {...extraProps} />;
+      case 'Performance and Leadtime':
+        return <PerformanceAndLeadtime {...extraProps} />;
       default:
         return <Placeholder title={activeSection} />;
     }
@@ -130,7 +130,7 @@ function AppContent() {
               </button>
               <span className="text-sm font-bold text-white truncate">Fanos Dashboard</span>
             </header>
-            <main ref={mainRef} className="flex-1 overflow-auto h-[calc(100dvh-56px)] pt-[56px]">
+            <main ref={mainRef} className="flex-1 overflow-auto h-[calc(100dvh-56px)] pt-[56px]" style={{ scrollbarGutter: 'stable' }}>
               <div className="max-w-container mx-auto px-lg pb-lg">
                 {renderPage({ sidebarVisible, toggleSidebar })}
               </div>
@@ -140,7 +140,7 @@ function AppContent() {
       ) : (
         <>
           <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={logout} />
-          <main ref={mainRef} className="flex-1 max-h-screen overflow-auto">
+          <main ref={mainRef} className="flex-1 max-h-screen overflow-auto" style={{ scrollbarGutter: 'stable' }}>
             <div className="max-w-container mx-auto px-lg pb-lg">
               {renderPage({ sidebarVisible, toggleSidebar })}
             </div>

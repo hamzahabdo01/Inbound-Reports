@@ -12,7 +12,7 @@ const fmtDuration = (days) => {
   return `${days}d`;
 };
 
-export default function PerformanceComplianceTab({ data, activeSections, tp, sp }: any) {
+export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp }: any) {
   const [supplierPerfLandscape, setSupplierPerfLandscape] = useState(false);
   const [supplierRiskLandscape, setSupplierRiskLandscape] = useState(false);
   const supplierPerfScrollRef = useRef<HTMLDivElement>(null);
@@ -31,11 +31,11 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
               { icon: 'fa-check-circle', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Port → Cleared', value: fmtDuration(data.leadtime.summary.portToCleared), subtitle: 'Customs & clearance' },
               { icon: 'fa-warehouse', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Cleared → Received', value: fmtDuration(data.leadtime.summary.clearedToReceive), subtitle: 'Inbound delivery' },
             ]} />
-            <div className="flex items-center gap-3 my-5">
+            <div className="flex items-center gap-3 mb-2 mt-5">
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-outline-variant to-outline-variant" />
               <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest whitespace-nowrap select-none">
                 <i className="fa-solid fa-ellipsis-h text-[8px] opacity-50" />
-                Pipeline Overview
+                Process Overview
                 <i className="fa-solid fa-ellipsis-h text-[8px] opacity-50" />
               </span>
               <div className="flex-1 h-px bg-gradient-to-l from-transparent via-outline-variant to-outline-variant" />
@@ -63,7 +63,7 @@ export default function PerformanceComplianceTab({ data, activeSections, tp, sp 
               ];
               const connectorTargets: (number | null)[] = [null, null, null, 45, 20, 90, 30, 15];
               return (
-                <div className="mb-5">
+                <div className="-mt-4 mb-5">
                   <MilestoneRingStepper milestones={merged} connectorAverages={connectorAverages} connectorTargets={connectorTargets} />
                 </div>
               );

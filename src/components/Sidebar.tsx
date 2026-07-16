@@ -41,7 +41,7 @@ const navItems = [
       { label: 'Inbound Report' },
       { label: 'Shipment Status' },
       { label: 'Procurement' },
-      { label: 'PO Performance and Compliance' },
+      { label: 'Performance and Leadtime' },
     ],
   },
   // HIDDEN: RDF

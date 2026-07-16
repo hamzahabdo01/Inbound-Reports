@@ -10,7 +10,7 @@ import { formatAmount } from './po/poShared';
 import OverviewTab from './po/OverviewTab';
 import ProcurementBreakdownTab from './po/ProcurementBreakdownTab';
 import ContractManagementTab from './po/ContractManagementTab';
-import PerformanceComplianceTab from './po/PerformanceComplianceTab';
+import LeadtimeAndPerformanceTab from './po/LeadtimeAndPerformanceTab';
 
 const TABS = [
   { key: 'overview',     label: 'Overview',              icon: 'fa-gauge-high',        sections: ['ppc-overview', 'ppc-procurement-breakdown', 'ppc-supplier-share', 'ppc-funding', 'ppc-local-intl', 'ppc-trend'] },
@@ -27,7 +27,7 @@ const SECTION_LABELS = {
   'ppc-leadtime': 'Leadtime', 'ppc-supplier-perf': 'Supplier Perf', 'ppc-supplier-risk': 'Supplier Risk', 'ppc-bond': 'Bond', 'ppc-overdue-pos': 'Overdue PO',
 };
 
-export default function PoPerformanceCompliance() {
+export default function PerformanceAndLeadtime() {
   const data = useMemo(() => {
     const d: any = generateAllData();
     d.trend = getTrendData();
@@ -183,7 +183,7 @@ export default function PoPerformanceCompliance() {
       )}
 
       {activeTab === 'compliance' && (
-        <PerformanceComplianceTab
+        <LeadtimeAndPerformanceTab
           data={data} activeSections={activeSections} tp={tp} sp={sp}
         />
       )}
