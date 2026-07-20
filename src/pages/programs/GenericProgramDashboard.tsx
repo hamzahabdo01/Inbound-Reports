@@ -297,7 +297,7 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
   const [statusFilter,  setStatusFilter]  = useState('');
   const [productFilter, setProductFilter] = useState('');
   const [siteFilter,    setSiteFilter]    = useState('All');
-  const [hubTypeFilter, setHubTypeFilter] = useState('All');
+
   const [yearFilter, setYearFilter] = useState('2016');
   const [selectedProduct, setSelectedProduct] = useState('');
 
@@ -723,15 +723,9 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
 
   const filteredHubRows = useMemo(() => {
     let result = hubData.rows;
-    if (siteFilter !== 'All')    result = result.filter((r) => r.Site?.trim() === siteFilter);
-    if (hubTypeFilter !== 'All') result = result.filter((r) => {
-      const site = r.Site?.trim() || '';
-      if (hubTypeFilter === 'Hub')    return  site.includes('Hub');
-      if (hubTypeFilter === 'Center') return !site.includes('Hub');
-      return true;
-    });
+    if (siteFilter !== 'All') result = result.filter((r) => r.Site?.trim() === siteFilter);
     return result;
-  }, [hubData.rows, siteFilter, hubTypeFilter]);
+  }, [hubData.rows, siteFilter]);
 
   const kpis = useMemo(() => ({
     totalSoh:       stockRows.reduce((s, r: any) => s + r.SOH, 0),
@@ -819,6 +813,7 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
   }, [apiOrderFillRate]);
 
   const [fillRateTooltip, setFillRateTooltip] = useState<any>(null);
+  const [showAllFillRates, setShowAllFillRates] = useState(false);
   const fillRateRootRef = useRef<HTMLDivElement>(null);
 
   const stockUtilization = useMemo(() => {
@@ -1056,6 +1051,47 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
     );
   }, [orderFillRateRows, fillRateTooltip]);
 
+  const mobileFillRateChart = useMemo(() => {
+    if (orderFillRateRows.length === 0) return null;
+    const visible = showAllFillRates ? orderFillRateRows : orderFillRateRows.slice(0, 5);
+    return (
+      <div className="px-4 py-3 select-none space-y-2">
+        {visible.map((r) => {
+          const cofrPct = Math.min(r.COFR * 100, 100);
+          const hofrPct = Math.min(r.HOFR * 100, 100);
+          return (
+            <div key={r.ProductCN} className="space-y-0.5">
+              <p className="text-[11px] font-semibold text-on-surface truncate">{r.ProductCN}</p>
+              <div className="flex items-center gap-2 pl-2">
+                <span className="text-[10px] font-bold text-on-surface-variant w-9 shrink-0">COFR</span>
+                <div className="flex-1 h-3 rounded-sm overflow-hidden bg-surface-container-low">
+                  <div className="h-full rounded-sm" style={{ width: `${Math.max(cofrPct, 1)}%`, backgroundColor: '#4A9598' }} />
+                </div>
+                <span className="text-[10px] font-bold text-on-surface tabular-nums w-10 text-right shrink-0">{cofrPct.toFixed(1)}%</span>
+              </div>
+              <div className="flex items-center gap-2 pl-2">
+                <span className="text-[10px] font-bold text-on-surface-variant w-9 shrink-0">HOFR</span>
+                <div className="flex-1 h-3 rounded-sm overflow-hidden bg-surface-container-low">
+                  <div className="h-full rounded-sm" style={{ width: `${Math.max(hofrPct, 1)}%`, backgroundColor: '#D97706' }} />
+                </div>
+                <span className="text-[10px] font-bold text-on-surface tabular-nums w-10 text-right shrink-0">{hofrPct.toFixed(1)}%</span>
+              </div>
+            </div>
+          );
+        })}
+        {orderFillRateRows.length > 5 && (
+          <button
+            type="button"
+            onClick={() => setShowAllFillRates((v) => !v)}
+            className="w-full text-center text-[11px] font-bold text-primary hover:underline py-2 cursor-pointer"
+          >
+            {showAllFillRates ? 'Show less' : `Show ${orderFillRateRows.length - 5} more`}
+          </button>
+        )}
+      </div>
+    );
+  }, [orderFillRateRows, showAllFillRates]);
+
   const hasFilters = Boolean(query.trim() || statusFilter || productFilter);
   const clearFilters = () => { setQuery(''); setStatusFilter(''); setProductFilter(''); };
   const selectedStockRow = useMemo(
@@ -1124,7 +1160,7 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
       <section id="ch-stock">
         <ProgramPanel
           title="Stock Status National"
-          subtitle={pageReady ? `${filteredStock.length} of ${stockRows.length} products` : ''}
+
           action={pageReady ? <div className="flex items-center gap-2"><IconButton variant="info" contentId="program-national-stock" /><IconButton variant="refresh" onClick={refreshStock} loading={refreshing['stock']} /></div> : undefined}
         >
           {pageReady ? <NationalStockTable rows={filteredStock} onSelectItem={setSelectedProduct} /> : <PanelSkeleton rows={6} height="h-56" />}
@@ -1136,41 +1172,33 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
         {!sectionLoaded['hub'] ? <PanelSkeleton /> : (
         <ProgramPanel
           title="Stock on Hand — Regional Hubs Breakdown"
-          subtitle={
-            productFilter
-              ? `${productFilter} across ${filteredHubRows.length} locations`
-              : `${focusedHubProducts.length} products × ${filteredHubRows.length} locations`
-          }
           action={(
             <div className="flex items-center gap-2">
               <IconButton variant="refresh" onClick={refreshHub} loading={refreshing['hub']} />
               <IconButton variant="info" contentId="program-hub-heatmap" />
-              <div className="relative">
-                <select
-                  value={siteFilter}
-                  onChange={(e) => setSiteFilter(e.target.value)}
-                  className="appearance-none h-9 min-w-[120px] rounded-lg border border-outline-variant bg-white px-3 pr-8 text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer"
-                >
-                  {hubSites.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
-                <i className="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-primary pointer-events-none" />
-              </div>
-              <div className="relative">
-                <select
-                  value={hubTypeFilter}
-                  onChange={(e) => setHubTypeFilter(e.target.value)}
-                  className="appearance-none h-9 min-w-[110px] rounded-lg border border-outline-variant bg-white px-3 pr-8 text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer"
-                >
-                  <option value="All">All Types</option>
-                  <option value="Hub">Hub</option>
-                  <option value="Center">Center</option>
-                </select>
-                <i className="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-primary pointer-events-none" />
-              </div>
             </div>
           )}
         >
-          <HubHeatmap rows={filteredHubRows} products={focusedHubProducts} statusMap={hubData.statusMap} />
+          <HubHeatmap
+            rows={filteredHubRows}
+            products={focusedHubProducts}
+            statusMap={hubData.statusMap}
+            siteFilter={(
+              <div className="flex items-center gap-2">
+                <label className="text-label-sm text-on-surface-variant whitespace-nowrap">Site:</label>
+                <div className="relative">
+                  <select
+                    value={siteFilter}
+                    onChange={(e) => setSiteFilter(e.target.value)}
+                    className="appearance-none h-9 min-w-[120px] rounded-lg border border-outline-variant bg-white px-3 pr-8 text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer"
+                  >
+                    {hubSites.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <i className="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-primary pointer-events-none" />
+                </div>
+              </div>
+            )}
+          />
         </ProgramPanel>
         )}
       </section>
@@ -1182,9 +1210,17 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
           leftTitle="Item Procurement By Agent"
           leftSubtitle="PO line count by funding source per product"
           leftAction={<IconButton variant="refresh" onClick={refreshProcurer} loading={refreshing['procurer']} />}
-          leftChart={<ProgramStackedBarChart data={procurementByAgent} normalized yLabel="Count" />}
+          leftChart={
+            <>
+              <div className="hidden lg:block">
+                <ProgramStackedBarChart data={procurementByAgent} normalized yLabel="Count" />
+              </div>
+              <div className="lg:hidden">
+                <ProgramStackedBarChart data={procurementByAgent} normalized horizontal />
+              </div>
+            </>
+          }
           rightTitle="Procurement Agents"
-          rightSubtitle={`Birr value share (${yearFilter})`}
           rightData={donorChart}
           rightLoading={loadingProcurer}
           rightAction={<><IconButton variant="refresh" onClick={refreshProcurerChart} loading={refreshing['procurerChart']} /><IconButton variant="info" contentId="program-procurement-agents" /></>}
@@ -1261,7 +1297,16 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
           leftTitle="Item Distribution by Facility Type"
           leftSubtitle="Products distributed across health center, hospital, woreda, and other facilities"
           leftAction={<IconButton variant="refresh" onClick={refreshDistribution} loading={refreshing['distribution']} />}
-          leftChart={<ProgramStackedBarChart data={itemDistribution} />}
+          leftChart={
+            <>
+              <div className="hidden lg:block">
+                <ProgramStackedBarChart data={itemDistribution} />
+              </div>
+              <div className="lg:hidden">
+                <ProgramStackedBarChart data={itemDistribution} horizontal />
+              </div>
+            </>
+          }
           rightTitle="Distribution by Facility Type"
           rightSubtitle="Share by facility type"
           rightData={(() => {
@@ -1292,9 +1337,17 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
         <>
         <ProgramChartRow
           leftTitle="Pipeline Incoming Shipment"
-          leftSubtitle="Center pipeline by product — PurchaseOrdered, BelowMax, AboveMax, ProjectedDaysOutOfStock, InvoicedM"
           leftAction={<IconButton variant="refresh" onClick={refreshPipeline} loading={refreshing['pipeline']} />}
-          leftChart={<ProgramStackedBarChart data={pipelineByDonor} />}
+          leftChart={
+            <>
+              <div className="hidden lg:block">
+                <ProgramStackedBarChart data={pipelineByDonor} />
+              </div>
+              <div className="lg:hidden">
+                <ProgramStackedBarChart data={pipelineByDonor} horizontal />
+              </div>
+            </>
+          }
           rightTitle="Distribution by Ownership Type"
           rightSubtitle={`Ownership share (${ownershipYear})`}
           rightData={ownershipChart}
@@ -1318,9 +1371,13 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
         />
         <ProgramChartRow
           leftTitle="Order Fill Rate"
-          leftSubtitle="COFR (Customer) and HOFR (Hub) fill rates by product"
           leftAction={<div className="flex items-center gap-2"><IconButton variant="info" contentId="program-order-fill-rate" /><IconButton variant="refresh" onClick={refreshOrderFillRate} loading={refreshing['orderFillRate']} /></div>}
-          leftChart={leftChart}
+          leftChart={
+            <>
+              <div className="hidden lg:block">{leftChart}</div>
+              <div className="lg:hidden">{mobileFillRateChart}</div>
+            </>
+          }
           rightTitle="Funding Source"
           rightSubtitle={`Donor share (${fundingYear})`}
           rightData={fundingChart}
@@ -1349,8 +1406,15 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
       {/* ── Stock Utilization ─────────────────────────────────────────────── */}
       <section id="ch-utilization">
         {!sectionLoaded['stockUtilization'] ? <PanelSkeleton /> : (
-        <ProgramPanel title="Stock Utilization National" subtitle="SOHAmtBirr, IssuedAmtBirr, and ExpiredAmtBirr by product" action={<IconButton variant="refresh" onClick={refreshStockUtilization} loading={refreshing['stockUtilization']} />}>
-          <ProgramStackedBarChart data={stockUtilization} height={260} />
+        <ProgramPanel title="Stock Utilization National" action={<IconButton variant="refresh" onClick={refreshStockUtilization} loading={refreshing['stockUtilization']} />}>
+          <>
+            <div className="hidden lg:block">
+              <ProgramStackedBarChart data={stockUtilization} height={260} />
+            </div>
+            <div className="lg:hidden">
+              <ProgramStackedBarChart data={stockUtilization} horizontal />
+            </div>
+          </>
         </ProgramPanel>
         )}
       </section>
@@ -1358,7 +1422,7 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
       {/* ── National MOS ─────────────────────────────────────────────────── */}
       <section id="ch-mos">
         {!sectionLoaded['mos'] ? <PanelSkeleton /> : (
-        <ProgramPanel title="National MOS" subtitle={`MOS by site — ${mosSiteLabels[mosSite?.toUpperCase()] || mosSite || 'select a site'}`} action={<IconButton variant="refresh" onClick={refreshMos} loading={refreshing['mos']} />}>
+        <ProgramPanel title="National MOS" action={<IconButton variant="refresh" onClick={refreshMos} loading={refreshing['mos']} />}>
           <div className="flex items-center gap-3 px-5 pt-3 pb-1">
             <label className="text-label-sm text-on-surface-variant whitespace-nowrap">Site:</label>
             <select
@@ -1373,7 +1437,12 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
             </select>
           </div>
           
-          <ProgramBarChart data={mosChart} valueFormatter={(v) => Number(v).toFixed(1)} />
+          <div className="hidden lg:block">
+            <ProgramBarChart data={mosChart} valueFormatter={(v) => Number(v).toFixed(1)} />
+          </div>
+          <div className="lg:hidden">
+            <ProgramBarChart data={mosChart} valueFormatter={(v) => Number(v).toFixed(1)} horizontal />
+          </div>
         </ProgramPanel>
         )}
       </section>

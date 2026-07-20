@@ -124,7 +124,7 @@ function ProgramDashboard() {
   return (
     <div className="space-y-5">
       {/* Single sticky block — chips always, filter only for Clinical Chemistry */}
-      <div className="sticky top-0 z-10 bg-[#F6FAFC] -mx-lg px-lg">
+      <div className="sticky top-0 z-30 bg-[#F6FAFC] -mx-lg px-lg">
         <ProgramChips active={activeProgram} onChange={setActiveProgram} />
         {activeProgram === 'Clinical Chemistry' && (
           <OrgToggle value={programType} onChange={setProgramType} />

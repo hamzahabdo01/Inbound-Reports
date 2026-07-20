@@ -5,10 +5,11 @@ import { getChartColor } from '../../utils/chartUtils';
 const Y_TICKS = [0, 20, 40, 60, 80, 100];
 const CHART_LEFT_OFFSET = 44;
 
-function ProgramStackedBarChart({ data = [], height = 220, normalized = false, yLabel, yTicks, showPct = true }: any) {
+function ProgramStackedBarChart({ data = [], height = 220, normalized = false, yLabel, yTicks, showPct = true, horizontal = false }: any) {
   const ticks = yTicks || Y_TICKS;
   const [hoveredBar, setHoveredBar] = useState(null);
   const [tooltip, setTooltip] = useState(null);
+  const [selectedBar, setSelectedBar] = useState<string | null>(null);
 
   if (!data.length) {
     return (
@@ -19,6 +20,77 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
   }
 
   const labels: string[] = [...new Set<string>(data.flatMap((item: any) => item.segments.map((seg: any) => seg.label)))];
+
+  if (horizontal) {
+    const toggleTooltip = (item) => {
+      if (selectedBar === item.label) {
+        setSelectedBar(null);
+      } else {
+        setSelectedBar(item.label);
+      }
+    };
+    return (
+      <div className="px-4 py-3 select-none">
+        {data.map((item) => {
+          const total = item.segments.reduce((sum, s) => sum + s.value, 0);
+          const isOpen = selectedBar === item.label;
+          return (
+            <div key={item.label} className="relative">
+              <div
+                className="flex items-center gap-2 py-1.5 cursor-pointer"
+                onClick={() => toggleTooltip(item)}
+              >
+                <span className="text-[11px] font-semibold text-on-surface-variant w-20 shrink-0 truncate" title={item.label}>{item.label}</span>
+              <div className="flex-1 h-4 rounded-sm overflow-hidden flex bg-surface-container-low">
+                {item.segments.map((seg, i) => {
+                  const pct = total > 0 ? (seg.value / total) * 100 : 0;
+                  return pct > 0 ? (
+                    <div
+                      key={seg.label}
+                      style={{
+                        width: `${pct}%`,
+                        backgroundColor: seg.color || getChartColor(labels.indexOf(seg.label)),
+                      }}
+                    />
+                  ) : null;
+                })}
+              </div>
+              </div>
+              {isOpen && (
+                <div className="bg-white rounded-xl shadow-lg border border-outline-variant px-4 py-3 text-xs mb-2 mx-1">
+                  <div className="font-bold text-on-surface text-[13px] mb-2">{item.label}</div>
+                  {item.segments.map((seg) => {
+                    const segPct = total > 0 ? ((seg.value / total) * 100).toFixed(1) : '0';
+                    const color = seg.color || getChartColor(labels.indexOf(seg.label));
+                    return (
+                      <div key={seg.label} className="flex items-center gap-1.5 mt-1.5 first:mt-0">
+                        <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
+                        <span className="font-semibold text-on-surface-variant">{seg.label}:</span>
+                        <span className="tabular-nums text-on-surface">{seg.value.toLocaleString()}</span>
+                        {showPct && segPct !== '0' && <span className="text-on-surface-variant/60">({segPct}%)</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3">
+          {labels.map((label, index) => {
+            const firstItemWithSeg = data.find((item) => item.segments.some((s) => s.label === label));
+            const segColor = firstItemWithSeg?.segments.find((s) => s.label === label)?.color;
+            return (
+              <span key={label} className="inline-flex items-center gap-1 text-[10px] font-semibold text-on-surface-variant">
+                <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: segColor || getChartColor(index) }} />
+                {label}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   const BAR_MAX_W = 64;
   const BAR_GAP = 6;

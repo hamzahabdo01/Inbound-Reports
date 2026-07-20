@@ -3,13 +3,37 @@ import { useState } from 'react';
 const CHART_LEFT = 44;
 const CHART_HEIGHT = 256;
 
-function ProgramBarChart({ data, valueFormatter = (value) => value, titleFormatter, yTicks }: any) {
+function ProgramBarChart({ data, valueFormatter = (value) => value, titleFormatter, yTicks, horizontal = false }: any) {
   const [hoveredLabel, setHoveredLabel] = useState(null);
   const [tooltip, setTooltip] = useState(null);
   const hasAxis = !!yTicks;
 
   const yMin = hasAxis ? yTicks[0] : 0;
   const yMax = hasAxis ? yTicks[yTicks.length - 1] : Math.max(...data.map((item) => item.value), 1);
+
+  if (horizontal) {
+    const max = Math.max(...data.map((item) => item.value), 1);
+    return (
+      <div className="px-4 py-3 select-none">
+        {data.map((item) => {
+          const pct = (item.value / max) * 100;
+          return (
+            <div key={item.label} className="flex items-center gap-2 py-1.5">
+              <span className="text-[11px] font-semibold text-on-surface-variant w-20 shrink-0 truncate" title={item.label}>{item.label}</span>
+              <div className="flex-1 h-4 rounded-sm overflow-hidden bg-surface-container-low">
+                <div
+                  className="h-full rounded-sm transition-all duration-300"
+                  style={{ width: `${Math.max(pct, item.value > 0 ? 2 : 0)}%`, backgroundColor: item.color || '#0B4F54' }}
+                />
+              </div>
+              <span className="text-[11px] font-bold text-on-surface tabular-nums w-14 text-right shrink-0">{valueFormatter(item.value)}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   const range = yMax - yMin || 1;
   const zeroPct = hasAxis ? ((0 - yMin) / range) * 100 : 0;
 

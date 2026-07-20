@@ -35,6 +35,7 @@ interface BaseTableProps {
   headerPadding?: string;
   tableClassName?: string;
   wrapperClassName?: string;
+  cellTextSize?: string;
 }
 
 function BaseTable({
@@ -53,6 +54,7 @@ function BaseTable({
   headerPadding = 'px-4 py-3',
   tableClassName = '',
   wrapperClassName = '',
+  cellTextSize = 'text-body-md',
 }: BaseTableProps) {
   const hasRows = rows.length > 0;
   const start = hasRows ? (pagination ? (pagination.page - 1) * pagination.rowsPerPage + 1 : 1) : 0;
@@ -94,7 +96,7 @@ function BaseTable({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`${cellPadding} text-body-md text-on-surface ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'} ${col.className || ''}`}
+                        className={`${cellPadding} ${cellTextSize} text-on-surface ${col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'} ${col.className || ''}`}
                       >
                         {col.render ? col.render(row, index) : (row[col.key] ?? '')}
                       </td>

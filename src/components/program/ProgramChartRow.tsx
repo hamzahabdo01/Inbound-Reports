@@ -18,7 +18,7 @@ function ProgramChartRow({ leftTitle, leftSubtitle, leftChart, leftAction, right
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
       <ProgramPanel title={leftTitle} subtitle={leftSubtitle} className="col-span-1 lg:col-span-2" action={leftAction}>
-        {leftChart}
+        <div className="py-4">{leftChart}</div>
       </ProgramPanel>
       <ProgramPanel title={rightTitle} subtitle={rightSubtitle} action={rightActions}>
         {rightExtra && <div className="px-5 pt-3 pb-1">{rightExtra}</div>}
@@ -27,7 +27,7 @@ function ProgramChartRow({ leftTitle, leftSubtitle, leftChart, leftAction, right
             <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
           </div>
         ) : (
-          <PieChart data={rightData} />
+          <div className="pb-3"><PieChart data={rightData} /></div>
         )}
       </ProgramPanel>
     </div>

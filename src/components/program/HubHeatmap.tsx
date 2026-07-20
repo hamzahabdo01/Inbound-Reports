@@ -31,7 +31,7 @@ const getCellStatus = (value, thresholds, ss) => {
   return statuses[0];
 };
 
-function HubHeatmap({ rows, products, thresholds, statusMap }: any) {
+function HubHeatmap({ rows, products, thresholds, statusMap, siteFilter }: any) {
   const [page, setPage] = useState(1);
   const [hoveredStatus, setHoveredStatus] = useState<string | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
@@ -85,18 +85,10 @@ function HubHeatmap({ rows, products, thresholds, statusMap }: any) {
 
   const columns: ColumnDef[] = [
     {
-      key: 'sn',
-      label: 'SN',
-      width: 'w-16',
-      headerClassName: 'w-16',
-      className: 'bg-white text-body-sm text-on-surface-variant',
-      render: (row, index) => (page - 1) * rowsPerPage + index + 1,
-    },
-    {
       key: 'site',
       label: 'Site',
-      className: 'bg-white font-semibold whitespace-nowrap',
-      headerClassName: 'min-w-[220px]',
+      className: 'sticky left-0 z-10 bg-white font-semibold whitespace-nowrap',
+      headerClassName: 'sticky left-0 z-20 min-w-[160px] bg-surface-container',
       render: (row) => row.Site,
     },
     {
@@ -172,8 +164,9 @@ function HubHeatmap({ rows, products, thresholds, statusMap }: any) {
   return (
     <div className="flex flex-col">
       {/* Legend Indicators positioned above the table */}
-      <div className="flex flex-wrap items-center justify-between px-5 py-3 border-b border-outline-variant bg-surface-container-lowest select-none">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center flex-wrap gap-y-2 px-5 py-3 border-b border-outline-variant bg-surface-container-lowest select-none">
+        {/* Desktop: highlight status buttons */}
+        <div className="hidden lg:flex items-center gap-2">
           <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mr-2">Highlight Status:</span>
           {statuses.map((status) => {
             const isSelected = selectedStatuses.includes(status.label);
@@ -214,8 +207,42 @@ function HubHeatmap({ rows, products, thresholds, statusMap }: any) {
             </button>
           )}
         </div>
-        <div className="text-[11px] text-on-surface-variant font-medium">
-          Values: <span className="font-bold text-primary">Estimated (Compact)</span>
+        {siteFilter && <div className="hidden lg:flex items-center gap-2 ml-auto">{siteFilter}</div>}
+        {/* Mobile/Tablet: dropdown */}
+        <div className="lg:hidden flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mr-2">Highlight Status:</span>
+            <div className="relative">
+              <select
+                value={selectedStatuses.length === 1 ? selectedStatuses[0] : ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!val) {
+                    setSelectedStatuses([]);
+                  } else {
+                    setSelectedStatuses([val]);
+                  }
+                }}
+                className="appearance-none h-9 min-w-[130px] rounded-lg border border-outline-variant bg-white px-3 pr-8 text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer"
+              >
+                <option value="">All</option>
+                {statuses.map((s) => (
+                  <option key={s.label} value={s.label}>{s.label}</option>
+                ))}
+              </select>
+              <i className="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-primary pointer-events-none" />
+            </div>
+            {selectedStatuses.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedStatuses([])}
+                className="text-[11px] font-bold text-primary hover:underline cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {siteFilter && <div className="lg:hidden flex items-center gap-2">{siteFilter}</div>}
         </div>
       </div>
 
@@ -223,7 +250,7 @@ function HubHeatmap({ rows, products, thresholds, statusMap }: any) {
         columns={columns}
         rows={visibleRows}
         minWidth="1220px"
-        tableClassName="border-collapse"
+        tableClassName="border-separate border-spacing-0"
         headerRowClassName="bg-surface-container border-y border-outline-variant"
         rowKey={(row) => row.Site}
         rowClassName="hover:bg-surface-container-low"
@@ -233,7 +260,6 @@ function HubHeatmap({ rows, products, thresholds, statusMap }: any) {
           total: sortedRows.length,
           rowsPerPage,
           onChange: setPage,
-          info: <>{startRow}&ndash;{end} of {sortedRows.length} hubs (sorted by risk)</>,
         }}
       />
     </div>

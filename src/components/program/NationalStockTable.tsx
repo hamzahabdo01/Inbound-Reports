@@ -12,7 +12,9 @@ function NationalStockTable({ rows, onSelectItem }: any) {
     {
       key: 'ProductCN',
       label: 'Item',
-      className: `font-semibold ${hoverText}`,
+      headerClassName: 'sticky left-0 z-0 bg-[#CFD8DC] lg:static lg:z-auto',
+      width: 'w-40',
+      className: `sticky left-0 z-0 bg-white font-semibold lg:bg-transparent lg:static lg:z-auto ${hoverText}`,
       render: (row) => (
         <button
           type="button"
@@ -29,6 +31,8 @@ function NationalStockTable({ rows, onSelectItem }: any) {
     {
       key: 'Status',
       label: 'Status',
+      headerClassName: 'min-w-[140px]',
+      width: 'w-30',
       render: (row) => <StatusBadge status={row.SS} hoverWhite={clickable} />,
     },
     { key: 'SOH', label: 'SOH', className: hoverText, render: (row) => compactNumber(row.SOH) },

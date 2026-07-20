@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
+import MobileHeader from './components/MobileHeader';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import InboundReports from './pages/InboundReports';
@@ -121,16 +122,11 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-surface flex">
       {isMobile ? (
-        <div className="overflow-hidden w-full">
+        <div className="overflow-clip w-full">
           <Sidebar activeSection={activeSection} onNavigate={setActiveSection} collapsed={!sidebarVisible} onToggleCollapse={toggleSidebar} onLogout={logout} isMobile onClose={() => setSidebarVisible(false)} />
           <div className="flex-1 flex flex-col min-h-screen min-w-0">
-            <header className="fixed top-0 z-40 flex items-center gap-3 px-4 py-3 bg-primary w-full">
-              <button onClick={toggleSidebar} className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/15 text-white hover:brightness-110 transition-all shrink-0" aria-label="Toggle sidebar">
-                <i className="fa-solid fa-bars text-sm"></i>
-              </button>
-              <span className="text-sm font-bold text-white truncate">Fanos Dashboard</span>
-            </header>
-            <main ref={mainRef} className="flex-1 overflow-auto h-[calc(100dvh-56px)] pt-[56px]" style={{ scrollbarGutter: 'stable' }}>
+            <MobileHeader onToggleSidebar={toggleSidebar} />
+            <main ref={mainRef} className="flex-1 max-h-screen overflow-auto pt-[56px]" style={{ scrollbarGutter: 'stable' }}>
               <div className="max-w-container mx-auto px-lg pb-lg">
                 {renderPage({ sidebarVisible, toggleSidebar })}
               </div>
