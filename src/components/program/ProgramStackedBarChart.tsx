@@ -5,7 +5,7 @@ import { getChartColor } from '../../utils/chartUtils';
 const Y_TICKS = [0, 20, 40, 60, 80, 100];
 const CHART_LEFT_OFFSET = 44;
 
-function ProgramStackedBarChart({ data = [], height = 220, normalized = false, yLabel, yTicks }: any) {
+function ProgramStackedBarChart({ data = [], height = 220, normalized = false, yLabel, yTicks, showPct = true }: any) {
   const ticks = yTicks || Y_TICKS;
   const [hoveredBar, setHoveredBar] = useState(null);
   const [tooltip, setTooltip] = useState(null);
@@ -27,6 +27,8 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
   // For absolute mode: find max total to scale bars
   const totals = data.map((item) => item.segments.reduce((sum, s) => sum + s.value, 0));
   const absMax = Math.max(...totals, 1);
+
+  const barMax = yTicks ? ticks[ticks.length - 1] : absMax;
 
   const handleBarEnter = (item, e) => {
     const total = item.segments.reduce((sum, s) => sum + s.value, 0);
@@ -66,7 +68,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
           )}
           {[...ticks].reverse().map((tick) => (
             <span key={tick} className="text-[10px] font-semibold text-on-surface-variant text-right block leading-none">
-              {tick}%
+              {normalized ? `${tick}%` : new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 0 }).format(tick)}
             </span>
           ))}
         </div>
@@ -94,7 +96,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
           <div className="absolute left-0 right-0 bottom-6 flex items-end gap-1.5" style={{ height, maxWidth: barsMaxWidth, margin: '0 auto' }}>
             {data.map((item) => {
               const total = item.segments.reduce((sum, s) => sum + s.value, 0);
-              const barHeightPct = normalized ? 100 : (total / absMax) * 100;
+              const barHeightPct = normalized ? 100 : Math.min((total / barMax) * 100, 100);
               const isHovered = hoveredBar === item.label;
 
               return (
@@ -172,7 +174,7 @@ function ProgramStackedBarChart({ data = [], height = 220, normalized = false, y
                     <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
                     <span className="font-semibold text-on-surface-variant">{seg.label}:</span>
                     <span className="tabular-nums text-on-surface">{seg.value.toLocaleString()}</span>
-                    {seg.pct !== '0' && <span className="text-on-surface-variant/60">({seg.pct}%)</span>}
+                    {showPct && seg.pct !== '0' && <span className="text-on-surface-variant/60">({seg.pct}%)</span>}
                   </div>
                 );
               })}

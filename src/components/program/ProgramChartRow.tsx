@@ -16,8 +16,8 @@ function ProgramChartRow({ leftTitle, leftSubtitle, leftChart, leftAction, right
   );
 
   return (
-    <div className="grid grid-cols-3 gap-5">
-      <ProgramPanel title={leftTitle} subtitle={leftSubtitle} className="col-span-2" action={leftAction}>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <ProgramPanel title={leftTitle} subtitle={leftSubtitle} className="col-span-1 lg:col-span-2" action={leftAction}>
         {leftChart}
       </ProgramPanel>
       <ProgramPanel title={rightTitle} subtitle={rightSubtitle} action={rightActions}>

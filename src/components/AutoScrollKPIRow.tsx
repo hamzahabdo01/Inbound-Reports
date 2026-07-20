@@ -77,8 +77,8 @@ export default function AutoScrollKPIRow({ cards, speed = 0.04 }: AutoScrollKPIR
     <div className="relative">
       {isOverflowing && (
         <>
-          <div className="absolute left-0 top-0 bottom-0 w-16 z-10 pointer-events-none bg-gradient-to-r from-[#F6FAFC] to-transparent" />
-          <div className="absolute right-0 top-0 bottom-0 w-16 z-10 pointer-events-none bg-gradient-to-l from-[#F6FAFC] to-transparent" />
+          <div className="absolute left-0 top-0 bottom-0 w-16 z-[1] pointer-events-none bg-gradient-to-r from-[#F6FAFC] to-transparent" />
+          <div className="absolute right-0 top-0 bottom-0 w-16 z-[1] pointer-events-none bg-gradient-to-l from-[#F6FAFC] to-transparent" />
         </>
       )}
       <div

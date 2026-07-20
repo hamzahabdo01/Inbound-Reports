@@ -19,6 +19,32 @@ import { SS_WebApi, OIH_WebApi, POD_WebApi, POHRIHRCH_WebApi, RCD_WebApi, MainDa
 const formatCompact = (v) =>
   new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(v || 0);
 const formatNumber = (v) => new Intl.NumberFormat('en').format(v || 0);
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  const raw = String(dateStr).trim();
+  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) {
+    const [_, y, mo, d] = m;
+    const day = parseInt(d, 10);
+    const suffix = day > 3 && day < 21 ? 'th' : ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][day % 10] || 'th';
+    const month = new Date(+y, +mo - 1).toLocaleDateString('en-US', { month: 'long' });
+    return month + ' ' + day + suffix + ', ' + y;
+  }
+  const n = Number(raw);
+  if (!isNaN(n) && raw.length >= 10) {
+    const d2 = new Date(n * (n > 1e11 ? 1 : 1000));
+    if (!isNaN(d2.getTime())) {
+      const day = d2.getDate();
+      const suffix = day > 3 && day < 21 ? 'th' : ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][day % 10] || 'th';
+      return d2.toLocaleDateString('en-US', { month: 'long' }) + ' ' + day + suffix + ', ' + d2.getFullYear();
+    }
+  }
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return raw;
+  const day = d.getDate();
+  const suffix = day > 3 && day < 21 ? 'th' : ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'][day % 10] || 'th';
+  return d.toLocaleDateString('en-US', { month: 'long' }) + ' ' + day + suffix + ', ' + d.getFullYear();
+};
 
 function includesQuery(row, query) {
   if (!query.trim()) return true;
@@ -99,33 +125,37 @@ function processHubData(hubSoh) {
 function processPurchaseOrders(data) {
   if (!data.length) return [];
   const sampleKeys = Object.keys(data[0]);
-  const poKey = sampleKeys.find((k) => /^PurchaseOrderNumber|^PONumber/i.test(k))
-    || sampleKeys.find((k) => /^PO_Number/i.test(k))
-    || 'PurchaseOrderNumber';
+  const poKey = sampleKeys.find((k) => /^PurchaseOrderNumber|^PONumber|^PO_/i.test(k)) || 'PurchaseOrderNumber';
+  const dateKey = sampleKeys.find((k) => /Date/i.test(k)) || 'Date';
   const productKey = sampleKeys.find((k) => /^ProductCN/i.test(k))
-    || sampleKeys.find((k) => /^ItemName|^ProductName/i.test(k))
-    || 'ProductCN';
-  const donorKey = sampleKeys.find((k) => /^Donor|^FundingSource|^Source/i.test(k))
-    || 'Donor';
-  const orderedKey = sampleKeys.find((k) => /^OrderQuantity|^OrderedQuantity|^QuantityOrdered/i.test(k))
-    || 'OrderQuantity';
-  const nextDelKey = sampleKeys.find((k) => /^NextDeliveryQuantity|^NextDelivery|^QuantityToReceive/i.test(k))
-    || 'NextDeliveryQuantity';
-  const deliveredKey = sampleKeys.find((k) => /^DeliveredQuantity|^QuantityReceived|^ReceivedQuantity/i.test(k))
-    || 'DeliveredQuantity';
+    || sampleKeys.find((k) => /^ItemName|^ProductName/i.test(k)) || 'ProductCN';
+  const donorKey = sampleKeys.find((k) => /^Donor|^FundingSource|^Source/i.test(k)) || 'Donor';
+  const procurerKey = sampleKeys.find((k) => /^Procurer|^ProcuringEntity/i.test(k)) || 'Procurer';
+  const supplierKey = sampleKeys.find((k) => /^Supplier|^Vendor|^Manufacturer/i.test(k)) || 'Supplier';
+  const orderedKey = sampleKeys.find((k) => /^OrderQuantity|^OrderedQuantity|^QuantityOrdered/i.test(k)) || 'OrderQuantity';
+  const shippedKey = sampleKeys.find((k) => /^Shipped|^QuantityInvoiced/i.test(k)) || 'Shipped';
+  const receivedKey = sampleKeys.find((k) => /^DeliveredQuantity|^QuantityReceived|^ReceivedQuantity/i.test(k)) || 'DeliveredQuantity';
+  const nextDelKey = sampleKeys.find((k) => /^NextDeliveryQuantity|^NextDelivery|^QuantityToReceive/i.test(k)) || 'NextDeliveryQuantity';
 
   return data.map((r) => {
     const ordered = Number(r[orderedKey]) || 0;
-    const delivered = Number(r[deliveredKey]) || 0;
-    const progress = ordered > 0 ? (delivered / ordered) * 100 : 0;
+    const shipped = Number(r[shippedKey]) || 0;
+    const received = Number(r[receivedKey]) || 0;
+    const pending = Math.max(ordered - received, 0);
+    const completed = ordered > 0 ? ((received / ordered) * 100).toFixed(1) : '0.0';
     return {
-      PurchaseOrderNumber: String(r[poKey] || ''),
+      po: String(r[poKey] || ''),
+      date: formatDate(r[dateKey]),
       ProductCN: String(r[productKey] || ''),
-      Donor: String(r[donorKey] || ''),
-      OrderQuantity: ordered,
+      donor: String(r[donorKey] || ''),
+      procurer: String(r[procurerKey] || ''),
+      supplier: String(r[supplierKey] || ''),
+      ordered,
+      shipped,
+      received,
+      pending,
+      completed,
       NextDeliveryQuantity: Number(r[nextDelKey]) || 0,
-      DeliveredQuantity: delivered,
-      deliveryProgress: progress,
     };
   });
 }
@@ -337,6 +367,7 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
   }, []);
 
   useEffect(() => {
+    if (selectedProduct) return;
     const timer = setTimeout(() => {
 
       const stagger = (ms, fn) => setTimeout(fn, ms);
@@ -445,16 +476,17 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
       markLoaded('issued');
     }, 300);
     return () => clearTimeout(timer);
-  }, [markLoaded, programCode]);
+  }, [markLoaded, programCode, selectedProduct]);
 
   // Tier 1 fires immediately on mount
   useEffect(() => { fetchTier1(); }, [fetchTier1]);
 
   // ── Tier 2 chart fetches (staggered after their parent section API) ────
   useEffect(() => {
+    if (selectedProduct) return;
     const timer = setTimeout(() => fetchProcurerChart(yearFilter), 400);
     return () => clearTimeout(timer);
-  }, [yearFilter, fetchProcurerChart]);
+  }, [yearFilter, fetchProcurerChart, selectedProduct]);
 
   const fetchOwnershipChart = useCallback(async (year) => {
     setLoadingOwnership(true);
@@ -471,9 +503,10 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
   }, [programCode]);
 
   useEffect(() => {
+    if (selectedProduct) return;
     const timer = setTimeout(() => fetchOwnershipChart(ownershipYear), 550);
     return () => clearTimeout(timer);
-  }, [ownershipYear, fetchOwnershipChart]);
+  }, [ownershipYear, fetchOwnershipChart, selectedProduct]);
 
   const fetchFundingChart = useCallback(async (year) => {
     setLoadingFunding(true);
@@ -490,9 +523,10 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
   }, [programCode]);
 
   useEffect(() => {
+    if (selectedProduct) return;
     const timer = setTimeout(() => fetchFundingChart(fundingYear), 600);
     return () => clearTimeout(timer);
-  }, [fundingYear, fetchFundingChart]);
+  }, [fundingYear, fetchFundingChart, selectedProduct]);
 
   const fetchIssuedItems = useCallback(async (from, to) => {
     if (!from || !to) return;
@@ -506,7 +540,10 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
     }
   }, [programCode]);
 
-  useEffect(() => { fetchIssuedItems(issuedFromDate, issuedToDate) }, [issuedFromDate, issuedToDate, fetchIssuedItems]);
+  useEffect(() => {
+    if (selectedProduct) return;
+    fetchIssuedItems(issuedFromDate, issuedToDate);
+  }, [issuedFromDate, issuedToDate, fetchIssuedItems, selectedProduct]);
 
   // ── Individual refresh callbacks (one per section) ──────────────────────
   const withRefresh = (key, fn) => async (...args) => {
@@ -640,8 +677,9 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
 
   // Fetch purchase orders on mount and when tab changes
   useEffect(() => {
+    if (selectedProduct) return;
     refreshPurchaseOrders(poTab).then(() => markLoaded('purchaseOrders'));
-  }, [poTab]);
+  }, [poTab, selectedProduct]);
 
   // ── API data, no CSV fallback ────────────────────────────────────────────
   const stockRows = apiStockRows;

@@ -22,7 +22,7 @@ function formatEstimate(value) {
 function RecentReceivesTable({ rows }: any) {
   const columns: ColumnDef[] = [
     { key: 'FullDate', label: 'Date', className: 'whitespace-nowrap', render: (row) => formatDate(row.FullDate) },
-    { key: 'ProductCN', label: 'Item', className: 'font-semibold' },
+    { key: 'Supplier', label: 'Supplier' },
     { key: 'Manufacturer', label: 'Manufacturer' },
     { key: 'Country', label: 'Country' },
     { key: 'QuantityReceived', label: 'Quantity', render: (row) => formatEstimate(row.QuantityReceived) },

@@ -19,7 +19,7 @@ function PurchaseOrderTable({ rows }: any) {
       render: (row) => (
         <div className="flex items-center gap-2">
           <span className="w-20 h-2 rounded-full bg-surface-container overflow-hidden">
-            <span className="block h-full bg-primary" style={{ width: `${Math.min(Number(row.completed), 100)}%` }} />
+            <span className="block h-full bg-success" style={{ width: `${Math.min(Number(row.completed), 100)}%` }} />
           </span>
           <span className="text-[11px] font-bold text-on-surface-variant">{row.completed}%</span>
         </div>

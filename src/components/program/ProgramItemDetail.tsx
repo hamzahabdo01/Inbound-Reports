@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import ProgramPanel from './ProgramPanel';
 import ProgramBarChart from './ProgramBarChart';
 import ProgramStackedBarChart from './ProgramStackedBarChart';
@@ -9,30 +9,30 @@ import RecentReceivesTable from './RecentReceivesTable';
 import PieChart from '../PieChart';
 import KPICard from '../KPICard';
 import IconButton from '../IconButton';
+import ExportDropdown from '../ExportDropdown';
 import { SS_WebApi, OIH_WebApi, POD_WebApi, POHRIHRCH_WebApi, RCD_WebApi, MainDashboard_WebApi, OIDRCD_WebApi, LookUp } from '../../api/fanos';
+
+function formatDate(raw) {
+  if (!raw) return '';
+  try {
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return raw;
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  } catch {
+    return raw;
+  }
+}
 
 const formatNumber = (value) => new Intl.NumberFormat('en').format(value || 0);
 const compactNumber = (value) =>
   new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(value || 0);
 
-const safePercent = (value, total) => (total > 0 ? (value / total) * 100 : 0);
 const firstAvailableNumber = (row, keys, fallback = 0) => {
   const key = keys.find((candidate) => row?.[candidate] !== undefined && row?.[candidate] !== null && row?.[candidate] !== '');
   return Number(row?.[key]) || fallback;
 };
 
 const CHART_COLORS = ['#00373B', '#0B4F54', '#216E6A', '#4A9598', '#86BFC5', '#515F74', '#D97706', '#BA1A1A'];
-
-const groupBySum = (rows, key, valueKey) => {
-  const grouped: Record<string, number> = rows.reduce((acc: any, row: any) => {
-    const label = row[key] || 'Unknown';
-    acc[label] = (acc[label] || 0) + (Number(row[valueKey]) || 0);
-    return acc;
-  }, {});
-  return Object.entries(grouped)
-    .map(([label, value]) => ({ label, value }))
-    .sort((a, b) => b.value - a.value);
-};
 
 function TinySelect({ label = '2016' }: any) {
   return (
@@ -47,14 +47,15 @@ function TinySelect({ label = '2016' }: any) {
   );
 }
 
-function DetailChartPanel({ title, icon = 'fa-circle-info', action, children }: any) {
+function DetailChartPanel({ title, contentId, expandData, expandTitle, action, children }: any) {
   return (
     <ProgramPanel
       title={title}
       action={(
         <div className="flex items-center gap-2">
           {action}
-          <i className={`fa-solid ${icon} text-[13px] text-primary/80`} />
+          {expandData && <IconButton variant="expand" data={expandData} title={expandTitle || title} />}
+          {contentId && <IconButton variant="info" contentId={contentId} />}
         </div>
       )}
     >
@@ -63,13 +64,14 @@ function DetailChartPanel({ title, icon = 'fa-circle-info', action, children }: 
   );
 }
 
-function EmptyDataTable({ title, columns, subtitle = '', rows = [] }: any) {
+function EmptyDataTable({ title, contentId, columns, subtitle = '', rows = [] }: any) {
+  const count = rows.length;
   return (
-    <ProgramPanel title={title} subtitle={subtitle}>
+    <ProgramPanel title={title} subtitle={subtitle} action={contentId ? <div className="flex items-center gap-2"><IconButton variant="info" contentId={contentId} /><ExportDropdown headers={columns} rows={rows} filename={contentId} /></div> : undefined}>
       <BaseTable columns={columns} rows={rows} emptyMessage="No rows" headerBg="bg-[#CFD8DC]" minWidth="520px" rowKey={(row, index) => row.id || index} rowClassName="hover:bg-surface-container-low" />
       <div className="flex items-center justify-end gap-5 border-t border-surface-container-low px-4 py-3 text-[11px] font-semibold text-on-surface-variant">
         <span>Rows per page: 10</span>
-        <span>0-0 of 0</span>
+        <span>{count > 0 ? `1-${count} of ${count}` : '0-0 of 0'}</span>
         <span className="inline-flex gap-3 text-outline">
           <i className="fa-solid fa-chevron-left" />
           <i className="fa-solid fa-chevron-right" />
@@ -79,19 +81,25 @@ function EmptyDataTable({ title, columns, subtitle = '', rows = [] }: any) {
   );
 }
 
-function NationalMosBelowEop({ stockRow }: any) {
+function NationalMosBelowEop({ stockRow, unit, unitLoaded }: any) {
+  if (!stockRow || typeof stockRow !== 'object' || Object.keys(stockRow).length === 0) {
+    return (
+      <ProgramPanel title="National MOS Below EOP" action={<IconButton variant="info" contentId="national-mos-below-eop" />}>
+        <div className="flex h-40 items-center justify-center text-body-sm text-on-surface-variant">No data</div>
+      </ProgramPanel>
+    );
+  }
   const [hoveredGauge, setHoveredGauge] = useState(null);
-  const current = firstAvailableNumber(stockRow, ['NationalMosBelowEop', 'CurrentMosBelowEop'], 2);
-  const offTarget = firstAvailableNumber(stockRow, ['OffTarget', 'OffTargetMos'], 100);
-  const unit = stockRow?.Unit || '50x2';
-  const soh = firstAvailableNumber(stockRow, ['NationalMosSoh', 'MosSoh'], 70735);
+  const current = firstAvailableNumber(stockRow, ['EstimatedMos', 'EstimatedMOS', 'Estimated', 'Mos', 'MOS', 'CurrentMosBelowEop', 'NationalMosBelowEop'], 2);
+  const offTarget = 100;
+  const soh = firstAvailableNumber(stockRow, ['SOH', 'NationalMosSoh', 'MosSoh'], 0);
   const radius = 42;
   const circumference = 2 * Math.PI * radius;
   const currentPct = Math.min(current / Math.max(offTarget, 1), 1);
   const currentLength = Math.max(circumference * currentPct, 4);
 
   return (
-    <ProgramPanel title="National MOS Below EOP">
+    <ProgramPanel title="National MOS Below EOP" action={<IconButton variant="info" contentId="national-mos-below-eop" />}>
       <div className="px-3 pt-4">
         <div className="relative mx-auto h-28 w-28">
           <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" role="img" aria-label="National MOS below EOP chart">
@@ -110,8 +118,9 @@ function NationalMosBelowEop({ stockRow }: any) {
             />
           </svg>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center rounded-full text-center">
-            <span className="text-[9px] font-extrabold uppercase text-on-surface-variant">Current</span>
-            <span className="text-[24px] font-extrabold leading-7 text-on-surface">{current}</span>
+            <span className="text-[9px] font-extrabold uppercase text-on-surface-variant">MOS</span>
+            <span className="text-[20px] font-extrabold leading-6 text-on-surface">{compactNumber(current)}</span>
+            <span className="text-[8px] font-semibold text-on-surface-variant">of {offTarget}</span>
           </div>
           {hoveredGauge && (
             <div
@@ -121,18 +130,20 @@ function NationalMosBelowEop({ stockRow }: any) {
                 top: hoveredGauge === 'current' ? '10px' : '38px',
               }}
             >
-              {hoveredGauge === 'current' ? `Current: ${current}` : `Off target: ${offTarget}`}
+              {hoveredGauge === 'current' ? `MOS: ${compactNumber(current)}` : `Target: ${offTarget} MOS`}
             </div>
           )}
         </div>
-        <div className="-mx-3 mt-1 grid grid-cols-2 border-t border-outline-variant text-body-sm">
-          <div className="border-r border-outline-variant px-3 py-2">
-            <p className="font-bold text-on-surface">Unit</p>
-            <p className="mt-2 text-on-surface">{unit}</p>
+        <div className="-mx-3 mt-2 border-t border-outline-variant">
+          <div className="flex items-center justify-between border-b border-outline-variant px-3 py-2.5">
+            <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wide">Unit</span>
+            <span className="text-[16px] font-extrabold text-on-surface">
+              {unitLoaded ? (unit || '—') : <i className="fa-solid fa-spinner fa-spin text-primary text-sm" />}
+            </span>
           </div>
-          <div className="px-3 py-2 text-right">
-            <p className="font-bold text-on-surface">SOH</p>
-            <p className="mt-2 text-on-surface">{formatNumber(soh)}</p>
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <span className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wide">SOH</span>
+            <span className="text-[16px] font-extrabold text-on-surface">{formatNumber(soh)}</span>
           </div>
         </div>
       </div>
@@ -179,7 +190,7 @@ function ProgramItemSwitcher({ items = [], selectedItem, onSelectItem }: any) {
 
 function StockStatusTable({ stockRow }: any) {
   return (
-    <ProgramPanel title="Stock Status" action={<TinySelect label="06/18/2026" />}>
+    <ProgramPanel title="Stock Status" action={<div className="flex items-center gap-2"><TinySelect label="06/18/2026" /><IconButton variant="info" contentId="stock-status" /></div>}>
       <BaseTable
         columns={[
           { key: 'site', label: 'Site' },
@@ -199,6 +210,32 @@ function StockStatusTable({ stockRow }: any) {
         rowClassName="hover:bg-surface-container-low"
       />
     </ProgramPanel>
+  );
+}
+
+function PanelSkeleton({ rows = 4, height = 'h-48' }: any) {
+  return (
+    <div className="bg-white border border-outline-variant rounded-xl shadow-[0px_4px_20px_rgba(10,50,53,0.06)] animate-pulse">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant">
+        <div className="space-y-1.5 flex-1">
+          <div className="h-4 bg-surface-container-high rounded w-48" />
+          <div className="h-3 bg-surface-container-high rounded w-32" />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 bg-surface-container-high rounded-xl" />
+          <div className="w-10 h-10 bg-surface-container-high rounded-xl" />
+        </div>
+      </div>
+      <div className={`px-5 py-4 space-y-3 ${height}`}>
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="flex gap-4">
+            <div className="h-3.5 bg-surface-container-high rounded flex-1" />
+            <div className="h-3.5 bg-surface-container-high rounded w-16" />
+            <div className="h-3.5 bg-surface-container-high rounded w-20" />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -264,9 +301,12 @@ function ProgramItemDetail({
   const [apiOwnershipDist, setApiOwnershipDist] = useState([]);
   const [apiRegionDist, setApiRegionDist] = useState([]);
   const [apiBinCard, setApiBinCard] = useState([]);
+  const [unit, setUnit] = useState('');
+  const [unitLoaded, setUnitLoaded] = useState(false);
 
   const [currentDate, setCurrentDate] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState<Record<string, boolean>>({});
+  const markLoaded = (key: string) => setLoaded(prev => ({...prev, [key]: true}));
 
   const [procurerYear, setProcurerYear] = useState('2016');
   const [yearOptions, setYearOptions] = useState<string[]>(['2016']);
@@ -291,13 +331,21 @@ function ProgramItemDetail({
   }, []);
 
   useEffect(() => {
+    // Component mount/unmount tracking
+  }, []);
+
+  const procurerKeyRef = useRef('');
+  useEffect(() => {
     if (!productSN) return;
+    const key = `${productSN}|${procurerYear}|${activeOrg}`;
+    if (procurerKeyRef.current === key) return;
+    procurerKeyRef.current = key;
     setProcurerLoading(true);
-    POD_WebApi.getItemProcurer({ ModeCode: 'HPR', FiscalYear: procurerYear, ProductSN: String(productSN) })
+    POD_WebApi.getItemProcurer({ ModeCode: activeOrg, FiscalYear: procurerYear, ProductSN: String(productSN) })
       .then(r => setApiProcurer(r?.data?.Data || []))
       .catch(() => setApiProcurer([]))
       .finally(() => setProcurerLoading(false));
-  }, [productSN, procurerYear]);
+  }, [productSN, procurerYear, activeOrg]);
 
   const formatDateForApi = (dateStr, fmt: 'slash' | 'dash') => {
     if (!dateStr) return '';
@@ -314,9 +362,12 @@ function ProgramItemDetail({
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const fetchAll = useCallback(async () => {
+  const fetchKeyRef = useRef('');
+  useEffect(() => {
     if (!productSN) return;
-    setLoading(true);
+    const key = `${productSN}|${activeOrg}`;
+    if (fetchKeyRef.current === key) return;
+    fetchKeyRef.current = key;
 
     const today = currentDate || new Date().toISOString();
     const todaySlash = formatDateForApi(today, 'slash');
@@ -328,59 +379,59 @@ function ProgramItemDetail({
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const fromDash = formatDateForApi(sevenDaysAgo.toISOString(), 'dash');
 
-    const p1 = SS_WebApi.getNationalMOS({ ModeCode: 'HPR', ProductSN: String(productSN) })
-      .then(r => setApiNationalMos(r?.data?.Data?.[0] || null)).catch(() => {});
+    const p1 = SS_WebApi.getNationalMOS({ ModeCode: activeOrg, ProductSN: String(productSN) })
+      .then(r => { setApiNationalMos(r?.data?.Data?.[0] || null); markLoaded('overview'); }).catch(() => { markLoaded('overview'); });
 
-    const p2 = SS_WebApi.getStockutilizationByEnvironment({ ModeCode: 'HPR', EnvironmentGroupCode: 'HUB', ProductSN: String(productSN), OrderBy: 'Environment' })
-      .then(r => setApiStockUtil(r?.data?.Data || [])).catch(() => {});
+    const p2 = SS_WebApi.getStockutilizationByEnvironment({ ModeCode: activeOrg, EnvironmentGroupCode: 'HUB', ProductSN: String(productSN), OrderBy: 'Environment' })
+      .then(r => { setApiStockUtil(r?.data?.Data || []); markLoaded('stockUtil'); }).catch(() => { markLoaded('stockUtil'); });
 
-    const p3 = POHRIHRCH_WebApi.getHubPipelineByEnvironment({ ModeCode: 'HPR', EnvironmentGroupCode: 'HUB', ProductSN: String(productSN), OrderBy: 'Environment' })
-      .then(r => setApiPipeline(r?.data?.Data || [])).catch(() => {});
+    const p3 = POHRIHRCH_WebApi.getHubPipelineByEnvironment({ ModeCode: activeOrg, EnvironmentGroupCode: 'HUB', ProductSN: String(productSN), OrderBy: 'Environment' })
+      .then(r => { setApiPipeline(r?.data?.Data || []); markLoaded('pipeline'); }).catch(() => { markLoaded('pipeline'); });
 
-    const p4 = SS_WebApi.getSohNearyExpiryBreakdownByEnvironment({ ModeCode: 'HPR', EnvironmentGroupCode: 'HUB', ProductSN: String(productSN) })
-      .then(r => setApiExpiryBkdn(r?.data?.Data || [])).catch(() => {});
+    const p4 = SS_WebApi.getSohNearyExpiryBreakdownByEnvironment({ ModeCode: activeOrg, EnvironmentGroupCode: 'HUB', ProductSN: String(productSN) })
+      .then(r => { setApiExpiryBkdn(r?.data?.Data || []); markLoaded('expiry'); }).catch(() => { markLoaded('expiry'); });
 
-    const p5 = SS_WebApi.getDaysOutOfStockBySite({ ModeCode: 'HPR', EnvironmentGroupCode: 'HUB', ProductSN: String(productSN), From: fromSlash, To: todaySlash })
-      .then(r => setApiDaysOos(r?.data?.Data || [])).catch(() => {});
+    const p5 = SS_WebApi.getDaysOutOfStockBySite({ ModeCode: activeOrg, EnvironmentGroupCode: 'HUB', ProductSN: String(productSN), From: fromSlash, To: todaySlash })
+      .then(r => { setApiDaysOos(r?.data?.Data || []); markLoaded('daysOos'); }).catch(() => { markLoaded('daysOos'); });
 
-    const p6 = SS_WebApi.getPoRiRcByDP({ ModeCode: 'HPR', ProductSN: String(productSN) })
-      .then(r => setApiPoRc(r?.data?.Data || [])).catch(() => {});
+    const p6 = SS_WebApi.getPoRiRcByDP({ ModeCode: activeOrg, ProductSN: String(productSN) })
+      .then(r => { setApiPoRc(r?.data?.Data || []); markLoaded('po'); }).catch(() => { markLoaded('po'); });
 
-    const p7 = RCD_WebApi.getItemByManufacturer({ ModeCode: 'HPR', FiscalYear: '2016', ProductSN: String(productSN), OrderBy: 'Manufacturer' })
-      .then(r => setApiManufacturers(r?.data?.Data || [])).catch(() => {});
+    const p7 = RCD_WebApi.getItemByManufacturer({ ModeCode: activeOrg, FiscalYear: '2016', ProductSN: String(productSN), OrderBy: 'Manufacturer' })
+      .then(r => { setApiManufacturers(r?.data?.Data || []); markLoaded('manufacturers'); }).catch(() => { markLoaded('manufacturers'); });
 
-    const p8 = RCD_WebApi.getItemBySupplier({ ModeCode: 'HPR', FiscalYear: '2016', ProductSN: String(productSN) })
-      .then(r => setApiSuppliers(r?.data?.Data || [])).catch(() => {});
+    const p8 = RCD_WebApi.getItemBySupplier({ ModeCode: activeOrg, FiscalYear: '2016', ProductSN: String(productSN) })
+      .then(r => { setApiSuppliers(r?.data?.Data || []); markLoaded('supplier'); }).catch(() => { markLoaded('supplier'); });
 
-    const p9 = RCD_WebApi.getItemCountry({ ModeCode: 'HPR', FiscalYear: '2016', ProductSN: String(productSN) })
-      .then(r => setApiCountries(r?.data?.Data || [])).catch(() => {});
+    const p9 = RCD_WebApi.getItemCountry({ ModeCode: activeOrg, FiscalYear: '2016', ProductSN: String(productSN) })
+      .then(r => { setApiCountries(r?.data?.Data || []); markLoaded('country'); }).catch(() => { markLoaded('country'); });
 
-    const p10 = MainDashboard_WebApi.getReceiveTrend({ ModeCode: 'HPR', EnvironmentCode: 'CNPH', ProductSN: String(productSN) })
-      .then(r => setApiReceived(r?.data?.Data || [])).catch(() => {});
+    const p10 = MainDashboard_WebApi.getReceiveTrend({ ModeCode: activeOrg, EnvironmentCode: 'CNPH', ProductSN: String(productSN) })
+      .then(r => { setApiReceived(r?.data?.Data || []); markLoaded('received'); }).catch(() => { markLoaded('received'); });
 
-    const p11 = OIH_WebApi.getItemDistributionHub2Facility({ ModeCode: 'HPR', PageSize: 100, Page: 1, ProductSN: String(productSN) })
-      .then(r => setApiIssued(r?.data?.Data || [])).catch(() => {});
+    const p11 = OIH_WebApi.getItemDistributionHub2Facility({ ModeCode: activeOrg, PageSize: 100, Page: 1, ProductSN: String(productSN) })
+      .then(r => { setApiIssued(r?.data?.Data || []); markLoaded('issued'); }).catch(() => { markLoaded('issued'); });
 
-    const p12 = POD_WebApi.getItemFundingSourceAndProcurer({ ModeCode: 'HPR', ProductSN: String(productSN) })
-      .then(r => setApiFunding(r?.data?.Data || [])).catch(() => {});
+    const p12 = POD_WebApi.getItemFundingSourceAndProcurer({ ModeCode: activeOrg, ProductSN: String(productSN) })
+      .then(r => { setApiFunding(r?.data?.Data || []); markLoaded('funding'); }).catch(() => { markLoaded('funding'); });
 
-    const p13 = OIH_WebApi.getDistributionByFacilityType({ ModeCode: 'HPR', ProductSN: String(productSN) })
-      .then(r => setApiFacilityDist(r?.data?.Data || [])).catch(() => {});
+    const p13 = OIH_WebApi.getDistributionByFacilityType({ ModeCode: activeOrg, FiscalYear: '2016', ProductSN: String(productSN) })
+      .then(r => { setApiFacilityDist(r?.data?.Data || []); markLoaded('facilityDist'); }).catch(() => { markLoaded('facilityDist'); });
 
-    const p14 = OIH_WebApi.getDistributionByOwnershipType({ ModeCode: 'HPR', ProductSN: String(productSN) })
-      .then(r => setApiOwnershipDist(r?.data?.Data || [])).catch(() => {});
+    const p14 = OIH_WebApi.getDistributionByOwnershipType({ ModeCode: activeOrg, FiscalYear: '2016', ProductSN: String(productSN) })
+      .then(r => { setApiOwnershipDist(r?.data?.Data || []); markLoaded('ownershipDist'); }).catch(() => { markLoaded('ownershipDist'); });
 
-    const p15 = SS_WebApi.getSOHByRegion({ ModeCode: 'HPR', ProductSN: String(productSN) })
-      .then(r => setApiRegionDist(r?.data?.Data || [])).catch(() => {});
+    const p15 = SS_WebApi.getSOHByRegion({ ModeCode: activeOrg, ProductSN: String(productSN) })
+      .then(r => { setApiRegionDist(r?.data?.Data || []); markLoaded('regionDist'); }).catch(() => { markLoaded('regionDist'); });
 
-    const p16 = OIDRCD_WebApi.getByDateIU_MostRecentIssueReceive({ ModeCode: 'hpr', ProductSN: String(productSN), From: fromDash, To: todayDash })
-      .then(r => setApiBinCard(r?.data?.Data || [])).catch(() => {});
+    const p16 = OIDRCD_WebApi.getByDateIU_MostRecentIssueReceive({ ModeCode: activeOrg, ProductSN: String(productSN), From: fromDash, To: todayDash })
+      .then(r => { setApiBinCard(r?.data?.Data || []); markLoaded('binCard'); }).catch(() => { markLoaded('binCard'); });
 
-    await Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16]);
-    setLoading(false);
-  }, [productSN, currentDate]);
+    const p17 = SS_WebApi.getNationalstockutilization({ ModeCode: activeOrg, ProgramCode: programCode, OrderBy: 'ProductCN' })
+      .then(r => { const rows = r?.data?.Data || []; const match = rows.find((row: any) => String(row.ProductSN) === String(productSN)); if (match?.unit) setUnit(match.unit); setUnitLoaded(true); }).catch(() => { setUnitLoaded(true); });
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+    Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17]);
+  }, [productSN, activeOrg]);
 
   const productPOs = useMemo(
     () => {
@@ -452,7 +503,6 @@ function ProgramItemDetail({
 
   const totalPO = productPOs.reduce((sum, row) => sum + (row.OrderQuantity || row.OrderedQuantity || 0), 0);
   const totalReceived = productReceives.reduce((sum, row) => sum + (row.QuantityReceived || 0), 0);
-  const totalValue = productReceives.reduce((sum, row) => sum + (row.AmountReceivedBirr || 0), 0);
   const soh = stockRow?.SOH || 0;
   const amc = stockRow?.AMC || 0;
   const max = stockRow?.Max || 0;
@@ -473,12 +523,12 @@ function ProgramItemDetail({
     const sampleKeys = Object.keys(apiExpiryBkdn[0]);
     const labelKey = sampleKeys.find(k => /Environment|Site|Hub/i.test(k)) || sampleKeys[0];
     const sohKey = sampleKeys.find(k => /SOH|Stock|Quantity|Qty|Count/i.test(k)) || sampleKeys[1];
-    const expiryKey = sampleKeys.find(k => /Expir|Near|Neary|Below/i.test(k)) || sampleKeys[2];
+    const expiryKey = sampleKeys.find(k => /^ExpiredAmt/i.test(k)) || sampleKeys.find(k => /Expir/i.test(k) && !/Near/i.test(k)) || sampleKeys.find(k => /Expir|Near|Neary|Below/i.test(k)) || sampleKeys[2];
     return apiExpiryBkdn.slice(0, 12).map((r) => ({
       label: String(r[labelKey] || ''),
       segments: [
         { label: 'SOH', value: Number(r[sohKey]) || 0 },
-        { label: 'Near Expiry', value: Number(r[expiryKey]) || 0 },
+        { label: 'Expired', value: Number(r[expiryKey]) || 0 },
       ].filter(s => s.value > 0),
     }));
   }, [apiExpiryBkdn]);
@@ -486,8 +536,8 @@ function ProgramItemDetail({
   const daysOutChart = useMemo(() => {
     if (apiDaysOos.length === 0) return [];
     const sampleKeys = Object.keys(apiDaysOos[0]);
-    const labelKey = sampleKeys.find(k => /Environment|Site|Hub/i.test(k)) || sampleKeys[0];
-    const valKey = sampleKeys.find(k => /Days|Percent|Value|Count|Pct/i.test(k)) || sampleKeys[1];
+    const labelKey = sampleKeys.find(k => /EnvironmentCode|Environment_Code/i.test(k)) || sampleKeys.find(k => /Environment|Site|Hub/i.test(k)) || sampleKeys[0];
+    const valKey = sampleKeys.find(k => /^DOS$/i.test(k)) || sampleKeys.find(k => /^DoS$/i.test(k)) || sampleKeys.find(k => /^dos$/i.test(k)) || sampleKeys.find(k => /Days|Percent|Value|Count|Pct/i.test(k)) || sampleKeys[1];
     return apiDaysOos.slice(0, 18).map((r, i) => ({
       label: String(r[labelKey] || ''),
       value: Number(r[valKey]) || 0,
@@ -589,17 +639,17 @@ function ProgramItemDetail({
       const labelKey = sampleKeys.find(k => /Manufacturer|Name|Supplier/i.test(k)) || sampleKeys[0];
       const valKey = sampleKeys.find(k => /Birr|Amount|Value|ETB|Total/i.test(k)) || sampleKeys.find(k => typeof apiManufacturers[0][k] === 'number');
       const total = apiManufacturers.reduce((s, r) => s + (valKey ? Number(r[valKey]) || 0 : 0), 0);
-      return apiManufacturers.map((r) => ({
-        label: String(r[labelKey] || 'Unknown'),
-        value: valKey ? Number(r[valKey]) || 0 : 1,
-        share: total > 0 ? `${((Number(r[valKey]) / total) * 100).toFixed(1)}%` : '0%',
-      })).filter((r) => r.value > 0);
+      return apiManufacturers.map((r) => {
+        const val = valKey ? Number(r[valKey]) || 0 : 1;
+        return {
+          label: String(r[labelKey] || 'Unknown'),
+          value: val,
+          share: total > 0 ? `${((val / total) * 100).toFixed(1)}%` : '0%',
+        };
+      }).filter((r) => r.label && r.label !== 'Unknown');
     }
-    return groupBySum(productReceives, 'Manufacturer', 'AmountReceivedBirr').map((row) => ({
-      ...row,
-      share: `${safePercent(row.value, totalValue).toFixed(1)}%`,
-    }));
-  }, [apiManufacturers, productReceives, totalValue]);
+    return [];
+  }, [apiManufacturers]);
 
   const supplierRows = useMemo(() => {
     if (apiSuppliers.length > 0) {
@@ -607,17 +657,17 @@ function ProgramItemDetail({
       const labelKey = sampleKeys.find(k => /Supplier|Donor|Name|Agent/i.test(k)) || sampleKeys[0];
       const valKey = sampleKeys.find(k => /Birr|Amount|Value|ETB|Total|Quantity/i.test(k)) || sampleKeys.find(k => typeof apiSuppliers[0][k] === 'number');
       const total = apiSuppliers.reduce((s, r) => s + (valKey ? Number(r[valKey]) || 0 : 0), 0);
-      return apiSuppliers.map((r) => ({
-        label: String(r[labelKey] || 'Unknown'),
-        value: valKey ? Number(r[valKey]) || 0 : 1,
-        share: total > 0 ? `${((Number(r[valKey]) / total) * 100).toFixed(1)}%` : '0%',
-      })).filter((r) => r.value > 0);
+      return apiSuppliers.map((r) => {
+        const val = valKey ? Number(r[valKey]) || 0 : 1;
+        return {
+          label: String(r[labelKey] || 'Unknown'),
+          value: val,
+          share: total > 0 ? `${((val / total) * 100).toFixed(1)}%` : '0%',
+        };
+      }).filter((r) => r.label && r.label !== 'Unknown');
     }
-    return groupBySum(productPOs, 'Donor', 'OrderQuantity').map((row) => ({
-      ...row,
-      share: `${safePercent(row.value, totalPO).toFixed(1)}%`,
-    }));
-  }, [apiSuppliers, productPOs, totalPO]);
+    return [];
+  }, [apiSuppliers]);
 
   const countryRows = useMemo(() => {
     if (apiCountries.length > 0) {
@@ -625,17 +675,17 @@ function ProgramItemDetail({
       const labelKey = sampleKeys.find(k => /Country|Origin/i.test(k)) || sampleKeys[0];
       const valKey = sampleKeys.find(k => /Birr|Amount|Value|ETB|Total|Quantity/i.test(k)) || sampleKeys.find(k => typeof apiCountries[0][k] === 'number');
       const total = apiCountries.reduce((s, r) => s + (valKey ? Number(r[valKey]) || 0 : 0), 0);
-      return apiCountries.map((r) => ({
-        label: String(r[labelKey] || 'Unknown'),
-        value: valKey ? Number(r[valKey]) || 0 : 1,
-        share: total > 0 ? `${((Number(r[valKey]) / total) * 100).toFixed(1)}%` : '0%',
-      })).filter((r) => r.value > 0);
+      return apiCountries.map((r) => {
+        const val = valKey ? Number(r[valKey]) || 0 : 1;
+        return {
+          label: String(r[labelKey] || 'Unknown'),
+          value: val,
+          share: total > 0 ? `${((val / total) * 100).toFixed(1)}%` : '0%',
+        };
+      }).filter((r) => r.label && r.label !== 'Unknown');
     }
-    return groupBySum(productReceives, 'Country', 'AmountReceivedBirr').map((row) => ({
-      ...row,
-      share: `${safePercent(row.value, totalValue).toFixed(1)}%`,
-    }));
-  }, [apiCountries, productReceives, totalValue]);
+    return [];
+  }, [apiCountries]);
 
   const fundingChart = useMemo(() => {
     if (apiFunding.length === 0) return [];
@@ -669,13 +719,30 @@ function ProgramItemDetail({
 
   const facilityDistData = useMemo(() => {
     if (apiFacilityDist.length === 0) return [];
-    const r = apiFacilityDist[0];
-    const keys = Object.keys(r).filter(k => k !== 'RowNumber' && typeof r[k] === 'number');
-    return keys.map((k, i) => ({
-      label: k,
-      value: Number(r[k]) || 0,
-      color: CHART_COLORS[i % CHART_COLORS.length],
-    })).filter(item => item.value > 0);
+    const data = apiFacilityDist;
+    const ignore = new Set(['RowNumber', 'FiscalYear', 'ProductCN', 'ProductSN']);
+    const labelKey = Object.keys(data[0]).find((k) =>
+      /InstitutionType|Institution|type|facility|category/i.test(k) && typeof data[0][k] === 'string'
+    ) || Object.keys(data[0]).find((k) =>
+      typeof data[0][k] === 'string' && !ignore.has(k)
+    );
+    const valueKey = Object.keys(data[0]).find((k) =>
+      /^AmountIssuedInBirr$/i.test(k)
+    ) || Object.keys(data[0]).find((k) =>
+      /amount|birr|value|total|quantity|qty/i.test(k) && typeof data[0][k] === 'number'
+    ) || Object.keys(data[0]).find((k) =>
+      typeof data[0][k] === 'number' && !ignore.has(k)
+    );
+    if (labelKey && valueKey) {
+      return data
+        .map((r, i) => ({
+          label: String(r[labelKey]),
+          value: Number(r[valueKey]) || 0,
+          color: CHART_COLORS[i % CHART_COLORS.length],
+        }))
+        .filter((r) => r.value > 0);
+    }
+    return [];
   }, [apiFacilityDist]);
 
   const ownershipDistData = useMemo(() => {
@@ -698,11 +765,17 @@ function ProgramItemDetail({
     const labelKey = sampleKeys.find(k => /Region|Environment|Site|Hub/i.test(k)) || sampleKeys.find(k => typeof apiRegionDist[0][k] === 'string');
     const valKey = sampleKeys.find(k => /Birr|Amount|Value|SOH|Count|Total|ETB/i.test(k)) || sampleKeys.find(k => typeof apiRegionDist[0][k] === 'number');
     if (labelKey && valKey) {
-      return apiRegionDist.map((r, i) => ({
+      const raw = apiRegionDist.map((r) => ({
         label: String(r[labelKey] || 'Unknown'),
         value: Number(r[valKey]) || 0,
-        color: CHART_COLORS[i % CHART_COLORS.length],
       })).filter(r => r.value > 0);
+      const total = raw.reduce((s, r) => s + r.value, 0);
+      return raw.map((r, i) => ({
+        ...r,
+        rawValue: r.value,
+        value: total > 0 ? (r.value / total) * 100 : 0,
+        color: CHART_COLORS[i % CHART_COLORS.length],
+      }));
     }
     return [];
   }, [apiRegionDist]);
@@ -736,14 +809,16 @@ function ProgramItemDetail({
     const regionKey = sampleKeys.find(k => /Region|Woreda|Zone/i.test(k)) || sampleKeys[1];
     const qtyKey = sampleKeys.find(k => /Quantity|Qty|Issued/i.test(k)) || sampleKeys.find(k => typeof apiIssued[0][k] === 'number');
     const invKey = sampleKeys.find(k => /Invoice/i.test(k)) || sampleKeys[2];
+    const facilityKey = sampleKeys.find(k => /Facility|Institution|Receiver|To/i.test(k));
+    const distributorKey = sampleKeys.find(k => /Supplier/i.test(k)) || sampleKeys.find(k => /Distributor|Hub|Sender|From|Environment/i.test(k));
     return apiIssued.slice(0, 20).map((r, i) => ({
       id: i,
-      date: String(r[dateKey] || ''),
+      date: formatDate(r[dateKey]),
       region: String(r[regionKey] || ''),
-      facility: '',
+      facility: facilityKey ? String(r[facilityKey] || '') : '',
       quantity: formatNumber(Number(r[qtyKey]) || 0),
       invoice: String(r[invKey] || ''),
-      distributor: '',
+      distributor: distributorKey ? String(r[distributorKey] || '') : '',
     }));
   }, [apiIssued]);
 
@@ -785,9 +860,10 @@ function ProgramItemDetail({
         </div>
       </div>
 
+      {loaded.overview ? (
       <section id="pd-overview">
         <div className="grid grid-cols-[180px_minmax(0,1fr)] items-stretch gap-4">
-          <NationalMosBelowEop stockRow={apiNationalMos || stockRow} />
+          <NationalMosBelowEop stockRow={apiNationalMos} unit={unit} unitLoaded={unitLoaded} />
           <div className="grid h-full grid-cols-4 grid-rows-2 items-stretch gap-2">
           <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-surface-container" iconColor="text-primary" label="AMC"     value={compactNumber(amc)}          subtitle="Avg monthly" />
           <KPICard variant="detailed" icon="fa-warehouse"          iconBg="bg-success/10"       iconColor="text-success"  label="SOH"     value={compactNumber(soh)}          subtitle="Stock on hand" />
@@ -800,20 +876,24 @@ function ProgramItemDetail({
         </div>
           </div>
         </section>
+      ) : (
+        <PanelSkeleton rows={2} height="h-28" />
+      )}
 
       <section id="pd-stock-status">
         <StockStatusTable stockRow={stockRow} />
       </section>
 
+      {loaded.stockUtil || loaded.pipeline || loaded.expiry || loaded.daysOos || loaded.funding || loaded.facilityDist || loaded.ownershipDist || loaded.regionDist ? (
       <section id="pd-charts">
         <div className="grid grid-cols-[minmax(0,1fr)_330px] gap-x-5 gap-y-5">
-        <DetailChartPanel title="Months Of Stock">
+        <DetailChartPanel title="Months Of Stock" contentId="months-of-stock">
           <div className="flex h-64 items-center justify-center text-body-sm text-on-surface-variant">
             No data
           </div>
         </DetailChartPanel>
 
-        <DetailChartPanel title="Funding Source">
+        <DetailChartPanel title="Funding Source" contentId="funding-source" expandData={fundingChart} expandTitle="Funding Source">
           <div className="flex h-64 items-center">
             {fundingChart.length > 0 ? (
               <PieChart data={fundingChart} totalLabel="Funding source" />
@@ -823,7 +903,7 @@ function ProgramItemDetail({
           </div>
         </DetailChartPanel>
 
-        <DetailChartPanel title="Stock Utilization">
+        <DetailChartPanel title="Stock Utilization" contentId="stock-utilization">
           {stockUtilData.length > 0 ? (
             <ProgramStackedBarChart data={stockUtilData} normalized yLabel="%" height={220} />
           ) : (
@@ -831,7 +911,7 @@ function ProgramItemDetail({
           )}
         </DetailChartPanel>
 
-        <DetailChartPanel title="Procurement Agents" action={
+        <DetailChartPanel title="Procurement Agents" contentId="procurement-agents" expandData={procurerChart} expandTitle="Procurement Agents" action={
           <div className="relative">
             <select value={procurerYear} onChange={(e) => setProcurerYear(e.target.value)}
               className="appearance-none h-7 min-w-[72px] rounded-md border border-outline-variant bg-white pl-2 pr-5 text-xs font-semibold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
@@ -855,15 +935,15 @@ function ProgramItemDetail({
           </div>
         </DetailChartPanel>
 
-        <DetailChartPanel title="Pipeline">
+        <DetailChartPanel title="Pipeline" contentId="pipeline">
           {pipelineHubData.length > 0 ? (
-            <ProgramStackedBarChart data={pipelineHubData} normalized yLabel="%" height={220} yTicks={[0, 10, 20, 30, 40, 50, 60, 70, 80]} />
+            <ProgramStackedBarChart data={pipelineHubData} height={220} />
           ) : (
             <div className="flex h-64 items-center justify-center text-body-sm text-on-surface-variant">No data</div>
           )}
         </DetailChartPanel>
 
-        <DetailChartPanel title="Distribution by Facility Type">
+        <DetailChartPanel title="Distribution by Facility Type" contentId="distribution-by-facility-type" expandData={facilityDistData} expandTitle="Distribution by Facility Type">
           <div className="flex items-center justify-center py-4">
             <div className="w-[380px]">
               {facilityDistData.length > 0 ? (
@@ -875,15 +955,15 @@ function ProgramItemDetail({
           </div>
         </DetailChartPanel>
 
-        <DetailChartPanel title="Expiry Breakdown in Qty">
+        <DetailChartPanel title="Expiry Breakdown in Qty" contentId="expiry-breakdown">
           {expiryChart.length > 0 ? (
-            <ProgramStackedBarChart data={expiryChart} height={240} />
+            <ProgramStackedBarChart data={expiryChart} height={240} showPct={false} yTicks={[0, 5000, 10000, 15000, 20000, 25000, 30000]} />
           ) : (
             <div className="flex h-64 items-center justify-center text-body-sm text-on-surface-variant">No data</div>
           )}
         </DetailChartPanel>
 
-        <DetailChartPanel title="Distribution by Ownership Type">
+        <DetailChartPanel title="Distribution by Ownership Type" contentId="distribution-by-ownership-type" expandData={ownershipDistData} expandTitle="Distribution by Ownership Type">
           <div className="flex items-center justify-center py-4">
             <div className="w-[380px]">
               {ownershipDistData.length > 0 ? (
@@ -895,32 +975,44 @@ function ProgramItemDetail({
           </div>
         </DetailChartPanel>
 
-        <DetailChartPanel title="Days Out of Stock in %">
+        <div className="col-span-full">
+        <DetailChartPanel title="Days Out of Stock in %" contentId="days-out-of-stock">
           {daysOutChart.length > 0 ? (
-            <ProgramBarChart data={daysOutChart} valueFormatter={(value) => `${value.toFixed(0)}%`} />
+            <ProgramBarChart data={daysOutChart} valueFormatter={(value) => `${value.toFixed(2)}`} yTicks={[-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1]} />
           ) : (
             <div className="flex h-64 items-center justify-center text-body-sm text-on-surface-variant">No data</div>
           )}
         </DetailChartPanel>
+        </div>
+      </div>
 
-        <DetailChartPanel title="Distribution by Region">
+      <div className="mt-5">
+        <DetailChartPanel title="Distribution by Region" contentId="distribution-by-region">
           {regionDistData.length > 0 ? (
-            <PieChart data={regionDistData} totalLabel="Region distribution" />
+            <ProgramBarChart data={regionDistData} valueFormatter={(v) => `${v.toFixed(1)}%`} titleFormatter={(item) => compactNumber(item.rawValue)} />
           ) : (
             <div className="flex h-64 items-center justify-center text-body-sm text-on-surface-variant">No data</div>
           )}
         </DetailChartPanel>
       </div>
       </section>
+      ) : (
+        <PanelSkeleton rows={6} height="h-72" />
+      )}
 
+      {loaded.po ? (
       <section id="pd-po">
-        <ProgramPanel title="Purchase Order/Incoming Shipments" subtitle={`${productPOs.length} purchase order records`}>
+        <ProgramPanel title="Purchase Order/Incoming Shipments" subtitle={`${productPOs.length} purchase order records`} action={<div className="flex items-center gap-2"><IconButton variant="info" contentId="purchase-orders" /><ExportDropdown headers={[{key:'po',label:'PO'},{key:'date',label:'Date'},{key:'donor',label:'Donor'},{key:'procurer',label:'Procurer'},{key:'supplier',label:'Supplier'},{key:'ordered',label:'Ordered'},{key:'shipped',label:'Shipped'},{key:'received',label:'Received'},{key:'pending',label:'Pending'},{key:'completed',label:'Completed'}]} rows={productPOs} filename="purchase-orders" /></div>}>
           <PurchaseOrderTable rows={productPOs} />
         </ProgramPanel>
       </section>
+      ) : (
+        <PanelSkeleton rows={4} height="h-52" />
+      )}
 
+      {loaded.binCard ? (
       <section id="pd-bin-card">
-        <ProgramPanel title="Bin Card" subtitle="Stock movement history">
+        <ProgramPanel title="Bin Card" subtitle="Stock movement history" action={<div className="flex items-center gap-2"><IconButton variant="info" contentId="bin-card" /><ExportDropdown headers={[{key:'date',label:'Date'},{key:'invoice',label:'Invoice'},{key:'transaction',label:'Transaction'},{key:'document',label:'Document'},{key:'type',label:'Type'},{key:'from',label:'From'},{key:'to',label:'To'},{key:'quantity',label:'Quantity'},{key:'balance',label:'Balance'}]} rows={binCardRows} filename="bin-card" /></div>}>
           <BaseTable
             columns={[
               { key: 'date', label: 'Date' },
@@ -942,10 +1034,15 @@ function ProgramItemDetail({
           />
         </ProgramPanel>
       </section>
+      ) : (
+        <PanelSkeleton rows={4} height="h-52" />
+      )}
 
+      {loaded.manufacturers ? (
       <section id="pd-manufacturers">
         <EmptyDataTable
           title="Manufacturers"
+          contentId="manufacturers"
           subtitle={`${manufacturerRows.length} source records`}
           rows={manufacturerRows}
           columns={[
@@ -955,10 +1052,15 @@ function ProgramItemDetail({
           ]}
         />
       </section>
+      ) : (
+        <PanelSkeleton rows={4} height="h-36" />
+      )}
 
+      {loaded.supplier ? (
       <section id="pd-supplier">
         <EmptyDataTable
           title="Supplier"
+          contentId="supplier"
           rows={supplierRows}
           columns={[
             { key: 'label', label: 'Supplier' },
@@ -967,10 +1069,15 @@ function ProgramItemDetail({
           ]}
         />
       </section>
+      ) : (
+        <PanelSkeleton rows={4} height="h-36" />
+      )}
 
+      {loaded.country ? (
       <section id="pd-country">
         <EmptyDataTable
           title="Country"
+          contentId="country"
           rows={countryRows}
           columns={[
             { key: 'label', label: 'Country' },
@@ -979,15 +1086,23 @@ function ProgramItemDetail({
           ]}
         />
       </section>
+      ) : (
+        <PanelSkeleton rows={4} height="h-36" />
+      )}
 
+      {loaded.received ? (
       <section id="pd-received">
-        <ProgramPanel title="Received" subtitle={`${productReceives.length} months of data`}>
+        <ProgramPanel title="Received" subtitle={`${productReceives.length} months of data`} action={<div className="flex items-center gap-2"><IconButton variant="info" contentId="received" /><ExportDropdown headers={[{key:'FullDate',label:'Date'},{key:'Supplier',label:'Supplier'},{key:'Manufacturer',label:'Manufacturer'},{key:'Country',label:'Country'},{key:'QuantityReceived',label:'Quantity'},{key:'AmountReceivedBirr',label:'Value (ETB)'}]} rows={productReceives} filename="received" /></div>}>
           <RecentReceivesTable rows={productReceives} />
         </ProgramPanel>
       </section>
+      ) : (
+        <PanelSkeleton rows={4} height="h-52" />
+      )}
 
+      {loaded.issued ? (
       <section id="pd-issued">
-        <ProgramPanel title="Issued Data: Hub to Facility" subtitle={`${issuedRows.length} records`}>
+        <ProgramPanel title="Issued Data: Hub to Facility" subtitle={`${issuedRows.length} records`} action={<div className="flex items-center gap-2"><IconButton variant="info" contentId="issued" /><ExportDropdown headers={[{key:'date',label:'Date'},{key:'region',label:'Region-Zone-Woreda'},{key:'facility',label:'Facility'},{key:'quantity',label:'Quantity'},{key:'invoice',label:'Invoice'},{key:'distributor',label:'Distributor'}]} rows={issuedRows} filename="issued" /></div>}>
           <BaseTable
             columns={[
               { key: 'date', label: 'Date' },
@@ -1006,6 +1121,9 @@ function ProgramItemDetail({
           />
         </ProgramPanel>
       </section>
+      ) : (
+        <PanelSkeleton rows={4} height="h-52" />
+      )}
     </div>
   );
 }
