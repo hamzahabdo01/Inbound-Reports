@@ -41,7 +41,7 @@ function DetailContent({ active, hover }: any) {
 
 const PO_TYPE_COLORS = ['#0B4F54', '#D97706', '#216E6A', '#4A9598'];
 
-function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, barAreaW = 400, setHover, activeHover }: any) {
+function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 132, barAreaW = 400, setHover, activeHover, selectedIndex, onSelect }: any) {
   const types = [...data].sort((a, b) => b[amountKey] - a[amountKey]);
   const barH = 28;
   const gap = 10;
@@ -65,15 +65,35 @@ function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, b
           const barW = Math.max(10, (t[amountKey] / maxAmount) * barAreaW);
           const label = labelMap[t[labelKey]] || t[labelKey];
           return (
-            <g key={i} className="cursor-pointer" 
-              onMouseEnter={(e) => setHover({ ...t, mx: e.clientX, my: e.clientY })}
-              onMouseMove={(e) => setHover(prev => prev ? { ...prev, mx: e.clientX, my: e.clientY } : prev)}
-              onMouseLeave={() => setHover(null)}>
-              <text x={labelW - 8} y={y + barH / 2 + 4} textAnchor="end" fontSize="11" fontWeight={activeHover && activeHover[labelKey] === t[labelKey] ? 800 : 700} fill={activeHover && activeHover[labelKey] === t[labelKey] ? "#0B4F54" : "#404849"}>{label}</text>
-              <rect x={labelW} y={y} width={barW} height={barH} rx="5" fill={colors[i % colors.length]} opacity={activeHover && activeHover[labelKey] === t[labelKey] ? 1 : 0.8}
-                style={{ transition: 'all 0.3s ease-in-out' }}
-              />
-            </g>
+    <g key={i} className="cursor-pointer" 
+      onClick={() => onSelect?.(i)}
+      onMouseEnter={(e) => setHover({ ...t, mx: e.clientX, my: e.clientY })}
+      onMouseMove={(e) => setHover(prev => prev ? { ...prev, mx: e.clientX, my: e.clientY } : prev)}
+      onMouseLeave={() => setHover(null)}>
+      {(() => {
+        const isSel = selectedIndex === i;
+        return (
+          <>
+            <text x={labelW - 24} y={y + barH / 2 + 4} textAnchor="end" fontSize="11"
+              fontWeight={isSel ? 800 : 700}
+              fill={isSel ? "#0B4F54" : "#404849"}
+            >{label}</text>
+            <rect x={labelW} y={y} width={barW} height={barH} rx="5" fill={colors[i % colors.length]}
+              opacity={isSel ? 1 : 0.55}
+              style={{
+                transform: isSel ? 'scale(1.08)' : 'scale(1)',
+                transformOrigin: `${labelW + barW / 2}px ${y + barH / 2}px`,
+                transition: 'all 0.3s ease',
+                filter: isSel ? 'drop-shadow(0 2px 6px rgba(0,0,0,0.18))' : 'none',
+              }}
+            />
+            {isSel && (
+              <rect x={labelW} y={y} width={4} height={barH} rx="2" fill={colors[i % colors.length]} opacity="0.6" />
+            )}
+          </>
+        );
+      })()}
+    </g>
           );
         })}
       </svg>
@@ -81,15 +101,32 @@ function BarChart({ data, labelKey, amountKey, shareKey, colors, labelW = 110, b
   );
 }
 
-export default function OverviewTab({ data, activeSections, kpiCards = [], supplierHover, setSupplierHover, trendYears, trendYear, setTrendYear, filteredTrend, trendHover, setTrendHover }: any) {
-  const fundingYears = useMemo(() => data.fundingSources.map((d: any) => d.name), [data.fundingSources]);
-  const [fundingYear, setFundingYear] = useState<string>(() => fundingYears[fundingYears.length - 1] || '');
+export default function OverviewTab({ data, activeSections, kpiCards = [], supplierHover, setSupplierHover, trendHover, setTrendHover, poByMaterialTypeForYear, selectedYear }: any) {
   const [selectedTrendIdx, setSelectedTrendIdx] = useState(-1);
   const [fundOpenIdx, setFundOpenIdx] = useState(-1);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const isTrendMobile = useMediaQuery('(max-width: 767px)');
 
-  useEffect(() => { setSelectedTrendIdx(filteredTrend.length - 1); }, [filteredTrend]);
+  const trendWithDates = useMemo(() => {
+    return (data.trend || []).map((t: any) => {
+      const d = new Date(t.date);
+      return { ...t, year: d.getFullYear(), month: d.getMonth() + 1, monthLabel: d.toLocaleDateString('en', { month: 'short' }) };
+    });
+  }, [data.trend]);
+
+  const filteredTrend = useMemo(() => trendWithDates.filter((t: any) => t.year === selectedYear), [trendWithDates, selectedYear]);
+
+  useEffect(() => {
+    setSelectedTrendIdx(prev => Math.min(prev, filteredTrend.length - 1));
+  }, [filteredTrend]);
+
+  useEffect(() => {
+    if (isTrendMobile || trendHover !== null || !filteredTrend.length) return;
+    const interval = setInterval(() => {
+      setSelectedTrendIdx(prev => (prev + 1) % filteredTrend.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [isTrendMobile, trendHover, filteredTrend.length]);
 
   return (
     <>
@@ -100,10 +137,10 @@ export default function OverviewTab({ data, activeSections, kpiCards = [], suppl
       )}
 
       {activeSections.includes('ppc-procurement-breakdown') && (
-        <MergedBreakdownSection data={data} />
+        <MergedBreakdownSection data={data} poByMaterialTypeForYear={poByMaterialTypeForYear} selectedYear={selectedYear} />
       )}
 
-      {activeSections.includes('ppc-supplier-share') && (
+      {false && (
         <section id="ppc-supplier-share">
           <SectionPanel title="Contract by Supplier Share" subtitle="Distribution of contract value by supplier" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={data.supplierShare.map(s => ({ label: s.label, value: s.amount }))} title="Contract by Supplier Share" /><IconButton variant="info" contentId="po-supplier-share" /></div>}>
             {(() => {
@@ -242,25 +279,15 @@ export default function OverviewTab({ data, activeSections, kpiCards = [], suppl
         <div className="flex flex-col lg:flex-row gap-5">
           {activeSections.includes('ppc-funding') && (
             <section id="ppc-funding" className="w-full lg:w-[58.333%]">
-        <SectionPanel title="Procurement by Funding Source" subtitle="Total procurement value by fund and year" action={
-          <div className="relative">
-            <select value={fundingYear} onChange={e => setFundingYear(e.target.value)}
-              className="appearance-none h-8 min-w-[90px] rounded-md border border-outline-variant bg-white pl-2.5 pr-7 text-body-sm text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
-              {fundingYears.map((yr: string) => (
-                <option key={yr} value={yr}>{yr}</option>
-              ))}
-            </select>
-            <i className="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary pointer-events-none" />
-          </div>
-        }>
+        <SectionPanel title="Procurement by Funding Source" subtitle={`Total procurement value by fund — ${selectedYear}`} action={<IconButton variant="info" contentId="po-funding" />}>
           {isTrendMobile ? (() => {
-            const yearEntry = data.fundingSources.find(d => d.name === fundingYear) || data.fundingSources[0];
+            const yearEntry = data.fundingSources.find((d: any) => String(d.name) === String(selectedYear)) || data.fundingSources[0];
             const children = yearEntry?.children || [];
             const total = children.reduce((s, c) => s + c.value, 0);
             const FUND_COLORS = ['#0B4F54', '#D97706', '#216E6A', '#4A9598', '#515F74', '#86BFC5', '#059669', '#BA1A1A', '#4A8EA5'];
             const funds = children.map((c, i) => ({ ...c, percent: total > 0 ? (c.value / total) * 100 : 0, color: FUND_COLORS[i % FUND_COLORS.length] }))
               .sort((a, b) => b.value - a.value);
-            if (!funds.length) return <div className="text-center py-10 text-body-sm text-on-surface-variant">No data for {fundingYear}.</div>;
+            if (!funds.length) return <div className="text-center py-10 text-body-sm text-on-surface-variant">No data for {selectedYear}.</div>;
             return (
               <div className="space-y-1">
                 {funds.map((fund, i) => {
@@ -291,7 +318,7 @@ export default function OverviewTab({ data, activeSections, kpiCards = [], suppl
               </div>
             );
           })() : (
-            <FundingSourceChart data={data.fundingSources} selectedYear={fundingYear} />
+            <FundingSourceChart data={data.fundingSources} selectedYear={String(selectedYear)} />
           )}
         </SectionPanel>
             </section>
@@ -310,22 +337,15 @@ export default function OverviewTab({ data, activeSections, kpiCards = [], suppl
 
       {activeSections.includes('ppc-trend') && (
         <section id="ppc-trend">
-          <SectionPanel title="Procurement Amount Trend" subtitle={`Monthly procurement trajectory — ${trendYear}`} action={
-            <div className="relative">
-              <select value={trendYear} onChange={e => { setTrendYear(Number(e.target.value)); setTrendHover(null) }}
-                className="appearance-none h-8 min-w-[90px] rounded-md border border-outline-variant bg-white pl-2.5 pr-7 text-body-sm text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
-                {trendYears.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-              <i className="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary pointer-events-none" />
-            </div>
-          }>
+          <SectionPanel title="Procurement Amount Trend" subtitle={`Monthly procurement trajectory — ${selectedYear}`} action={<IconButton variant="info" contentId="po-trend" />}>
             {(() => {
               const formatMonth = (d) => {
+                if (!d) return '';
                 const dt = new Date(d.date);
                 return dt.toLocaleDateString('en', { month: 'short' });
               };
               const dataLen = filteredTrend.length;
-              if (!dataLen) return <div className="text-center py-10 text-body-sm text-on-surface-variant">No data for {trendYear}.</div>;
+              if (!dataLen) return <div className="text-center py-10 text-body-sm text-on-surface-variant">No data for {selectedYear}.</div>;
               const svgW = 900, svgH = 300;
               const pad = { top: 24, right: 24, bottom: 48, left: 72 };
               const chartW = svgW - pad.left - pad.right;
@@ -339,12 +359,13 @@ export default function OverviewTab({ data, activeSections, kpiCards = [], suppl
               const renderDetail = (idx) => {
                 if (idx === null || idx < 0) return null;
                 const t = filteredTrend[idx];
+                if (!t) return null;
                 const prev = filteredTrend[idx - 1];
                 const change = prev ? ((t.amount - prev.amount) / prev.amount) * 100 : null;
                 return (
                   <div className="space-y-4">
                     <div>
-                      <p className="text-label-sm text-on-surface-variant uppercase tracking-wider">{formatMonth(t)} {trendYear}</p>
+                      <p className="text-label-sm text-on-surface-variant uppercase tracking-wider">{formatMonth(t)} {selectedYear}</p>
                       <p className="text-[28px] font-extrabold text-on-surface mt-1 leading-tight font-mono tracking-tight">
                         {formatAmount(t.amount)} <span className="text-[11px] text-on-surface-variant font-bold">ETB</span>
                       </p>
@@ -412,16 +433,18 @@ export default function OverviewTab({ data, activeSections, kpiCards = [], suppl
                         const x = pad.left + i * (barWidth + barGap);
                         const y = pad.top + chartH - (t.amount / range) * chartH;
                         const h = chartH - (y - pad.top);
-                        const isActive = trendHover === i;
+                        const isHovered = trendHover === i;
+                        const isSelected = trendHover === null && selectedTrendIdx === i;
+                        const isActive = isHovered || isSelected;
                         return (
                           <g key={t.monthLabel}>
                              <rect x={x} y={y} width={barWidth} height={h} rx="3" fill={i % 2 === 0 ? '#0B4F54' : '#D97706'}
                               stroke={isActive ? '#ffffff' : 'none'} strokeWidth={isActive ? 2.5 : 0}
-                              opacity={trendHover === null || isActive ? 1 : 0.25}
+                              opacity={isActive ? 1 : 0.25}
                               onMouseEnter={() => setTrendHover(i)} onMouseLeave={() => setTrendHover(null)}
                               tabIndex={0}
                               role="button"
-                              aria-label={`${formatMonth(t)} ${trendYear}: ${formatAmount(t.amount)} ETB`}
+                              aria-label={`${formatMonth(t)} ${selectedYear}: ${formatAmount(t.amount)} ETB`}
                               style={{ cursor: 'pointer', transition: 'all 0.3s ease-in-out' }}
                             />
                             {isActive && (
@@ -438,7 +461,7 @@ export default function OverviewTab({ data, activeSections, kpiCards = [], suppl
                     </svg>
                   </div>
                   <div className="w-full lg:w-72 lg:shrink-0 bg-surface-container-low rounded-xl p-5 flex flex-col justify-center min-h-[200px]">
-                    {renderDetail(trendHover) ?? detailPlaceholder('desktop')}
+                    {trendHover !== null ? renderDetail(trendHover) : (selectedTrendIdx >= 0 && selectedTrendIdx < filteredTrend.length) ? renderDetail(selectedTrendIdx) : detailPlaceholder('desktop')}
                   </div>
                 </div>
               );
@@ -452,19 +475,21 @@ export default function OverviewTab({ data, activeSections, kpiCards = [], suppl
 
 const OPEN_TYPE_LABEL = { 'ZHP1': 'Health Program', 'ZRDL': 'RDF Local', 'ZRDI': 'RDF Intl.', 'FO': 'Framework Order' };
 
-function MergedBreakdownSection({ data }: any) {
+function MergedBreakdownSection({ data, poByMaterialTypeForYear, selectedYear }: any) {
   const [view, setView] = useState('material');
   const [hover, setHover] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [openIndex, setOpenIndex] = useState(0);
   const isMobile = useMediaQuery('(max-width: 767px)');
   const totalAllPO = data.poByType.reduce((s, t) => s + t.totalAmount, 0);
   const totalOpen = data.openPOByType.data.reduce((s, d) => s + d.totalOpenAmount, 0);
   const openMapped = data.openPOByType.data.map(d => ({ ...d, label: OPEN_TYPE_LABEL[d.sourceCategoryCode] || d.sourceCategoryCode }));
-  const totalMat = data.poByMaterialType.reduce((s, t) => s + t.totalAmount, 0);
+  const matData = poByMaterialTypeForYear || data.poByMaterialType;
+  const totalMat = matData.reduce((s, t) => s + t.totalAmount, 0);
 
   const views = [
-    { key: 'material', label: 'By Material Type', subtitle: `${data.poByMaterialType.length} types — ${formatAmount(totalMat)} total`,
-      data: data.poByMaterialType, labelKey: 'materialTypeName', amountKey: 'totalAmount', shareKey: 'amountSharePercent',
+    { key: 'material', label: `By Material Type (${selectedYear})`, subtitle: `${matData.length} types — ${formatAmount(totalMat)} total`,
+      data: matData, labelKey: 'materialTypeName', amountKey: 'totalAmount', shareKey: 'amountSharePercent',
       tooltipKeys: { name: 'materialTypeName', amount: 'totalAmount', share: 'amountSharePercent', lines: 'purchaseOrderLineCount' } },
     { key: 'po-type', label: 'By PO Type', subtitle: `${data.poByType.length} types — ${formatAmount(totalAllPO)} total`,
       data: data.poByType, labelKey: 'purchaseOrderType', amountKey: 'totalAmount', shareKey: 'amountSharePercent',
@@ -485,6 +510,14 @@ function MergedBreakdownSection({ data }: any) {
     'RDF  local': 'RDF Local',
   };
 
+  useEffect(() => {
+    if (isMobile || hover) return;
+    const interval = setInterval(() => {
+      setSelectedIndex(prev => (prev + 1) % sorted.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [isMobile, hover, sorted.length]);
+
   const toggleRow = useCallback((index: number) => {
     setOpenIndex(prev => prev === index ? -1 : index);
   }, []);
@@ -500,7 +533,7 @@ function MergedBreakdownSection({ data }: any) {
     <section id="ppc-procurement-breakdown">
       <SectionPanel title="Procurement Breakdown" subtitle={active.subtitle} action={<IconButton variant="info" contentId="po-procurement-breakdown" />}>
         <div className="relative mb-5 w-fit">
-          <select value={view} onChange={(e) => { setView(e.target.value); setHover(null); }}
+          <select value={view} onChange={(e) => { setView(e.target.value); setHover(null); setSelectedIndex(0); }}
             className="appearance-none h-8 rounded-md border border-outline-variant bg-white pl-2.5 pr-7 text-xs font-semibold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
             {views.map(v => (
               <option key={v.key} value={v.key}>{v.label}</option>
@@ -545,11 +578,11 @@ function MergedBreakdownSection({ data }: any) {
           /* Desktop: bars + side panel */
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="w-full lg:w-[58.333%]">
-              <BarChart data={active.data} labelKey={active.labelKey} amountKey={active.amountKey} shareKey={active.shareKey} colors={PO_TYPE_COLORS} setHover={setHover} activeHover={hover} />
+              <BarChart data={active.data} labelKey={active.labelKey} amountKey={active.amountKey} shareKey={active.shareKey} colors={PO_TYPE_COLORS} setHover={setHover} activeHover={hover} selectedIndex={selectedIndex} onSelect={setSelectedIndex} />
             </div>
             <div className="w-full lg:w-[41.666%] bg-surface-container-low rounded-xl p-6 flex flex-col justify-center min-h-[200px]">
-              {hover ? (
-                <DetailContent active={active} hover={hover} />
+              {hover || sorted[selectedIndex] ? (
+                <DetailContent active={active} hover={hover || sorted[selectedIndex]} />
               ) : (
                 <div className="text-center space-y-3">
                   <div className="w-12 h-12 rounded-xl bg-primary/5 mx-auto flex items-center justify-center">

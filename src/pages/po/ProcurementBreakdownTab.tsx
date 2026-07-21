@@ -1,10 +1,28 @@
 import { useState } from 'react';
 import KPICard from '../../components/KPICard';
 import KpiCarousel from '../../components/KpiCarousel';
-import PieChart from '../../components/PieChart';
 import IconButton from '../../components/IconButton';
-import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 import ExportDropdown from '../../components/ExportDropdown';
+import StackedShareBar from '../../components/StackedShareBar';
+import { poStatusToStackedShareRows, formatPoValue } from './poStatusToStackedShareRows';
+import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
+
+const PROCUREMENT_STATUS_DATA = [
+  { stage: "Not Started / Not Captured", count: 1244, value: 79914528178.64, pct: 51.13, color: "#00373B" },
+  { stage: "Awaiting Foreign Shipment",     count: 836,  value: 47634445578.04, pct: 34.36, color: "#0B4F54" },
+  { stage: "Performance Guarantee Received", count: 199,  value: 9429786448.05,  pct: 8.18,  color: "#216E6A" },
+  { stage: "Signed Contract Received",       count: 53,   value: 1660858440.60,  pct: 2.18,  color: "#4A9598" },
+  { stage: "Contracting In Progress",        count: 49,   value: 3083284424.86,  pct: 2.01,  color: "#86BFC5" },
+  { stage: "Order Closed",                   count: 19,   value: 776233492.23,   pct: 0.78,  color: "#515F74" },
+  { stage: "PO Approved",                    count: 12,   value: 745494199.11,   pct: 0.49,  color: "#D97706" },
+  { stage: "LC / CAD Opened",                count: 10,   value: 159342157.70,   pct: 0.41,  color: "#BA1A1A" },
+  { stage: "LC / CAD Application In Progress", count: 5,  value: 1116199513.96,  pct: 0.21,  color: "#E53E3E" },
+  { stage: "Budget Confirmed",               count: 3,    value: 1814683953.94,  pct: 0.12,  color: "#F6AD55" },
+  { stage: "Proforma Received",              count: 2,    value: 28079009.79,    pct: 0.08,  color: "#48BB78" },
+  { stage: "PO Approval In Progress",        count: 1,    value: 282907.80,      pct: 0.04,  color: "#A0AEC0" }
+];
+
+const { rows: stackedRows, colorMap: stackedColorMap } = poStatusToStackedShareRows(PROCUREMENT_STATUS_DATA);
 
 const fmtDuration = (days) => {
   if (days == null || days < 0) return null;
@@ -231,42 +249,12 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
 
       {activeSections.includes('ppc-status') && (
         <section id="ppc-status">
-          <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received" action={<div className="flex items-center gap-1"><IconButton variant="expand" data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} title="Procurement Status" /><IconButton variant="info" contentId="po-proc-status" /><ExportDropdown headers={[{ key: 'refNo', label: 'Reference' }, { key: 'supplier', label: 'Supplier' }, { key: 'stage', label: 'Stage' }, { key: 'statusDate', label: 'Status Date' }]} rows={filteredStatusDetails} filename="procurement-status" /></div>}>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div>
-                <PieChart data={data.procurementStatus.stages.map((s) => ({ label: s.stage, value: s.count, color: s.color }))} totalLabel="Procurement stages" />
-              </div>
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-sm font-bold text-on-surface">Filter by stage:</span>
-                  <select value={procurementStatusFilter} onChange={(e) => setProcurementStatusFilter(e.target.value)}
-                    className="h-8 rounded-md border border-outline-variant bg-white px-2 text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 max-w-[150px]"
-                  >
-                    <option value="All">All Stages</option>
-                    {data.procurementStatus.stages.map((s) => (
-                      <option key={s.stage} value={s.stage}>{s.stage} ({s.count})</option>
-                    ))}
-                  </select>
-                </div>
-                <Table page={tp('proc-status')} setPage={sp('proc-status')} rowsPerPage={5}
-                  headers={[
-                    { key: 'ref', label: 'Reference' },
-                    { key: 'supplier', label: 'Supplier' },
-                    { key: 'stage', label: 'Stage' },
-                    { key: 'date', label: 'Status Date' },
-                  ]}
-                  rows={filteredStatusDetails}
-                  renderRow={(row) => (
-                    <>
-                      <Td className="font-mono">{row.refNo}</Td>
-                      <Td>{row.supplier}</Td>
-                      <Td><StatusBadge status={row.stage} /></Td>
-                      <Td>{row.statusDate}</Td>
-                    </>
-                  )}
-                />
-              </div>
-            </div>
+          <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received" action={<IconButton variant="info" contentId="po-proc-status" />}>
+            <StackedShareBar
+              rows={stackedRows}
+              colorMap={stackedColorMap}
+              formatValue={(value) => (value < 1e6 ? value.toLocaleString() : formatPoValue(value))}
+            />
           </SectionPanel>
         </section>
       )}

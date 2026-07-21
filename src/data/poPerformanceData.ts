@@ -11,6 +11,8 @@ import openPOItemDetailRaw from './po-perfromance-and-compliance/OpenPOItemDetai
 import overduePOScheduleLineRaw from './po-perfromance-and-compliance/OverduePOsScheduleLineDetail.json';
 import overduePOSummaryRaw from './po-perfromance-and-compliance/OverduePOsSummary.json';
 import fundYearSummaryRaw from './FundYearSummary_202607021033.json';
+import performanceBondsRaw from './performanceBondData';
+import leadtimeData from './leadtimeData';
 
 const FUND_NAME_MAP: Record<string, string> = {
   EPSSDEF: 'EPSS',
@@ -410,8 +412,8 @@ export default function generateAllData() {
     lcCadExpirySummary: lcCadExpirySummaryRaw.data,
     contractVsPO: generateContractVsPO(contracts, pos),
     contractPipeline: generateContractPipeline(contracts),
-    performanceBonds: generatePerformanceBonds(),
-    leadtime,
+    performanceBonds: performanceBondsRaw,
+    leadtime: { ...leadtimeData, milestone: computeMilestoneDistribution(contractToReceiveTrackingRaw.data) },
     procurementStatus: generateProcurementStatus(),
     supplierPerformance: generateSupplierPerformance(pos),
     supplierRiskRanking: supplierRiskRankingRaw.data,

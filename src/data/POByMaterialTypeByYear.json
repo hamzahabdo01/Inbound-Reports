@@ -1,0 +1,215 @@
+{
+  "success": true,
+  "message": "Purchase orders by material type and year retrieved successfully.",
+  "data": [
+    {
+      "year": 2024,
+      "materialTypeCode": "ZME",
+      "materialTypeName": "Medicine",
+      "purchaseOrderCount": 431,
+      "purchaseOrderLineCount": 712,
+      "materialCount": 372,
+      "supplierCount": 92,
+      "totalAmount": 20741255795.39,
+      "yearAmountSharePercent": 55.91,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2024,
+      "materialTypeCode": "ZMD",
+      "materialTypeName": "Medical Device",
+      "purchaseOrderCount": 207,
+      "purchaseOrderLineCount": 449,
+      "materialCount": 305,
+      "supplierCount": 57,
+      "totalAmount": 7121890270.61,
+      "yearAmountSharePercent": 19.2,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2024,
+      "materialTypeCode": "ZLC",
+      "materialTypeName": "Laboratory commodity",
+      "purchaseOrderCount": 121,
+      "purchaseOrderLineCount": 1095,
+      "materialCount": 556,
+      "supplierCount": 49,
+      "totalAmount": 4855933814.28,
+      "yearAmountSharePercent": 13.09,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2024,
+      "materialTypeCode": "ZMS",
+      "materialTypeName": "Medical Supply",
+      "purchaseOrderCount": 83,
+      "purchaseOrderLineCount": 174,
+      "materialCount": 110,
+      "supplierCount": 37,
+      "totalAmount": 4375670639.02,
+      "yearAmountSharePercent": 11.8,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2025,
+      "materialTypeCode": "ZME",
+      "materialTypeName": "Medicine",
+      "purchaseOrderCount": 490,
+      "purchaseOrderLineCount": 708,
+      "materialCount": 382,
+      "supplierCount": 87,
+      "totalAmount": 34067922802.08,
+      "yearAmountSharePercent": 55.52,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2025,
+      "materialTypeCode": "ZMD",
+      "materialTypeName": "Medical Device",
+      "purchaseOrderCount": 242,
+      "purchaseOrderLineCount": 847,
+      "materialCount": 522,
+      "supplierCount": 55,
+      "totalAmount": 15647224268.85,
+      "yearAmountSharePercent": 25.5,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2025,
+      "materialTypeCode": "ZLC",
+      "materialTypeName": "Laboratory commodity",
+      "purchaseOrderCount": 168,
+      "purchaseOrderLineCount": 1013,
+      "materialCount": 733,
+      "supplierCount": 40,
+      "totalAmount": 6700215364.22,
+      "yearAmountSharePercent": 10.92,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2025,
+      "materialTypeCode": "ZMS",
+      "materialTypeName": "Medical Supply",
+      "purchaseOrderCount": 116,
+      "purchaseOrderLineCount": 242,
+      "materialCount": 121,
+      "supplierCount": 40,
+      "totalAmount": 4944971393.73,
+      "yearAmountSharePercent": 8.06,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2026,
+      "materialTypeCode": "ZME",
+      "materialTypeName": "Medicine",
+      "purchaseOrderCount": 212,
+      "purchaseOrderLineCount": 263,
+      "materialCount": 178,
+      "supplierCount": 70,
+      "totalAmount": 19286173123.47,
+      "yearAmountSharePercent": 50.53,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2026,
+      "materialTypeCode": "ZMD",
+      "materialTypeName": "Medical Device",
+      "purchaseOrderCount": 176,
+      "purchaseOrderLineCount": 310,
+      "materialCount": 151,
+      "supplierCount": 46,
+      "totalAmount": 8582939294.82,
+      "yearAmountSharePercent": 22.49,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2026,
+      "materialTypeCode": "ZLC",
+      "materialTypeName": "Laboratory commodity",
+      "purchaseOrderCount": 97,
+      "purchaseOrderLineCount": 481,
+      "materialCount": 316,
+      "supplierCount": 34,
+      "totalAmount": 6652297379.36,
+      "yearAmountSharePercent": 17.43,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2026,
+      "materialTypeCode": "ZMS",
+      "materialTypeName": "Medical Supply",
+      "purchaseOrderCount": 73,
+      "purchaseOrderLineCount": 141,
+      "materialCount": 69,
+      "supplierCount": 24,
+      "totalAmount": 3643358953.85,
+      "yearAmountSharePercent": 9.55,
+      "unconvertedPurchaseOrderCount": 0,
+      "currency": "ETB"
+    }
+  ],
+  "meta": {
+    "report": "purchase-orders-by-material-type-by-year",
+    "granularity": [
+      "year",
+      "materialType"
+    ],
+    "recordCount": 12,
+    "period": {
+      "startYear": 2024,
+      "endYear": 2026
+    },
+    "currency": "ETB",
+    "yearTotals": [
+      {
+        "year": 2024,
+        "purchaseOrderLineCount": 2430,
+        "materialCount": 1343,
+        "totalAmount": 37094750519.3,
+        "yearAmountSharePercent": 100.0,
+        "unconvertedPurchaseOrderCount": 0
+      },
+      {
+        "year": 2025,
+        "purchaseOrderLineCount": 2810,
+        "materialCount": 1758,
+        "totalAmount": 61360333828.88,
+        "yearAmountSharePercent": 100.0,
+        "unconvertedPurchaseOrderCount": 0
+      },
+      {
+        "year": 2026,
+        "purchaseOrderLineCount": 1195,
+        "materialCount": 714,
+        "totalAmount": 38164768751.5,
+        "yearAmountSharePercent": 100.0,
+        "unconvertedPurchaseOrderCount": 0
+      }
+    ],
+    "totals": {
+      "purchaseOrderLineCount": 6435,
+      "materialCount": 3815,
+      "totalAmount": 136619853099.68,
+      "unconvertedPurchaseOrderCount": 0
+    },
+    "notes": [
+      "Purchase order counts are distinct within each year and material type and must not be summed because one purchase order may contain multiple material types.",
+      "Supplier counts are distinct within each year and material type and must not be summed.",
+      "Purchase order line counts and material counts are additive across material types within a year.",
+      "yearAmountSharePercent is calculated within each year; minor deviations from 100 percent may occur because values are independently rounded.",
+      "The 2026 reporting year is partial through 2026-06-18."
+    ]
+  },
+  "errors": []
+}

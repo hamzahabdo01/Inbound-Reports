@@ -1,0 +1,91 @@
+{
+  "success": true,
+  "message": "Purchase order summary by year retrieved successfully.",
+  "data": [
+    {
+      "year": 2024,
+      "purchaseOrderCount": 830,
+      "purchaseOrderLineCount": 2430,
+      "supplierCount": 208,
+      "materialCount": 1343,
+      "totalAmount": 37094750519.3,
+      "averagePurchaseOrderAmount": 44692470.51,
+      "minimumPurchaseOrderAmount": 0.0,
+      "maximumPurchaseOrderAmount": 4573043201.0,
+      "earliestPurchaseOrderDate": "2024-06-04",
+      "latestPurchaseOrderDate": "2024-12-31",
+      "convertedLineCount": 2430,
+      "unconvertedLineCount": 0,
+      "convertedPurchaseOrderCount": 830,
+      "unconvertedPurchaseOrderCount": 0,
+      "lineCurrencyConversionCoveragePercent": 100.0,
+      "purchaseOrderCurrencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2025,
+      "purchaseOrderCount": 989,
+      "purchaseOrderLineCount": 2810,
+      "supplierCount": 196,
+      "materialCount": 1758,
+      "totalAmount": 61360333828.88,
+      "averagePurchaseOrderAmount": 62042804.68,
+      "minimumPurchaseOrderAmount": 0.0,
+      "maximumPurchaseOrderAmount": 1275953612.06,
+      "earliestPurchaseOrderDate": "2025-01-01",
+      "latestPurchaseOrderDate": "2025-12-31",
+      "convertedLineCount": 2810,
+      "unconvertedLineCount": 0,
+      "convertedPurchaseOrderCount": 989,
+      "unconvertedPurchaseOrderCount": 0,
+      "lineCurrencyConversionCoveragePercent": 100.0,
+      "purchaseOrderCurrencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    },
+    {
+      "year": 2026,
+      "purchaseOrderCount": 526,
+      "purchaseOrderLineCount": 1195,
+      "supplierCount": 152,
+      "materialCount": 714,
+      "totalAmount": 38164768751.5,
+      "averagePurchaseOrderAmount": 72556594.58,
+      "minimumPurchaseOrderAmount": 8587.39,
+      "maximumPurchaseOrderAmount": 2657382000.0,
+      "earliestPurchaseOrderDate": "2026-01-01",
+      "latestPurchaseOrderDate": "2026-06-18",
+      "convertedLineCount": 1195,
+      "unconvertedLineCount": 0,
+      "convertedPurchaseOrderCount": 526,
+      "unconvertedPurchaseOrderCount": 0,
+      "lineCurrencyConversionCoveragePercent": 100.0,
+      "purchaseOrderCurrencyConversionCoveragePercent": 100.0,
+      "currency": "ETB"
+    }
+  ],
+  "meta": {
+    "report": "purchase-order-summary-by-year",
+    "granularity": "year",
+    "recordCount": 3,
+    "period": {
+      "startYear": 2024,
+      "endYear": 2026
+    },
+    "currency": "ETB",
+    "totals": {
+      "purchaseOrderCount": 2345,
+      "purchaseOrderLineCount": 6435,
+      "totalAmount": 136619853099.68,
+      "convertedLineCount": 6435,
+      "unconvertedLineCount": 0,
+      "convertedPurchaseOrderCount": 2345,
+      "unconvertedPurchaseOrderCount": 0
+    },
+    "notes": [
+      "Supplier and material counts are distinct within each year and must not be summed across years.",
+      "Average, minimum, and maximum purchase order amounts are year-specific statistics and are not aggregated.",
+      "The 2026 reporting year is partial through 2026-06-18."
+    ]
+  },
+  "errors": []
+}

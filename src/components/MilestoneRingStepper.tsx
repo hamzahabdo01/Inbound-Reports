@@ -29,11 +29,6 @@ const MANUAL_TOKENS: Record<number, ColorToken> = {
   0: 'track',
   1: 'track',
   2: 'track',
-  3: 'success',
-  4: 'warning',
-  5: 'error',
-  7: 'success',
-  8: 'success',
 };
 
 const TOKEN_TAILWIND_MAP: Record<ColorToken, { bg: string; stroke: string; fill: string }> = {
@@ -231,31 +226,31 @@ function MilestoneRingStepper({ milestones, onMilestoneClick, connectorAverages,
             <g key={`conn-${i}`}>
               <line x1={x1} y1={y1} x2={x2} y2={y2} className={strokeCls} strokeWidth={2} />
               {!targetStr && !avgStr ? (
-                <text x={midX} y={midY} textAnchor="middle" dominantBaseline="central" transform={`rotate(${angle}, ${midX}, ${midY})`} className="text-[13px] font-semibold fill-on-surface-variant/50" style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                <text x={midX} y={midY} textAnchor="middle" dominantBaseline="central" transform={`rotate(${angle}, ${midX}, ${midY})`} className="text-[11px] font-semibold fill-on-surface-variant/50" style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
                   No data
                 </text>
               ) : (
                 <>
                   {targetStr ? (
                     <foreignObject x={midX + nx - 26} y={midY + ny - 8} width={52} height={16} transform={`rotate(${angle}, ${midX + nx}, ${midY + ny})`}>
-                      <div className="flex items-center justify-center gap-0.5 text-[13px] font-semibold text-on-surface whitespace-nowrap" style={{ textShadow: '-0.5px -0.5px 0 #fff, 0.5px -0.5px 0 #fff, -0.5px 0.5px 0 #fff, 0.5px 0.5px 0 #fff' }}>
-                        <i className="fa-solid fa-bullseye text-[13px]" />
+                      <div className="flex items-center justify-center gap-0.5 text-[11px] font-semibold text-on-surface whitespace-nowrap" style={{ textShadow: '-0.5px -0.5px 0 #fff, 0.5px -0.5px 0 #fff, -0.5px 0.5px 0 #fff, 0.5px 0.5px 0 #fff' }}>
+                        <i className="fa-solid fa-bullseye text-[11px]" />
                         <span>{targetStr}</span>
                       </div>
                     </foreignObject>
                   ) : (
-                    <text x={midX + nx} y={midY + ny} textAnchor="middle" dominantBaseline="central" transform={`rotate(${angle}, ${midX + nx}, ${midY + ny})`} className="text-[13px] font-semibold fill-on-surface-variant/50" style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                    <text x={midX + nx} y={midY + ny} textAnchor="middle" dominantBaseline="central" transform={`rotate(${angle}, ${midX + nx}, ${midY + ny})`} className="text-[11px] font-semibold fill-on-surface-variant/50" style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
                       No data
                     </text>
                   )}
                   {avgStr ? (
                     <foreignObject x={midX - nx - 26} y={midY - ny - 8} width={52} height={16} transform={`rotate(${angle}, ${midX - nx}, ${midY - ny})`}>
-                      <div className={`flex items-center justify-center gap-0.5 text-[13px] font-semibold whitespace-nowrap ${fillCls.replace('fill-', 'text-')}`} style={{ textShadow: '-0.5px -0.5px 0 #fff, 0.5px -0.5px 0 #fff, -0.5px 0.5px 0 #fff, 0.5px 0.5px 0 #fff' }}>
-<GaugeCircle size={13} className="inline-block shrink-0" strokeWidth={1.2} /><span>{avgStr}</span>
+                      <div className={`flex items-center justify-center gap-0.5 text-[11px] font-semibold whitespace-nowrap ${fillCls.replace('fill-', 'text-')}`} style={{ textShadow: '-0.5px -0.5px 0 #fff, 0.5px -0.5px 0 #fff, -0.5px 0.5px 0 #fff, 0.5px 0.5px 0 #fff' }}>
+<GaugeCircle size={11} className="inline-block shrink-0" strokeWidth={1.2} /><span>{avgStr}</span>
                       </div>
                     </foreignObject>
                   ) : (
-                    <text x={midX - nx} y={midY - ny} textAnchor="middle" dominantBaseline="central" transform={`rotate(${angle}, ${midX - nx}, ${midY - ny})`} className="text-[13px] font-semibold fill-on-surface-variant/50" style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                    <text x={midX - nx} y={midY - ny} textAnchor="middle" dominantBaseline="central" transform={`rotate(${angle}, ${midX - nx}, ${midY - ny})`} className="text-[11px] font-semibold fill-on-surface-variant/50" style={{ paintOrder: 'stroke', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
                       No data
                     </text>
                   )}

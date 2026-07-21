@@ -199,7 +199,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
             </nav>
           </div>
           <div className="mt-4 pt-4 border-t border-white/10">
-            <button onClick={onLogout} className="w-full flex items-center gap-3 py-2 rounded-lg text-sm text-white hover:text-white hover:bg-white/5 transition-all duration-150 px-3">
+            <button onClick={onLogout} className="w-full flex items-center gap-3 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all duration-150 px-3">
               <i className="fa-solid fa-right-from-bracket text-sm w-4 text-center shrink-0"></i>
               <span>Logout</span>
             </button>

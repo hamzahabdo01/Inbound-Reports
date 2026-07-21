@@ -1,5 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
+import KpiCarousel from '../../components/KpiCarousel';
+import KPICard from '../../components/KPICard';
 import IconButton from '../../components/IconButton';
 import MilestoneRingStepper from '../../components/MilestoneRingStepper';
 import { LEADTIME_MILESTONE_STEPS } from '../../utils/leadtimeMilestones';
@@ -13,6 +15,14 @@ const fmtDuration = (days) => {
 };
 
 export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp }: any) {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
   const [supplierPerfLandscape, setSupplierPerfLandscape] = useState(false);
   const [supplierRiskLandscape, setSupplierRiskLandscape] = useState(false);
   const supplierPerfScrollRef = useRef<HTMLDivElement>(null);
@@ -24,13 +34,23 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
         <section id="ppc-leadtime">
           <SectionPanel title="Leadtime Analysis" subtitle="Average processing times across procurement stages" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-leadtime" /><ExportDropdown headers={[{ key: 'poNo', label: 'PO No' }, { key: 'supplier', label: 'Supplier' }, { key: 'contractToPO', label: 'C→PO' }, { key: 'poToLCOpening', label: 'PO→LC' }, { key: 'lcToPortArrival', label: 'LC→Port' }, { key: 'portToCleared', label: 'Port→Clr' }, { key: 'clearedToReceive', label: 'Clr→Rcv' }, { key: 'totalLeadtime', label: 'Total' }]} rows={data.leadtime.details} filename="leadtime" /></div>}>
 
-            <AutoScrollKPIRow cards={[
-              { icon: 'fa-file-signature', iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Contract → PO', value: fmtDuration(data.leadtime.summary.contractToPO), subtitle: 'Tender process' },
-              { icon: 'fa-file-invoice', iconBg: 'bg-[#4A8EA5]/10', iconColor: 'text-[#4A8EA5]', label: 'PO → LC Opening', value: fmtDuration(data.leadtime.summary.poToLCOpening), subtitle: 'Contract management' },
-              { icon: 'fa-ship', iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'LC → Port Arrival', value: fmtDuration(data.leadtime.summary.lcToPortArrival), subtitle: 'Supplier lead' },
-              { icon: 'fa-check-circle', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Port → Cleared', value: fmtDuration(data.leadtime.summary.portToCleared), subtitle: 'Customs & clearance' },
-              { icon: 'fa-warehouse', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Cleared → Received', value: fmtDuration(data.leadtime.summary.clearedToReceive), subtitle: 'Inbound delivery' },
-            ]} />
+            {isMobile ? (
+              <KpiCarousel>
+                <KPICard variant="detailed" icon="fa-file-signature" iconBg="bg-primary/10" iconColor="text-primary" label="Contract → PO" value={120} subtitle="Tender process" />
+                <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="PO → LC Opening" value={104} subtitle="Contract management" />
+                <KPICard variant="detailed" icon="fa-ship" iconBg="bg-warning/10" iconColor="text-warning" label="LC → Port Arrival" value={110} subtitle="Supplier lead" />
+                <KPICard variant="detailed" icon="fa-check-circle" iconBg="bg-success/10" iconColor="text-success" label="Port → Cleared" value={9.7} subtitle="Customs & clearance" />
+                <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-success/10" iconColor="text-success" label="Cleared → Received" value={23} subtitle="Inbound delivery" />
+              </KpiCarousel>
+            ) : (
+              <AutoScrollKPIRow cards={[
+                { icon: 'fa-file-signature', iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Contract → PO', value: 120, subtitle: 'Tender process' },
+                { icon: 'fa-file-invoice', iconBg: 'bg-[#4A8EA5]/10', iconColor: 'text-[#4A8EA5]', label: 'PO → LC Opening', value: 104, subtitle: 'Contract management' },
+                { icon: 'fa-ship', iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'LC → Port Arrival', value: 110, subtitle: 'Supplier lead' },
+                { icon: 'fa-check-circle', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Port → Cleared', value: 9.7, subtitle: 'Customs & clearance' },
+                { icon: 'fa-warehouse', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Cleared → Received', value: 23, subtitle: 'Inbound delivery' },
+              ]} />
+            )}
             <div className="flex items-center gap-3 mb-2 mt-5">
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-outline-variant to-outline-variant" />
               <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest whitespace-nowrap select-none">
@@ -53,15 +73,16 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                 percent: i < 3 ? 0 : (data.leadtime.milestone.percentages[i] || 0),
                 hasData: i < 3 ? true : step.dataAvailable && (data.leadtime.milestone.counts[i] || 0) > 0,
               }));
+              const s = data.leadtime.summary;
               const connectorAverages: (number | null)[] = [
                 null, null, null,
-                data.leadtime.summary.contractToPO,
-                data.leadtime.summary.poToLCOpening,
-                data.leadtime.summary.lcToPortArrival,
-                data.leadtime.summary.portToCleared,
-                data.leadtime.summary.clearedToReceive,
+                120,
+                104,
+                110,
+                9.7,
+                23,
               ];
-              const connectorTargets: (number | null)[] = [null, null, null, 45, 20, 90, 30, 15];
+              const connectorTargets: (number | null)[] = [null, null, null, 14.5, 29, 61.75, 30, 3];
               return (
                 <div className="-mt-4 mb-5">
                   <MilestoneRingStepper milestones={merged} connectorAverages={connectorAverages} connectorTargets={connectorTargets} />
@@ -104,25 +125,34 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
             return (
               <SectionPanel title="Supplier Performance Tracking" subtitle="Delivery performance leaderboard based on evaluated delivery records" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-supplier-perf" /><ExportDropdown headers={[{ key: 'rank', label: 'Rank' }, { key: 'supplierName', label: 'Supplier' }, { key: 'supplierCountryCode', label: 'Country' }, { key: 'purchaseOrderCount', label: 'POs' }, { key: 'purchaseOrderItemCount', label: 'Items' }, { key: 'favorableDeliveryRatePercent', label: 'Delivery Rate' }, { key: 'secondaryPerformanceRatePercent', label: 'Perf. Rate' }, { key: 'overdueScheduleLineCount', label: 'Overdue Lines' }, { key: 'maximumDaysOverdue', label: 'Max Overdue' }]} rows={data.supplierPerformanceLeaderboard} filename="supplier-performance" /></div>}>
                 {s && (
-                  <AutoScrollKPIRow cards={[
-                    { icon: 'fa-building', iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Suppliers', value: s.supplierCount.toLocaleString(), subtitle: `${s.purchaseOrderCount.toLocaleString()} POs` },
-                    { icon: 'fa-truck', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Favorable Rate', value: `${s.performanceRatesPercent.favorableRate}%`, subtitle: `${s.performanceMeasurementCounts.favorableRecordCount.toLocaleString()} of ${s.performanceMeasurementCounts.evaluatedRecordCount.toLocaleString()}` },
-                    { icon: 'fa-exclamation-circle', iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Overdue Schedule', value: s.overdueScheduleLineCount.toLocaleString(), subtitle: `${s.overdueOpenAmountPercent}% overdue amount` },
-                    { icon: 'fa-clock', iconBg: 'bg-error/10', iconColor: 'text-error', label: 'Open Amount', value: `${formatAmount(s.totalOpenAmount)} ETB`, subtitle: `${formatAmount(s.totalOverdueOpenAmount)} overdue` },
-                  ]} />
+                  isMobile ? (
+                    <KpiCarousel>
+                      <KPICard variant="detailed" icon="fa-building" iconBg="bg-primary/10" iconColor="text-primary" label="Suppliers" value={s.supplierCount.toLocaleString()} subtitle={`${s.purchaseOrderCount.toLocaleString()} POs`} />
+                      <KPICard variant="detailed" icon="fa-truck" iconBg="bg-success/10" iconColor="text-success" label="Favorable Rate" value={`${s.performanceRatesPercent.favorableRate}%`} subtitle={`${s.performanceMeasurementCounts.favorableRecordCount.toLocaleString()} of ${s.performanceMeasurementCounts.evaluatedRecordCount.toLocaleString()}`} />
+                      <KPICard variant="detailed" icon="fa-exclamation-circle" iconBg="bg-warning/10" iconColor="text-warning" label="Overdue Schedule" value={s.overdueScheduleLineCount.toLocaleString()} subtitle={`${s.overdueOpenAmountPercent}% overdue amount`} />
+                      <KPICard variant="detailed" icon="fa-clock" iconBg="bg-error/10" iconColor="text-error" label="Open Amount" value={`${formatAmount(s.totalOpenAmount)} ETB`} subtitle={`${formatAmount(s.totalOverdueOpenAmount)} overdue`} />
+                    </KpiCarousel>
+                  ) : (
+                    <AutoScrollKPIRow cards={[
+                      { icon: 'fa-building', iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Suppliers', value: s.supplierCount.toLocaleString(), subtitle: `${s.purchaseOrderCount.toLocaleString()} POs` },
+                      { icon: 'fa-truck', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Favorable Rate', value: `${s.performanceRatesPercent.favorableRate}%`, subtitle: `${s.performanceMeasurementCounts.favorableRecordCount.toLocaleString()} of ${s.performanceMeasurementCounts.evaluatedRecordCount.toLocaleString()}` },
+                      { icon: 'fa-exclamation-circle', iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Overdue Schedule', value: s.overdueScheduleLineCount.toLocaleString(), subtitle: `${s.overdueOpenAmountPercent}% overdue amount` },
+                      { icon: 'fa-clock', iconBg: 'bg-error/10', iconColor: 'text-error', label: 'Open Amount', value: `${formatAmount(s.totalOpenAmount)} ETB`, subtitle: `${formatAmount(s.totalOverdueOpenAmount)} overdue` },
+                    ]} />
+                  )
                 )}
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs text-on-surface-variant font-medium">
                     {data.supplierPerformanceLeaderboard?.length || 0} suppliers
                   </span>
-                  <LandscapeToggle value={supplierPerfLandscape} onChange={setSupplierPerfLandscape} />
+                  {isMobile && <LandscapeToggle value={supplierPerfLandscape} onChange={setSupplierPerfLandscape} />}
                 </div>
                 <div
                   ref={supplierPerfScrollRef}
                   className="overflow-x-auto relative"
                   style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' } as any}
                 >
-                  <div style={{ minWidth: supplierPerfLandscape ? '1200px' : 'auto', transition: 'min-width 180ms ease' }}>
+                  <div style={{ minWidth: isMobile ? (supplierPerfLandscape ? '1200px' : 'auto') : '1200px', transition: 'min-width 180ms ease' }}>
                     <Table page={tp('supplier-perf')} setPage={sp('supplier-perf')}
                   headers={[
                     { key: 'supplier', label: 'Supplier', className: 'truncate' },
@@ -145,7 +175,7 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                     return (
                       <>
                         <Td className="font-bold" title={row.supplierName}>
-                          <span className={`block ${supplierPerfLandscape ? '' : 'truncate max-w-[100px] md:max-w-none'}`}>{row.supplierName}</span>
+                          <span className={`block ${supplierPerfLandscape || !isMobile ? '' : 'truncate max-w-[100px] md:max-w-none'}`}>{row.supplierName}</span>
                         </Td>
                         <Td className="text-center">
                           <span className="inline-block px-2 py-0.5 text-[10px] font-bold bg-surface-container rounded">{row.supplierCountryCode}</span>
@@ -179,14 +209,14 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                   <span className="text-xs text-on-surface-variant font-medium">
                     {risk?.length || 0} suppliers
                   </span>
-                  <LandscapeToggle value={supplierRiskLandscape} onChange={setSupplierRiskLandscape} />
+                  {isMobile && <LandscapeToggle value={supplierRiskLandscape} onChange={setSupplierRiskLandscape} />}
                 </div>
                 <div
                   ref={supplierRiskScrollRef}
                   className="overflow-x-auto relative"
                   style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' } as any}
                 >
-                  <div style={{ minWidth: supplierRiskLandscape ? '1200px' : 'auto', transition: 'min-width 180ms ease' }}>
+                  <div style={{ minWidth: isMobile ? (supplierRiskLandscape ? '1200px' : 'auto') : '1200px', transition: 'min-width 180ms ease' }}>
                     <Table page={tp('supplier-risk')} setPage={sp('supplier-risk')}
                   headers={[
                     { key: 'supplier', label: 'Supplier', className: 'truncate' },
@@ -206,16 +236,16 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                     return (
                       <>
                         <Td className="font-bold" title={row.supplierName}>
-                          <span className={`block ${supplierRiskLandscape ? '' : 'truncate max-w-[100px] md:max-w-none'}`}>{row.supplierName}</span>
+                          <span className={`block ${supplierRiskLandscape || !isMobile ? '' : 'truncate max-w-[100px] md:max-w-none'}`}>{row.supplierName}</span>
                         </Td>
-                        <Td className={`text-center ${supplierRiskLandscape ? '' : 'hidden md:table-cell'}`}>
+                        <Td className={`text-center ${supplierRiskLandscape || !isMobile ? '' : 'hidden md:table-cell'}`}>
                           <span className="inline-block px-2 py-0.5 text-[10px] font-bold bg-surface-container rounded">{flag}</span>
                         </Td>
-                        <Td className={`text-right ${supplierRiskLandscape ? '' : 'hidden md:table-cell'}`}>{row.purchaseOrderItemCount.toLocaleString()}</Td>
-                        <Td className={`text-right ${supplierRiskLandscape ? '' : 'hidden lg:table-cell'}`}>{row.favorableDeliveryRatePercent != null ? `${row.favorableDeliveryRatePercent}%` : '—'}</Td>
+                        <Td className={`text-right ${supplierRiskLandscape || !isMobile ? '' : 'hidden md:table-cell'}`}>{row.purchaseOrderItemCount.toLocaleString()}</Td>
+                        <Td className={`text-right ${supplierRiskLandscape || !isMobile ? '' : 'hidden lg:table-cell'}`}>{row.favorableDeliveryRatePercent != null ? `${row.favorableDeliveryRatePercent}%` : '—'}</Td>
                         <Td className="text-right">{row.overdueOpenAmountPercent}%</Td>
-                        <Td className={`text-right font-mono ${supplierRiskLandscape ? '' : 'hidden lg:table-cell'}`}>{fmtDuration(row.maximumDaysOverdue)}</Td>
-                        <Td className={`text-right font-mono ${supplierRiskLandscape ? '' : 'hidden lg:table-cell'}`}>{formatAmount(row.totalOpenAmount)}</Td>
+                        <Td className={`text-right font-mono ${supplierRiskLandscape || !isMobile ? '' : 'hidden lg:table-cell'}`}>{fmtDuration(row.maximumDaysOverdue)}</Td>
+                        <Td className={`text-right font-mono ${supplierRiskLandscape || !isMobile ? '' : 'hidden lg:table-cell'}`}>{formatAmount(row.totalOpenAmount)}</Td>
                         <Td className="text-center">
                           <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md ${levelColors[row.riskLevel] || 'bg-surface-container text-on-surface-variant'}`}>
                             {row.riskLevel}
@@ -246,15 +276,26 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                 acc[b.status].total += b.amount;
                 return acc;
               }, {});
-              const expiredCount = (statusGroups['Expired']?.count || 0) + (statusGroups['Confiscated']?.count || 0);
+              const activeCount = (statusGroups['VALID']?.count || 0) + (statusGroups['RECEIVED_EXPIRY_MISSING']?.count || 0);
+              const pendingCount = (statusGroups['SUBMITTED_NOT_RECEIVED']?.count || 0) + (statusGroups['EXPIRING_WITHIN_30_DAYS']?.count || 0);
+              const expiredCount = (statusGroups['EXPIRED']?.count || 0) + (statusGroups['MISSING']?.count || 0);
               return (
                 <>
-                  <AutoScrollKPIRow cards={[
-                    { icon: 'fa-file-contract', iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Total Bonds', value: bonds.length.toLocaleString(), subtitle: `Value: $${formatAmount(totalAmount)}` },
-                    { icon: 'fa-check-circle', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Verified / Active', value: ((statusGroups['Verified']?.count || 0) + (statusGroups['Received']?.count || 0)).toLocaleString(), subtitle: 'in good standing' },
-                    { icon: 'fa-clock', iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Extended', value: (statusGroups['Extended']?.count || 0).toLocaleString(), subtitle: 'term extended' },
-                    { icon: 'fa-exclamation-triangle', iconBg: 'bg-error/10', iconColor: 'text-error', label: 'Expired / Confiscated', value: expiredCount.toLocaleString(), subtitle: 'requires action' },
-                  ]} />
+                  {isMobile ? (
+                    <KpiCarousel>
+                      <KPICard variant="detailed" icon="fa-file-contract" iconBg="bg-primary/10" iconColor="text-primary" label="Total Bonds" value={bonds.length.toLocaleString()} subtitle={`Value: $${formatAmount(totalAmount)}`} />
+                      <KPICard variant="detailed" icon="fa-check-circle" iconBg="bg-success/10" iconColor="text-success" label="Valid / Received" value={activeCount.toLocaleString()} subtitle="in good standing" />
+                      <KPICard variant="detailed" icon="fa-clock" iconBg="bg-warning/10" iconColor="text-warning" label="Submitted / Expiring" value={pendingCount.toLocaleString()} subtitle="pending verification" />
+                      <KPICard variant="detailed" icon="fa-exclamation-triangle" iconBg="bg-error/10" iconColor="text-error" label="Expired / Missing" value={expiredCount.toLocaleString()} subtitle="requires action" />
+                    </KpiCarousel>
+                  ) : (
+                    <AutoScrollKPIRow cards={[
+                      { icon: 'fa-file-contract', iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Total Bonds', value: bonds.length.toLocaleString(), subtitle: `Value: $${formatAmount(totalAmount)}` },
+                      { icon: 'fa-check-circle', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Valid / Received', value: activeCount.toLocaleString(), subtitle: 'in good standing' },
+                      { icon: 'fa-clock', iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Submitted / Expiring', value: pendingCount.toLocaleString(), subtitle: 'pending verification' },
+                      { icon: 'fa-exclamation-triangle', iconBg: 'bg-error/10', iconColor: 'text-error', label: 'Expired / Missing', value: expiredCount.toLocaleString(), subtitle: 'requires action' },
+                    ]} />
+                  )}
                   <Table page={tp('bond')} setPage={sp('bond')}
                     headers={[
                       { key: 'bondNo', label: 'Bond No' },
