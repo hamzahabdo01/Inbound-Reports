@@ -8,6 +8,7 @@ import PurchaseOrderTable from './PurchaseOrderTable';
 import RecentReceivesTable from './RecentReceivesTable';
 import PieChart from '../PieChart';
 import KPICard from '../KPICard';
+import KpiCarousel from '../KpiCarousel';
 import IconButton from '../IconButton';
 import ExportDropdown from '../ExportDropdown';
 import { SS_WebApi, OIH_WebApi, POD_WebApi, POHRIHRCH_WebApi, RCD_WebApi, MainDashboard_WebApi, OIDRCD_WebApi, LookUp } from '../../api/fanos';
@@ -307,6 +308,15 @@ function ProgramItemDetail({
   const [currentDate, setCurrentDate] = useState('');
   const [loaded, setLoaded] = useState<Record<string, boolean>>({});
   const markLoaded = (key: string) => setLoaded(prev => ({...prev, [key]: true}));
+
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const [procurerYear, setProcurerYear] = useState('2016');
   const [yearOptions, setYearOptions] = useState<string[]>(['2016']);
@@ -850,7 +860,7 @@ function ProgramItemDetail({
             <button
               type="button"
               onClick={onBack}
-              className="inline-flex items-center gap-2 text-body-md font-bold text-primary hover:text-primary-hover"
+              className="inline-flex items-center gap-2 text-xs sm:text-body-md font-bold text-primary hover:text-primary-hover"
             >
               <i className="fa-solid fa-arrow-left" />
               Back to {programName}
@@ -862,8 +872,23 @@ function ProgramItemDetail({
 
       {loaded.overview ? (
       <section id="pd-overview">
-        <div className="grid grid-cols-[180px_minmax(0,1fr)] items-stretch gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)] items-stretch gap-4">
+          <div className="order-2 lg:order-1">
           <NationalMosBelowEop stockRow={apiNationalMos} unit={unit} unitLoaded={unitLoaded} />
+          </div>
+          <div className="order-1 lg:order-2">
+          {isMobile ? (
+          <KpiCarousel>
+          <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-surface-container" iconColor="text-primary" label="AMC"     value={compactNumber(amc)}          subtitle="Avg monthly" />
+          <KPICard variant="detailed" icon="fa-warehouse"          iconBg="bg-success/10"       iconColor="text-success"  label="SOH"     value={compactNumber(soh)}          subtitle="Stock on hand" />
+          <KPICard variant="detailed" icon="fa-cart-shopping"      iconBg="bg-surface-container" iconColor="text-primary" label="Ordered" value={compactNumber(totalPO || stockRow?.QuantityPurchaseOrder)} subtitle={`${productPOs.length} PO lines`} />
+          <KPICard variant="detailed" icon="fa-route"              iconBg="bg-success/10"       iconColor="text-success"  label="GIT"     value={compactNumber(stockRow?.GIT)} subtitle="In transit" />
+          <KPICard variant="detailed" icon="fa-box-open"           iconBg={wastage > 0 ? 'bg-warning/10' : 'bg-surface-container'} iconColor={wastage > 0 ? 'text-warning' : 'text-primary'} label="Wastage"  value={compactNumber(wastage)}       subtitle="Reported waste" />
+          <KPICard variant="detailed" icon="fa-clock"              iconBg={nearExpiry > 0 ? 'bg-warning/10' : 'bg-surface-container'} iconColor={nearExpiry > 0 ? 'text-warning' : 'text-primary'} label="nExpiry"  value={compactNumber(nearExpiry)}    subtitle="Near expiry" />
+          <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg={gap > 0 ? 'bg-warning/10' : 'bg-success/10'} iconColor={gap > 0 ? 'text-warning' : 'text-success'} label="Gap"      value={compactNumber(gap)}           subtitle="Gap to max" />
+          <KPICard variant="detailed" icon="fa-circle-plus"        iconBg={overage > 0 ? 'bg-error/10' : 'bg-surface-container'} iconColor={overage > 0 ? 'text-error' : 'text-primary'} label="Overage"  value={compactNumber(overage)}       subtitle="Above max" />
+          </KpiCarousel>
+          ) : (
           <div className="grid h-full grid-cols-4 grid-rows-2 items-stretch gap-2">
           <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-surface-container" iconColor="text-primary" label="AMC"     value={compactNumber(amc)}          subtitle="Avg monthly" />
           <KPICard variant="detailed" icon="fa-warehouse"          iconBg="bg-success/10"       iconColor="text-success"  label="SOH"     value={compactNumber(soh)}          subtitle="Stock on hand" />
@@ -874,6 +899,8 @@ function ProgramItemDetail({
           <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg={gap > 0 ? 'bg-warning/10' : 'bg-success/10'} iconColor={gap > 0 ? 'text-warning' : 'text-success'} label="Gap"      value={compactNumber(gap)}           subtitle="Gap to max" />
           <KPICard variant="detailed" icon="fa-circle-plus"        iconBg={overage > 0 ? 'bg-error/10' : 'bg-surface-container'} iconColor={overage > 0 ? 'text-error' : 'text-primary'} label="Overage"  value={compactNumber(overage)}       subtitle="Above max" />
         </div>
+          )}
+          </div>
           </div>
         </section>
       ) : (
@@ -886,7 +913,7 @@ function ProgramItemDetail({
 
       {loaded.stockUtil || loaded.pipeline || loaded.expiry || loaded.daysOos || loaded.funding || loaded.facilityDist || loaded.ownershipDist || loaded.regionDist ? (
       <section id="pd-charts">
-        <div className="grid grid-cols-[minmax(0,1fr)_330px] gap-x-5 gap-y-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_330px] gap-x-5 gap-y-5">
         <DetailChartPanel title="Months Of Stock" contentId="months-of-stock">
           <div className="flex h-64 items-center justify-center text-body-sm text-on-surface-variant">
             No data
@@ -905,7 +932,7 @@ function ProgramItemDetail({
 
         <DetailChartPanel title="Stock Utilization" contentId="stock-utilization">
           {stockUtilData.length > 0 ? (
-            <ProgramStackedBarChart data={stockUtilData} normalized yLabel="%" height={220} />
+            <ProgramStackedBarChart data={stockUtilData} normalized yLabel="%" height={220} horizontal={isMobile} />
           ) : (
             <div className="flex h-64 items-center justify-center text-body-sm text-on-surface-variant">No data</div>
           )}
@@ -957,7 +984,7 @@ function ProgramItemDetail({
 
         <DetailChartPanel title="Expiry Breakdown in Qty" contentId="expiry-breakdown">
           {expiryChart.length > 0 ? (
-            <ProgramStackedBarChart data={expiryChart} height={240} showPct={false} yTicks={[0, 5000, 10000, 15000, 20000, 25000, 30000]} />
+            <ProgramStackedBarChart data={expiryChart} height={240} showPct={false} yTicks={[0, 5000, 10000, 15000, 20000, 25000, 30000]} horizontal={isMobile} />
           ) : (
             <div className="flex h-64 items-center justify-center text-body-sm text-on-surface-variant">No data</div>
           )}
@@ -978,7 +1005,7 @@ function ProgramItemDetail({
         <div className="col-span-full">
         <DetailChartPanel title="Days Out of Stock in %" contentId="days-out-of-stock">
           {daysOutChart.length > 0 ? (
-            <ProgramBarChart data={daysOutChart} valueFormatter={(value) => `${value.toFixed(2)}`} yTicks={[-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1]} />
+              <ProgramBarChart data={daysOutChart} valueFormatter={(value) => `${value.toFixed(2)}`} yTicks={[-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1]} horizontal={isMobile} />
           ) : (
             <div className="flex h-64 items-center justify-center text-body-sm text-on-surface-variant">No data</div>
           )}
@@ -989,7 +1016,7 @@ function ProgramItemDetail({
       <div className="mt-5">
         <DetailChartPanel title="Distribution by Region" contentId="distribution-by-region">
           {regionDistData.length > 0 ? (
-            <ProgramBarChart data={regionDistData} valueFormatter={(v) => `${v.toFixed(1)}%`} titleFormatter={(item) => compactNumber(item.rawValue)} />
+            <ProgramBarChart data={regionDistData} valueFormatter={(v) => `${v.toFixed(1)}%`} titleFormatter={(item) => compactNumber(item.rawValue)} horizontal={isMobile} />
           ) : (
             <div className="flex h-64 items-center justify-center text-body-sm text-on-surface-variant">No data</div>
           )}
@@ -1105,7 +1132,7 @@ function ProgramItemDetail({
         <ProgramPanel title="Issued Data: Hub to Facility" subtitle={`${issuedRows.length} records`} action={<div className="flex items-center gap-2"><IconButton variant="info" contentId="issued" /><ExportDropdown headers={[{key:'date',label:'Date'},{key:'region',label:'Region-Zone-Woreda'},{key:'facility',label:'Facility'},{key:'quantity',label:'Quantity'},{key:'invoice',label:'Invoice'},{key:'distributor',label:'Distributor'}]} rows={issuedRows} filename="issued" /></div>}>
           <BaseTable
             columns={[
-              { key: 'date', label: 'Date' },
+              { key: 'date', label: 'Date', width: 'min-w-[150px]' },
               { key: 'region', label: 'Region-Zone-Woreda' },
               { key: 'facility', label: 'Facility' },
               { key: 'quantity', label: 'Quantity' },

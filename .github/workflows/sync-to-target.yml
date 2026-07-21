@@ -45,7 +45,7 @@ jobs:
             echo "No changes to commit"
             echo "changes=false" >> $GITHUB_OUTPUT
           else
-            git commit -m "Sync frontend from hamzahabdo01/Inbound-Reports"
+            git commit -m "${{ github.event.head_commit.message }}"
             echo "changes=true" >> $GITHUB_OUTPUT
           fi
 

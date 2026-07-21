@@ -4,7 +4,7 @@ const formatNumber = (value) => new Intl.NumberFormat('en').format(value || 0);
 
 function PurchaseOrderTable({ rows }: any) {
   const columns: ColumnDef[] = [
-    { key: 'po', label: 'PO. Number', className: 'sticky left-0 z-10 bg-white font-semibold text-primary break-words', headerClassName: 'sticky left-0 z-10 bg-[#CFD8DC]' },
+    { key: 'po', label: 'PO. Number', className: 'sticky left-0 z-[7] bg-white font-semibold text-primary break-words', headerClassName: 'sticky left-0 z-[7] bg-[#CFD8DC]' },
     { key: 'date', label: 'Date' },
     { key: 'donor', label: 'Donor' },
     { key: 'procurer', label: 'Procurer' },
