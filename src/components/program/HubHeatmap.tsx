@@ -36,6 +36,7 @@ function HubHeatmap({ rows, products, thresholds, statusMap, siteFilter }: any) 
   const [hoveredStatus, setHoveredStatus] = useState<string | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [fullscreen, setFullscreen] = useState(false);
+  const [rotated, setRotated] = useState(false);
   const rowsPerPage = 10;
 
   const isFilterActive = hoveredStatus !== null || selectedStatuses.length > 0;
@@ -249,7 +250,7 @@ function HubHeatmap({ rows, products, thresholds, statusMap, siteFilter }: any) 
         {!fullscreen && (
           <button
             type="button"
-            onClick={() => setFullscreen(true)}
+            onClick={() => { setFullscreen(true); setRotated(true); }}
             className="ml-auto lg:ml-2 p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-on-surface"
             title="Full screen view"
           >
@@ -282,16 +283,32 @@ function HubHeatmap({ rows, products, thresholds, statusMap, siteFilter }: any) 
       <div className="fixed inset-0 z-50 bg-white flex flex-col">
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b border-outline-variant bg-white shrink-0">
           <span className="text-header-sm font-bold text-on-surface">Hub Heatmap — Full View</span>
-          <button
-            type="button"
-            onClick={() => setFullscreen(false)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-body-sm font-semibold hover:bg-primary-dark transition-colors"
-          >
-            <i className="fa-solid fa-compress text-sm" />
-            Close
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setRotated((r) => !r)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-body-sm font-semibold transition-colors ${
+                rotated ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:text-on-surface'
+              }`}
+              title={rotated ? 'Reset orientation' : 'Rotate to landscape'}
+            >
+              <i className={`fa-solid fa-rotate text-sm transition-transform duration-300 ${rotated ? 'rotate-90' : ''}`} />
+              <span className="hidden sm:inline">{rotated ? 'Reset' : 'Rotate'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setFullscreen(false); setRotated(false); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-body-sm font-semibold hover:bg-primary-dark transition-colors"
+            >
+              <i className="fa-solid fa-compress text-sm" />
+              Close
+            </button>
+          </div>
         </div>
-        <div className="flex-1 overflow-auto">
+        <div
+          className={`flex-1 overflow-auto transition-transform duration-300 ${rotated ? 'rotate-90 translate-y-[-100%] origin-top-left' : ''}`}
+          style={rotated ? { width: '100vh', height: '100vw' } : {}}
+        >
           {heatmapContent}
         </div>
       </div>
