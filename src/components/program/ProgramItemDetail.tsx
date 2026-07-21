@@ -156,7 +156,7 @@ function ProgramItemSwitcher({ items = [], selectedItem, onSelectItem }: any) {
   if (!items.length || !onSelectItem) return null;
 
   return (
-    <div className="sticky top-[50px] z-[9] -mx-lg border-b border-outline-variant/40 bg-[#F6FAFC]/95 px-md py-2 shadow-sm backdrop-blur sm:px-lg shrink-0">
+    <div className="sticky top-[50px] z-[9] -mx-lg -mt-6 border-b border-outline-variant/40 bg-[#F6FAFC]/95 px-md py-2 shadow-sm backdrop-blur sm:px-lg shrink-0">
 
         <div className="program-item-switcher-scroll flex items-center gap-1.5 overflow-x-auto pb-1">
           {items.map((item) => {
@@ -853,7 +853,7 @@ function ProgramItemDetail({
         onSelectItem={onSelectItem}
       />
 
-      <div className="sticky top-[98px] z-[8] -mx-lg border-b border-outline-variant/40 bg-[#F6FAFC]/95 px-md py-2 shadow-sm backdrop-blur sm:px-lg shrink-0">
+      <div className="sticky top-[98px] z-[8] -mx-lg -mt-1 border-b border-outline-variant/40 bg-[#F6FAFC]/95 px-md py-2 shadow-sm backdrop-blur sm:px-lg shrink-0">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <button
