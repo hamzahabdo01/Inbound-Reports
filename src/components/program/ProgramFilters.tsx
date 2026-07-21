@@ -19,14 +19,14 @@ function ProgramFilters({
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
             placeholder="Search products, manufacturers, countries, purchase orders"
-            className="w-full h-11 pl-10 pr-4 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-md text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-4 focus:ring-primary/10"
+            className="w-full h-9 pl-10 pr-4 rounded-lg border border-outline-variant bg-surface-container-lowest text-body-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-4 focus:ring-primary/10"
           />
         </label>
 
         <select
           value={status}
           onChange={(event) => onStatusChange(event.target.value)}
-          className="h-11 min-w-[180px] rounded-lg border border-outline-variant bg-white px-3 text-body-md text-on-surface focus:border-primary focus:ring-4 focus:ring-primary/10"
+          className="h-9 min-w-[170px] rounded-lg border border-outline-variant bg-white px-3 text-body-sm text-on-surface focus:border-primary focus:ring-4 focus:ring-primary/10"
           aria-label="Filter by stock status"
         >
           <option value="">Stock status: All</option>
@@ -39,7 +39,7 @@ function ProgramFilters({
         <select
           value={product}
           onChange={(event) => onProductChange(event.target.value)}
-          className="h-11 min-w-[190px] rounded-lg border border-outline-variant bg-white px-3 text-body-md text-on-surface focus:border-primary focus:ring-4 focus:ring-primary/10"
+          className="h-9 min-w-[180px] rounded-lg border border-outline-variant bg-white px-3 text-body-sm text-on-surface focus:border-primary focus:ring-4 focus:ring-primary/10"
           aria-label="Filter by product"
         >
           <option value="">Product: All</option>
@@ -51,7 +51,7 @@ function ProgramFilters({
         {hasFilters && (
           <button
             onClick={onClear}
-            className="h-11 px-4 rounded-lg border border-outline-variant text-body-md font-semibold text-primary hover:bg-surface-container-low"
+            className="h-9 px-4 rounded-lg border border-outline-variant text-body-sm font-semibold text-primary hover:bg-surface-container-low"
           >
             Clear All
           </button>

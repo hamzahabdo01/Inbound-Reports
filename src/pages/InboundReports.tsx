@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { parseCSV, parseDwellingTime, parseQuantity, parseDate } from '../utils/csvParser';
 import { shipmentCSVData } from '../data/shipmentData';
 import PurchaseOrderFollowUp from './PurchaseOrderFollowUp';
-import AutoScrollKPIRow from '../components/AutoScrollKPIRow';
+import KPICard from '../components/KPICard';
+import KpiCarousel from '../components/KpiCarousel';
 import SearchInput from '../components/SearchInput';
 import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
@@ -322,9 +323,15 @@ function InboundReports() {
       {activeTab === 'shipment' && (
       <>
       {/* KPI Cards */}
-      <div className="relative mt-md mb-lg">
-        <AutoScrollKPIRow cards={kpiCards} />
-      </div>
+      {isMobile ? (
+        <KpiCarousel>
+          {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
+        </KpiCarousel>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-md mb-lg">
+          {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="bg-surface-container-lowest border border-[#D1D5DB] rounded-lg p-4 mb-md">

@@ -4,7 +4,8 @@ import IconButton from '../components/IconButton';
 
 import { shipmentStatusHPRData, shipmentStatusRDFData } from '../data/shipmentStatusData';
 import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../data/purchaseOrderDetailData';
-import AutoScrollKPIRow from '../components/AutoScrollKPIRow';
+import KPICard from '../components/KPICard';
+import KpiCarousel from '../components/KpiCarousel';
 import PieChart from '../components/PieChart';
 import HBarChart from '../components/HBarChart';
 import { Table, Td } from './po/poShared';
@@ -483,7 +484,15 @@ function ShipmentStatus() {
       {!isLoading && (
         <>
           {/* KPI Cards */}
-          <AutoScrollKPIRow cards={kpiCards} />
+          {isMobile ? (
+            <KpiCarousel>
+              {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
+            </KpiCarousel>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-md mb-lg">
+              {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
+            </div>
+          )}
 
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">

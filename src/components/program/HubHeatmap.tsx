@@ -35,6 +35,7 @@ function HubHeatmap({ rows, products, thresholds, statusMap, siteFilter }: any) 
   const [page, setPage] = useState(1);
   const [hoveredStatus, setHoveredStatus] = useState<string | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [fullscreen, setFullscreen] = useState(false);
   const rowsPerPage = 10;
 
   const isFilterActive = hoveredStatus !== null || selectedStatuses.length > 0;
@@ -161,8 +162,8 @@ function HubHeatmap({ rows, products, thresholds, statusMap, siteFilter }: any) 
     })),
   ];
 
-  return (
-    <div className="flex flex-col">
+  const heatmapContent = (
+    <>
       {/* Legend Indicators positioned above the table */}
       <div className="flex items-center flex-wrap gap-y-2 px-5 py-3 border-b border-outline-variant bg-surface-container-lowest select-none">
         {/* Desktop: highlight status buttons */}
@@ -244,6 +245,17 @@ function HubHeatmap({ rows, products, thresholds, statusMap, siteFilter }: any) 
           </div>
           {siteFilter && <div className="lg:hidden flex items-center gap-2">{siteFilter}</div>}
         </div>
+        {/* Fullscreen toggle */}
+        {!fullscreen && (
+          <button
+            type="button"
+            onClick={() => setFullscreen(true)}
+            className="ml-auto lg:ml-2 p-2 rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-on-surface"
+            title="Full screen view"
+          >
+            <i className="fa-solid fa-expand text-sm" />
+          </button>
+        )}
       </div>
 
       <BaseTable
@@ -262,6 +274,33 @@ function HubHeatmap({ rows, products, thresholds, statusMap, siteFilter }: any) 
           onChange: setPage,
         }}
       />
+    </>
+  );
+
+  if (fullscreen) {
+    return (
+      <div className="fixed inset-0 z-50 bg-white flex flex-col">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b border-outline-variant bg-white shrink-0">
+          <span className="text-header-sm font-bold text-on-surface">Hub Heatmap — Full View</span>
+          <button
+            type="button"
+            onClick={() => setFullscreen(false)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-body-sm font-semibold hover:bg-primary-dark transition-colors"
+          >
+            <i className="fa-solid fa-compress text-sm" />
+            Close
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto">
+          {heatmapContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col">
+      {heatmapContent}
     </div>
   );
 }
