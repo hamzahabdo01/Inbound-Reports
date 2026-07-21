@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import KPICard from '../../components/KPICard';
+import KpiCarousel from '../../components/KpiCarousel';
 import ProgramPanel from '../../components/program/ProgramPanel';
 import SectionNavigator from '../../components/SectionNavigator';
 import BaseTable from '../../components/BaseTable';
@@ -165,6 +166,15 @@ function LlinProgram() {
   const [distributionYear, setDistributionYear] = useState('2016');
   const [fundingYear, setFundingYear] = useState('2016');
   const [facilityYear, setFacilityYear] = useState('2014');
+
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const PROGRAM_CODE = 'LLIN';
 
@@ -476,12 +486,21 @@ function LlinProgram() {
 
       {/* ── Overview: KPI cards ──────────────────────────────────────────── */}
       <section id="llin-overview">
-        <div className="grid grid-cols-4 gap-3">
-          <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-success/10"     iconColor="text-success"     label="SOH"     value="101.7K"     subtitle={pageReady ? `${stockRows.length} SKUs` : '—'} />
-          <KPICard variant="detailed" icon="fa-cart-shopping"       iconBg="bg-surface-container" iconColor="text-primary" label="Ordered" value="0" subtitle="total PO quantity" />
-          <KPICard variant="detailed" icon="fa-route"          iconBg="bg-[#4A8EA5]/10"   iconColor="text-[#4A8EA5]"   label="GIT" value="0" subtitle="in transit" />
-          <KPICard variant="detailed" icon="fa-circle-exclamation"  iconBg="bg-warning/10"     iconColor="text-warning"     label="Damaged" value="10.9K"                        subtitle="reported damage" />
-        </div>
+        {isMobile ? (
+          <KpiCarousel>
+            <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-success/10"     iconColor="text-success"     label="SOH"     value="101.7K"     subtitle={pageReady ? `${stockRows.length} SKUs` : '—'} />
+            <KPICard variant="detailed" icon="fa-cart-shopping"       iconBg="bg-surface-container" iconColor="text-primary" label="Ordered" value="0" subtitle="total PO quantity" />
+            <KPICard variant="detailed" icon="fa-route"          iconBg="bg-[#4A8EA5]/10"   iconColor="text-[#4A8EA5]"   label="GIT" value="0" subtitle="in transit" />
+            <KPICard variant="detailed" icon="fa-circle-exclamation"  iconBg="bg-warning/10"     iconColor="text-warning"     label="Damaged" value="10.9K"                        subtitle="reported damage" />
+          </KpiCarousel>
+        ) : (
+          <div className="grid grid-cols-4 gap-3">
+            <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-success/10"     iconColor="text-success"     label="SOH"     value="101.7K"     subtitle={pageReady ? `${stockRows.length} SKUs` : '—'} />
+            <KPICard variant="detailed" icon="fa-cart-shopping"       iconBg="bg-surface-container" iconColor="text-primary" label="Ordered" value="0" subtitle="total PO quantity" />
+            <KPICard variant="detailed" icon="fa-route"          iconBg="bg-[#4A8EA5]/10"   iconColor="text-[#4A8EA5]"   label="GIT" value="0" subtitle="in transit" />
+            <KPICard variant="detailed" icon="fa-circle-exclamation"  iconBg="bg-warning/10"     iconColor="text-warning"     label="Damaged" value="10.9K"                        subtitle="reported damage" />
+          </div>
+        )}
       </section>
 
       {/* ── Issued — Center to Hub ──────────────────────────────────────── */}
@@ -507,7 +526,9 @@ function LlinProgram() {
           {pageReady ? (
           <BaseTable
             columns={[
-              { key: 'ProductCN', label: 'Item' },
+              { key: 'ProductCN', label: 'Item',
+                className: 'sticky left-0 z-10 bg-white',
+                headerClassName: 'sticky left-0 z-20 bg-[#CFD8DC]' },
               { key: 'SS', label: 'Status', render: (row) => (
                 <span className="inline-flex rounded bg-warning/15 px-2.5 py-1 text-[11px] font-bold text-warning">{row.SS}</span>
               )},
@@ -535,21 +556,19 @@ function LlinProgram() {
         <ProgramPanel
           title="Distribution: Planned vs Actual"
           subtitle={`${apiDistribution.length} distribution records`}
-          action={<div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <label className="text-caption text-on-surface-variant whitespace-nowrap">Year:</label>
-              <select
-                value={distributionYear}
-                onChange={handleDistributionYearChange}
-                className="h-8 min-w-[100px] rounded-lg border border-outline-variant bg-white px-2 text-body-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10"
-                aria-label="Filter distribution by fiscal year"
-              >
-                {yearsList.map((yr) => <option key={yr} value={yr}>{yr}</option>)}
-              </select>
-            </div>
-            <IconButton variant="refresh" onClick={refreshDistribution} loading={refreshing['distribution']} />
-          </div>}
+          action={<IconButton variant="refresh" onClick={refreshDistribution} loading={refreshing['distribution']} />}
         >
+          <div className="flex items-center gap-1.5 px-5 py-3 border-b border-outline-variant">
+            <label className="text-caption text-on-surface-variant whitespace-nowrap">Year:</label>
+            <select
+              value={distributionYear}
+              onChange={handleDistributionYearChange}
+              className="h-8 min-w-[100px] rounded-lg border border-outline-variant bg-white px-2 text-body-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10"
+              aria-label="Filter distribution by fiscal year"
+            >
+              {yearsList.map((yr) => <option key={yr} value={yr}>{yr}</option>)}
+            </select>
+          </div>
           {apiDistribution.length > 0 ? (
             <BaseTable
               pagination={{
@@ -560,7 +579,9 @@ function LlinProgram() {
                 onChange: (page) => setDistributionPage(page),
               }}
               columns={[
-                { key: 'region', label: 'Region' },
+                { key: 'region', label: 'Region',
+                  className: 'sticky left-0 z-10 bg-white',
+                  headerClassName: 'sticky left-0 z-20 bg-[#CFD8DC]' },
                 { key: 'zone', label: 'Zone' },
                 { key: 'woreda', label: 'Woreda' },
                 { key: 'planned', label: 'Planned Qty.', render: (row) => formatNumber(row.planned) },
@@ -603,7 +624,9 @@ function LlinProgram() {
         >
           <BaseTable
             columns={[
-              { key: 'po', label: 'PO Number' },
+              { key: 'po', label: 'PO Number',
+                className: 'sticky left-0 z-10 bg-white',
+                headerClassName: 'sticky left-0 z-20 bg-[#CFD8DC]' },
               { key: 'supplier', label: 'Supplier' },
               { key: 'ordered', label: 'Ordered', render: (row) => formatNumber(row.ordered) },
               { key: 'shipped', label: 'Shipped', render: (row) => formatNumber(row.shipped) },
@@ -625,7 +648,7 @@ function LlinProgram() {
 
       {/* ── Mini Tables ─────────────────────────────────────────────────── */}
       <section id="llin-mini">
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <ProgramPanel title="Manufacturer Summary" action={<IconButton variant="info" contentId="program-mini-table" />}>
             {sectionLoaded['manufacturer'] ? (
             <BaseTable
@@ -693,28 +716,28 @@ function LlinProgram() {
 
       {/* ── Funding Source + Distribution by Facility Type ──────────────── */}
       <section id="llin-procurement">
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <section>
           {!sectionLoaded['funding'] ? <PanelSkeleton /> : (
           <ProgramPanel
             title="Funding Source"
             subtitle="Procurement funding share"
             action={<div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5">
-                <label className="text-caption text-on-surface-variant whitespace-nowrap">Year:</label>
-                <select
-                  value={fundingYear}
-                  onChange={handleFundingYearChange}
-                  className="h-8 min-w-[100px] rounded-lg border border-outline-variant bg-white px-2 text-body-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10"
-                  aria-label="Filter funding source by fiscal year"
-                >
-                  {yearsList.map((yr) => <option key={yr} value={yr}>{yr}</option>)}
-                </select>
-              </div>
               <IconButton variant="refresh" onClick={refreshFunding} loading={refreshing['funding']} />
               <IconButton variant="info" contentId="program-funding-source" />
             </div>}
           >
+            <div className="flex items-center gap-1.5 px-5 py-3 border-b border-outline-variant">
+              <label className="text-caption text-on-surface-variant whitespace-nowrap">Year:</label>
+              <select
+                value={fundingYear}
+                onChange={handleFundingYearChange}
+                className="h-8 min-w-[100px] rounded-lg border border-outline-variant bg-white px-2 text-body-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10"
+                aria-label="Filter funding source by fiscal year"
+              >
+                {yearsList.map((yr) => <option key={yr} value={yr}>{yr}</option>)}
+              </select>
+            </div>
             <div className="flex h-64 items-center justify-center">
               {fundingChart.length > 0 ? (
                 <div className="w-[320px]">
@@ -733,21 +756,21 @@ function LlinProgram() {
             title="Distribution by Facility Type"
             subtitle="Receipt by facility type"
             action={<div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5">
-                <label className="text-caption text-on-surface-variant whitespace-nowrap">Year:</label>
-                <select
-                  value={facilityYear}
-                  onChange={handleFacilityYearChange}
-                  className="h-8 min-w-[100px] rounded-lg border border-outline-variant bg-white px-2 text-body-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10"
-                  aria-label="Filter facility distribution by fiscal year"
-                >
-                  {yearsList.map((yr) => <option key={yr} value={yr}>{yr}</option>)}
-                </select>
-              </div>
               <IconButton variant="refresh" onClick={refreshFacility} loading={refreshing['facility']} />
               <IconButton variant="info" contentId="program-facility-distribution" />
             </div>}
           >
+            <div className="flex items-center gap-1.5 px-5 py-3 border-b border-outline-variant">
+              <label className="text-caption text-on-surface-variant whitespace-nowrap">Year:</label>
+              <select
+                value={facilityYear}
+                onChange={handleFacilityYearChange}
+                className="h-8 min-w-[100px] rounded-lg border border-outline-variant bg-white px-2 text-body-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/10"
+                aria-label="Filter facility distribution by fiscal year"
+              >
+                {yearsList.map((yr) => <option key={yr} value={yr}>{yr}</option>)}
+              </select>
+            </div>
             {facilityTypeChart.length > 0 ? (
               <div className="flex h-64 items-center justify-center">
                 <div className="w-[320px]">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
+import KPICard from '../../components/KPICard';
+import KpiCarousel from '../../components/KpiCarousel';
 import ProgramPanel from '../../components/program/ProgramPanel';
 import SectionNavigator from '../../components/SectionNavigator';
 import BaseTable from '../../components/BaseTable';
@@ -42,6 +43,15 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
   const [distributionType, setDistributionType] = useState<'centerToHub' | 'hubToFacility'>('centerToHub');
   const [environmentCode, setEnvironmentCode] = useState('');
   const [hubList, setHubList] = useState<{ code: string; name: string }[]>([]);
+
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => { LookUp.getFiscalYearList().then((r) => {
       const years = (r?.data?.Data || [])
@@ -134,7 +144,15 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
 
       {/* ── Overview: KPI cards ──────────────────────────────────────────── */}
       <section id="cc-kpis">
-        <AutoScrollKPIRow cards={kpiCards} />
+        {isMobile ? (
+          <KpiCarousel>
+            {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
+          </KpiCarousel>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-md mb-lg">
+            {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
+          </div>
+        )}
       </section>
 
       {error && (
@@ -147,7 +165,7 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
         </div>
       )}
 
-      <section id="cc-distribution" className="grid grid-cols-2 gap-5">
+      <section id="cc-distribution" className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <ProgramPanel title="Distribution by Facility Type" subtitle="Issued quantity by product and facility type" action={<YearSelect label="" value={facilityYear} onChange={setFacilityYear} />}>
           <div className="-mt-3 px-5 pb-5">
             {facility.loading ? (
@@ -173,7 +191,7 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
       </section>
 
       {/* ── Procurement Agents + Funding Source ──────────────────────────── */}
-      <section id="cc-agents" className="grid grid-cols-2 gap-5">
+      <section id="cc-agents" className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <ProgramPanel title="Procurement Agents" subtitle="PO line count by product and funding source"
           action={<div className="flex items-center gap-2"><YearSelect label="" value={procurerYear} onChange={setProcurerYear} /><IconButton variant="expand" data={agents.data || []} title="Procurement Agents" /><IconButton variant="info" contentId="program-procurement-agents" /></div>}>
           <div className="-mt-3 px-5 pb-5">
@@ -221,6 +239,8 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
           <ProgramPanel
             title={distributionType === 'hubToFacility' ? 'Issued — Hub to Facility' : 'Issued — Center to Hub'}
             subtitle="Issued items by flow type and month"
+            stackOnMobile
+            titleAction={<IconButton variant="info" contentId="program-issued-items" />}
             action={
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
@@ -242,7 +262,6 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
                   <option value="centerToHub">Center to Hub</option>
                   <option value="hubToFacility">Hub to Facility</option>
                 </select>
-                <IconButton variant="info" contentId="program-issued-items" />
               </div>
             }
           >
