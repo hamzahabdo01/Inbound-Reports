@@ -381,6 +381,30 @@ function ProgramItemDetail({
     if (fetchKeyRef.current === key) return;
     fetchKeyRef.current = key;
 
+    setLoaded({});
+    setApiNationalMos(null);
+    setApiStockUtil([]);
+    setApiPipeline([]);
+    setApiExpiryBkdn([]);
+    setApiDaysOos([]);
+    setApiPoRc([]);
+    setApiManufacturers([]);
+    setApiSuppliers([]);
+    setApiCountries([]);
+    setApiReceived([]);
+    setApiIssued([]);
+    setApiFunding([]);
+    setApiFacilityDist([]);
+    setApiOwnershipDist([]);
+    setApiRegionDist([]);
+    setApiBinCard([]);
+    setApiProcurer([]);
+    setUnit('');
+    setUnitLoaded(false);
+
+    const mainEl = document.querySelector('main');
+    if (mainEl) mainEl.scrollTop = 0;
+
     const today = currentDate || new Date().toISOString();
     const todaySlash = formatDateForApi(today, 'slash');
     const todayDash = formatDateForApi(today, 'dash');
@@ -856,7 +880,7 @@ function ProgramItemDetail({
         onSelectItem={onSelectItem}
       />
 
-      <div className="sticky top-[98px] z-[8] -mx-lg -mt-1 border-b border-outline-variant/40 bg-[#F6FAFC]/95 px-md py-2 shadow-sm backdrop-blur sm:px-lg shrink-0">
+      <div className="sticky top-[98px] z-[8] -mx-lg border-b border-outline-variant/40 bg-[#F6FAFC]/95 px-md py-2 shadow-sm backdrop-blur sm:px-lg shrink-0">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <button
@@ -872,6 +896,7 @@ function ProgramItemDetail({
         </div>
       </div>
 
+      <div className="space-y-5">
       {loaded.overview ? (
       <section id="pd-overview">
         <div className="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)] items-stretch gap-4 my-3">
@@ -1153,6 +1178,7 @@ function ProgramItemDetail({
       ) : (
         <PanelSkeleton rows={4} height="h-52" />
       )}
+    </div>
     </div>
   );
 }

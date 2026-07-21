@@ -186,7 +186,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
     <div className={`fixed inset-0 z-50 flex transition-all duration-300 ${collapsed ? 'pointer-events-none' : ''}`}>
       <div className={`fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${collapsed ? 'opacity-0' : 'opacity-100'}`} onClick={onClose} />
       <aside className={`relative w-[240px] flex flex-col h-screen bg-sidebar-bg text-white shadow-2xl transition-transform duration-300 ${collapsed ? '-translate-x-full' : 'translate-x-0'}`}>
-        <div className="flex-1 overflow-y-hidden px-4 py-5 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto px-4 py-5 scrollbar-thin">
           <div className="flex items-center justify-between mb-8">
             <div className="text-sm font-bold text-white tracking-tight truncate">Fanos Dashboard</div>
             <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-lg shadow-sm bg-sidebar-accent text-primary hover:brightness-110 transition-all shrink-0" aria-label="Close sidebar">
@@ -197,8 +197,8 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
             {navItems.map((item) => item.children ? navGroup(item) : navLink(item))}
           </nav>
         </div>
-        <div className="px-3 py-2 border-t border-white/10 space-y-2">
-          <button onClick={onLogout} className="w-full flex items-center gap-3 py-2 rounded-lg text-sm text-white/50 hover:text-error hover:bg-white/5 transition-all duration-150 px-3">
+        <div className="px-3 py-2 border-t border-white/10">
+          <button onClick={onLogout} className="w-full flex items-center gap-3 py-2 rounded-lg text-sm text-white hover:text-white hover:bg-white/5 transition-all duration-150 px-3">
             <i className="fa-solid fa-right-from-bracket text-sm w-4 text-center shrink-0"></i>
             <span>Logout</span>
           </button>
@@ -234,7 +234,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
       <div className="px-2 xl:px-3 py-2 border-t border-white/10 space-y-2">
         <button
           onClick={onLogout}
-          className={`w-full flex items-center ${collapsed ? 'justify-center gap-0' : 'justify-start gap-3'} py-2 rounded-lg text-sm text-white/50 hover:text-error hover:bg-white/5 transition-all duration-150 ${collapsed ? 'px-0' : 'px-3'}`}
+          className={`w-full flex items-center ${collapsed ? 'justify-center gap-0' : 'justify-start gap-3'} py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all duration-150 ${collapsed ? 'px-0' : 'px-3'}`}
           title="Logout"
         >
           <i className="fa-solid fa-right-from-bracket text-sm w-4 text-center shrink-0"></i>
