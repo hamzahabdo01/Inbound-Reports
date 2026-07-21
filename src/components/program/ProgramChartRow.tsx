@@ -7,7 +7,7 @@ import IconButton from '../IconButton';
  * Used consistently across all program pages.
  * Automatically includes an ExpandButton beside any rightAction.
  */
-function ProgramChartRow({ leftTitle, leftSubtitle, leftChart, leftAction, rightTitle, rightSubtitle, rightData, rightAction, rightExtra, rightLoading }: any) {
+function ProgramChartRow({ leftTitle, leftSubtitle, leftChart, leftAction, rightTitle, rightSubtitle, rightData, rightAction, rightExtra, rightLoading, rightPieClassName }: any) {
   const rightActions = (
     <div className="flex items-center gap-1">
       <IconButton variant="expand" data={rightData} title={rightTitle} />
@@ -27,7 +27,7 @@ function ProgramChartRow({ leftTitle, leftSubtitle, leftChart, leftAction, right
             <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="pb-3"><PieChart data={rightData} /></div>
+          <div className={`pb-3 ${rightPieClassName ?? ''}`}><PieChart data={rightData} /></div>
         )}
       </ProgramPanel>
     </div>

@@ -1309,6 +1309,7 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
           }
           rightTitle="Distribution by Facility Type"
           rightSubtitle="Share by facility type"
+          rightPieClassName="pt-8"
           rightData={(() => {
             const types = ['HealthCenter', 'Hospital', 'Woreda', 'Others'];
             const totals = types.map((t) => ({

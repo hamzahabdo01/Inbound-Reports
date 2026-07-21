@@ -11,8 +11,8 @@ const formatCompact = (v) => {
 const statuses = [
   { label: 'Excess', color: '#0B4F54' },
   { label: 'Normal', color: '#059669' },
-  { label: 'Below Min', color: '#D97706' },
-  { label: 'Below EOP', color: '#EA580C' },
+  { label: 'Below Min', color: '#CA8A04' },
+  { label: 'Below EOP', color: '#D94D14' },
   { label: 'Stocked Out', color: '#BA1A1A' },
 ];
 
