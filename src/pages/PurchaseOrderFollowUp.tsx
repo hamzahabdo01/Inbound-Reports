@@ -3,6 +3,7 @@ import { parseCSV, parseQuantity } from '../utils/csvParser';
 import { purchaseOrderCSVData } from '../data/purchaseOrderData';
 import KPICard from '../components/KPICard';
 import KpiCarousel from '../components/KpiCarousel';
+import AutoScrollKPIRow from '../components/AutoScrollKPIRow';
 import SearchInput from '../components/SearchInput';
 import SimplePagination from '../components/SimplePagination';
 import EmptyState from '../components/EmptyState';
@@ -207,8 +208,8 @@ function PurchaseOrderFollowUp() {
           {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
         </KpiCarousel>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-md mb-lg">
-          {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
+        <div className="mb-lg">
+          <AutoScrollKPIRow cards={kpiCards} />
         </div>
       )}
 

@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import KPICard from '../../components/KPICard';
 import KpiCarousel from '../../components/KpiCarousel';
+import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
 import ProgramFilters from '../../components/program/ProgramFilters';
 import ProgramPanel from '../../components/program/ProgramPanel';
 import ProgramChartRow from '../../components/program/ProgramChartRow';
@@ -1127,6 +1128,7 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
   if (selectedProduct && selectedStockRow) {
     return (
       <ProgramItemDetail
+        key={selectedStockRow?.ProductSN}
         programCode={programCode}
         programName={programName}
         productName={selectedProduct}
@@ -1159,14 +1161,14 @@ function GenericProgramDashboard({ programCode, programName }: GenericProgramDas
             <KPICard variant="detailed" icon="fa-clock-rotate-left"  iconBg="bg-warning/10"         iconColor="text-warning"     label="Near Exp." value={kpiData.nExpiry} subtitle="MOS < 3 months" />
           </KpiCarousel>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-6 gap-md">
-            <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-success/10"        iconColor="text-success"     label="SOH"       value={kpiData.soh}     subtitle={pageReady ? `${stockRows.length} SKUs` : '—'} />
-            <KPICard variant="detailed" icon="fa-truck-ramp-box"     iconBg="bg-[#4A8EA5]/10"      iconColor="text-[#4A8EA5]"   label="Issued"    value={kpiData.issued}  subtitle="total issued" />
-            <KPICard variant="detailed" icon="fa-layer-group"        iconBg="bg-surface-container"  iconColor="text-primary"     label="Planned"   value={kpiData.planned} subtitle={pageReady ? `${purchaseOrders.length} PO lines` : '—'} />
-            <KPICard variant="detailed" icon="fa-route"              iconBg="bg-success/10"         iconColor="text-success"     label="GIT"       value={kpiData.git}     subtitle="in transit" />
-            <KPICard variant="detailed" icon="fa-circle-exclamation" iconBg="bg-error/10"           iconColor="text-error"       label="Expired"   value={kpiData.expired} subtitle="expired value" />
-            <KPICard variant="detailed" icon="fa-clock-rotate-left"  iconBg="bg-warning/10"         iconColor="text-warning"     label="Near Exp." value={kpiData.nExpiry} subtitle="MOS < 3 months" />
-          </div>
+          <AutoScrollKPIRow cards={[
+            { icon: "fa-boxes-stacked", iconBg: "bg-success/10", iconColor: "text-success", label: "SOH", value: kpiData.soh, subtitle: pageReady ? `${stockRows.length} SKUs` : '—' },
+            { icon: "fa-truck-ramp-box", iconBg: "bg-[#4A8EA5]/10", iconColor: "text-[#4A8EA5]", label: "Issued", value: kpiData.issued, subtitle: "total issued" },
+            { icon: "fa-layer-group", iconBg: "bg-surface-container", iconColor: "text-primary", label: "Planned", value: kpiData.planned, subtitle: pageReady ? `${purchaseOrders.length} PO lines` : '—' },
+            { icon: "fa-route", iconBg: "bg-success/10", iconColor: "text-success", label: "GIT", value: kpiData.git, subtitle: "in transit" },
+            { icon: "fa-circle-exclamation", iconBg: "bg-error/10", iconColor: "text-error", label: "Expired", value: kpiData.expired, subtitle: "expired value" },
+            { icon: "fa-clock-rotate-left", iconBg: "bg-warning/10", iconColor: "text-warning", label: "Near Exp.", value: kpiData.nExpiry, subtitle: "MOS < 3 months" },
+          ]} />
         )}
         <ProgramFilters
           query={query}           onQueryChange={setQuery}

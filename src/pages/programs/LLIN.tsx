@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import KPICard from '../../components/KPICard';
 import KpiCarousel from '../../components/KpiCarousel';
+import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
 import ProgramPanel from '../../components/program/ProgramPanel';
 import SectionNavigator from '../../components/SectionNavigator';
 import BaseTable from '../../components/BaseTable';
@@ -494,12 +495,12 @@ function LlinProgram() {
             <KPICard variant="detailed" icon="fa-circle-exclamation"  iconBg="bg-warning/10"     iconColor="text-warning"     label="Damaged" value="10.9K"                        subtitle="reported damage" />
           </KpiCarousel>
         ) : (
-          <div className="grid grid-cols-4 gap-3">
-            <KPICard variant="detailed" icon="fa-boxes-stacked"      iconBg="bg-success/10"     iconColor="text-success"     label="SOH"     value="101.7K"     subtitle={pageReady ? `${stockRows.length} SKUs` : '—'} />
-            <KPICard variant="detailed" icon="fa-cart-shopping"       iconBg="bg-surface-container" iconColor="text-primary" label="Ordered" value="0" subtitle="total PO quantity" />
-            <KPICard variant="detailed" icon="fa-route"          iconBg="bg-[#4A8EA5]/10"   iconColor="text-[#4A8EA5]"   label="GIT" value="0" subtitle="in transit" />
-            <KPICard variant="detailed" icon="fa-circle-exclamation"  iconBg="bg-warning/10"     iconColor="text-warning"     label="Damaged" value="10.9K"                        subtitle="reported damage" />
-          </div>
+          <AutoScrollKPIRow cards={[
+            { icon: "fa-boxes-stacked", iconBg: "bg-success/10", iconColor: "text-success", label: "SOH", value: "101.7K", subtitle: pageReady ? `${stockRows.length} SKUs` : '—' },
+            { icon: "fa-cart-shopping", iconBg: "bg-surface-container", iconColor: "text-primary", label: "Ordered", value: "0", subtitle: "total PO quantity" },
+            { icon: "fa-route", iconBg: "bg-[#4A8EA5]/10", iconColor: "text-[#4A8EA5]", label: "GIT", value: "0", subtitle: "in transit" },
+            { icon: "fa-circle-exclamation", iconBg: "bg-warning/10", iconColor: "text-warning", label: "Damaged", value: "10.9K", subtitle: "reported damage" },
+          ]} />
         )}
       </section>
 

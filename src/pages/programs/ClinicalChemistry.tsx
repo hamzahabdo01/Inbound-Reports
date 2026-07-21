@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import KPICard from '../../components/KPICard';
 import KpiCarousel from '../../components/KpiCarousel';
+import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
 import ProgramPanel from '../../components/program/ProgramPanel';
 import SectionNavigator from '../../components/SectionNavigator';
 import BaseTable from '../../components/BaseTable';
@@ -149,9 +150,7 @@ function ClinicalChemistry({ programType = 'HPR' }: any) {
             {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
           </KpiCarousel>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-md mb-lg">
-            {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
-          </div>
+          <AutoScrollKPIRow cards={kpiCards} />
         )}
       </section>
 

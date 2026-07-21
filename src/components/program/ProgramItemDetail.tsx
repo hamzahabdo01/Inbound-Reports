@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useLayoutEffect } from 'react';
 import ProgramPanel from './ProgramPanel';
 import ProgramBarChart from './ProgramBarChart';
 import ProgramStackedBarChart from './ProgramStackedBarChart';
@@ -339,8 +339,11 @@ function ProgramItemDetail({
     }).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  useLayoutEffect(() => {
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTop = 0;
+    }
   }, []);
 
   const procurerKeyRef = useRef('');

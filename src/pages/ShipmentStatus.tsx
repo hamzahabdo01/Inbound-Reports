@@ -6,6 +6,7 @@ import { shipmentStatusHPRData, shipmentStatusRDFData } from '../data/shipmentSt
 import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../data/purchaseOrderDetailData';
 import KPICard from '../components/KPICard';
 import KpiCarousel from '../components/KpiCarousel';
+import AutoScrollKPIRow from '../components/AutoScrollKPIRow';
 import PieChart from '../components/PieChart';
 import HBarChart from '../components/HBarChart';
 import { Table, Td } from './po/poShared';
@@ -489,8 +490,8 @@ function ShipmentStatus() {
               {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
             </KpiCarousel>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-md mb-lg">
-              {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
+            <div className="mb-lg">
+              <AutoScrollKPIRow cards={kpiCards} />
             </div>
           )}
 

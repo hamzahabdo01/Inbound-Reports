@@ -83,7 +83,7 @@ export default function AutoScrollKPIRow({ cards, speed = 0.04 }: AutoScrollKPIR
       )}
       <div
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto py-1 snap-x snap-mandatory"
+        className={`flex gap-3 overflow-x-auto py-1 ${paused ? 'snap-x snap-mandatory' : ''}`}
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         onClick={togglePause}
         onTouchStart={handleTouchStart}
@@ -92,7 +92,7 @@ export default function AutoScrollKPIRow({ cards, speed = 0.04 }: AutoScrollKPIR
       >
         <style>{`.askr-hide-scrollbar::-webkit-scrollbar { display: none; }`}</style>
         {displayCards.map((c, i) => (
-          <div key={`${c.label || i}-${i}`} className={`shrink-0 snap-center ${isOverflowing ? 'w-[280px]' : 'flex-1 min-w-0'}`}>
+          <div key={`${c.label || i}-${i}`} className={`shrink-0 ${paused ? 'snap-center' : ''} ${isOverflowing ? 'w-[280px]' : 'flex-1 min-w-0'}`}>
             <KPICard variant="detailed" {...c} />
           </div>
         ))}
