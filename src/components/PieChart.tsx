@@ -87,7 +87,7 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
                 type="button"
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-body-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs sm:text-body-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
               >
                 <span className="h-3 w-3 shrink-0 rounded" style={{ backgroundColor: slice.color }} />
                 <span className="min-w-0 flex-1 leading-snug">{slice.label}</span>
@@ -166,7 +166,7 @@ export default function PieChart({ data, totalLabel, showCenterLabel = true, leg
               type="button"
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
-              className={`inline-flex items-center gap-2 ${isCompact ? 'text-[11px]' : 'text-body-sm'} text-on-surface-variant hover:text-on-surface`}
+              className={`inline-flex items-center gap-2 ${isCompact ? 'text-[11px]' : 'text-xs sm:text-body-sm'} text-on-surface-variant hover:text-on-surface`}
             >
               <span className={`${isCompact ? 'h-2.5 w-2.5' : 'h-3 w-3'} rounded`} style={{ backgroundColor: slice.color }} />
               <span className={isCompact ? '' : 'whitespace-nowrap'}>{slice.label}</span>
