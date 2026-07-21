@@ -156,8 +156,8 @@ function ProgramItemSwitcher({ items = [], selectedItem, onSelectItem }: any) {
   if (!items.length || !onSelectItem) return null;
 
   return (
-    <div className="sticky top-[50px] z-[9] -mx-lg border-b border-outline-variant bg-[#F6FAFC]/95 px-lg py-1.5 backdrop-blur">
-      <div className="relative">
+    <div className="sticky top-[50px] z-[9] -mx-lg border-b border-outline-variant/40 bg-[#F6FAFC]/95 px-md py-2 shadow-sm backdrop-blur sm:px-lg shrink-0">
+
         <div className="program-item-switcher-scroll flex items-center gap-1.5 overflow-x-auto pb-1">
           {items.map((item) => {
             const label = typeof item === 'string' ? item : item.label;
@@ -184,7 +184,6 @@ function ProgramItemSwitcher({ items = [], selectedItem, onSelectItem }: any) {
           })}
         </div>
         <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-[#F6FAFC] to-transparent" />
-      </div>
     </div>
   );
 }
@@ -341,7 +340,7 @@ function ProgramItemDetail({
   }, []);
 
   useEffect(() => {
-    // Component mount/unmount tracking
+    window.scrollTo(0, 0);
   }, []);
 
   const procurerKeyRef = useRef('');
@@ -846,7 +845,7 @@ function ProgramItemDetail({
   ];
 
   return (
-    <div className="space-y-5">
+    <div>
       <SectionNavigator sections={DETAIL_SECTIONS} scrollOffset={160} />
       <ProgramItemSwitcher
         items={itemOptions}
@@ -854,7 +853,7 @@ function ProgramItemDetail({
         onSelectItem={onSelectItem}
       />
 
-      <div className="sticky top-[98px] z-[8] -mx-lg bg-[#F6FAFC]/95 px-lg py-1.5 backdrop-blur border-b border-outline-variant">
+      <div className="sticky top-[98px] z-[8] -mx-lg border-b border-outline-variant/40 bg-[#F6FAFC]/95 px-md py-2 shadow-sm backdrop-blur sm:px-lg shrink-0">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <button
@@ -872,7 +871,7 @@ function ProgramItemDetail({
 
       {loaded.overview ? (
       <section id="pd-overview">
-        <div className="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)] items-stretch gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)] items-stretch gap-4 my-3">
           <div className="order-2 lg:order-1">
           <NationalMosBelowEop stockRow={apiNationalMos} unit={unit} unitLoaded={unitLoaded} />
           </div>
@@ -964,7 +963,7 @@ function ProgramItemDetail({
 
         <DetailChartPanel title="Pipeline" contentId="pipeline">
           {pipelineHubData.length > 0 ? (
-            <ProgramStackedBarChart data={pipelineHubData} height={220} />
+            <ProgramStackedBarChart data={pipelineHubData} height={220} horizontal={isMobile} />
           ) : (
             <div className="flex h-64 items-center justify-center text-body-sm text-on-surface-variant">No data</div>
           )}
