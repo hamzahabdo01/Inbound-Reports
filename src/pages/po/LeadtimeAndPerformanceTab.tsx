@@ -27,6 +27,10 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
   const [supplierRiskLandscape, setSupplierRiskLandscape] = useState(false);
   const supplierPerfScrollRef = useRef<HTMLDivElement>(null);
   const supplierRiskScrollRef = useRef<HTMLDivElement>(null);
+  const [bondStatusFilter, setBondStatusFilter] = useState('All');
+  const BOND_STATUS_PRIORITY = { 'VALID': 0, 'RECEIVED_EXPIRY_MISSING': 1, 'SUBMITTED_NOT_RECEIVED': 2, 'EXPIRING_WITHIN_30_DAYS': 3, 'EXPIRED': 4, 'MISSING': 5 };
+  const sortedBonds = [...(data.performanceBonds || [])].sort((a, b) => (BOND_STATUS_PRIORITY[a.status] ?? 99) - (BOND_STATUS_PRIORITY[b.status] ?? 99));
+  const filteredBonds = bondStatusFilter === 'All' ? sortedBonds : sortedBonds.filter(b => b.status === bondStatusFilter);
 
   return (
     <>
@@ -152,8 +156,8 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                   className="overflow-x-auto relative"
                   style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' } as any}
                 >
-                  <div style={{ minWidth: isMobile ? (supplierPerfLandscape ? '1200px' : 'auto') : '1200px', transition: 'min-width 180ms ease' }}>
-                    <Table page={tp('supplier-perf')} setPage={sp('supplier-perf')}
+<div style={{ minWidth: isMobile ? (supplierPerfLandscape ? '1200px' : 'auto') : 'auto', transition: 'min-width 180ms ease' }}>
+                     <Table page={tp('supplier-perf')} setPage={sp('supplier-perf')}
                   headers={[
                     { key: 'supplier', label: 'Supplier', className: 'truncate' },
                     { key: 'country', label: 'Country', className: 'text-center' },
@@ -216,8 +220,8 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                   className="overflow-x-auto relative"
                   style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' } as any}
                 >
-                  <div style={{ minWidth: isMobile ? (supplierRiskLandscape ? '1200px' : 'auto') : '1200px', transition: 'min-width 180ms ease' }}>
-                    <Table page={tp('supplier-risk')} setPage={sp('supplier-risk')}
+<div style={{ minWidth: isMobile ? (supplierRiskLandscape ? '1200px' : 'auto') : 'auto', transition: 'min-width 180ms ease' }}>
+                     <Table page={tp('supplier-risk')} setPage={sp('supplier-risk')}
                   headers={[
                     { key: 'supplier', label: 'Supplier', className: 'truncate' },
                     { key: 'country', label: 'Country', className: `text-center ${supplierRiskLandscape ? '' : 'hidden md:table-cell'}` },
@@ -276,26 +280,44 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                 acc[b.status].total += b.amount;
                 return acc;
               }, {});
-              const activeCount = (statusGroups['VALID']?.count || 0) + (statusGroups['RECEIVED_EXPIRY_MISSING']?.count || 0);
+              const activeCount = (statusGroups['VALID']?.count || 0);
               const pendingCount = (statusGroups['SUBMITTED_NOT_RECEIVED']?.count || 0) + (statusGroups['EXPIRING_WITHIN_30_DAYS']?.count || 0);
-              const expiredCount = (statusGroups['EXPIRED']?.count || 0) + (statusGroups['MISSING']?.count || 0);
+              const expiredCount = (statusGroups['EXPIRED']?.count || 0);
+              const missingCount = (statusGroups['MISSING']?.count || 0);
+              const submittedNotRecv = statusGroups['SUBMITTED_NOT_RECEIVED'];
+              const atRiskAmt = (statusGroups['EXPIRING_WITHIN_30_DAYS']?.total || 0) + (statusGroups['EXPIRED']?.total || 0) + (statusGroups['MISSING']?.total || 0);
               return (
                 <>
                   {isMobile ? (
                     <KpiCarousel>
                       <KPICard variant="detailed" icon="fa-file-contract" iconBg="bg-primary/10" iconColor="text-primary" label="Total Bonds" value={bonds.length.toLocaleString()} subtitle={`Value: $${formatAmount(totalAmount)}`} />
-                      <KPICard variant="detailed" icon="fa-check-circle" iconBg="bg-success/10" iconColor="text-success" label="Valid / Received" value={activeCount.toLocaleString()} subtitle="in good standing" />
-                      <KPICard variant="detailed" icon="fa-clock" iconBg="bg-warning/10" iconColor="text-warning" label="Submitted / Expiring" value={pendingCount.toLocaleString()} subtitle="pending verification" />
-                      <KPICard variant="detailed" icon="fa-exclamation-triangle" iconBg="bg-error/10" iconColor="text-error" label="Expired / Missing" value={expiredCount.toLocaleString()} subtitle="requires action" />
+                      <KPICard variant="detailed" icon="fa-check-circle" iconBg="bg-success/10" iconColor="text-success" label="Valid" value={activeCount.toLocaleString()} subtitle="in good standing" />
+                      <KPICard variant="detailed" icon="fa-paper-plane" iconBg="bg-warning/10" iconColor="text-warning" label="Submitted Not Received" value={submittedNotRecv?.count.toLocaleString() || '0'} subtitle={`${formatAmount(submittedNotRecv?.total || 0)} ETB`} />
+                      <KPICard variant="detailed" icon="fa-calendar-xmark" iconBg="bg-error/10" iconColor="text-error" label="Expired" value={expiredCount.toLocaleString()} subtitle={`${formatAmount(statusGroups['EXPIRED']?.total || 0)} ETB`} />
+                      <KPICard variant="detailed" icon="fa-circle-exclamation" iconBg="bg-error/10" iconColor="text-error" label="Missing" value={missingCount.toLocaleString()} subtitle={`${formatAmount(statusGroups['MISSING']?.total || 0)} ETB`} />
+                      <KPICard variant="detailed" icon="fa-triangle-exclamation" iconBg="bg-error/10" iconColor="text-error" label="At Risk Open Value" value={`${formatAmount(atRiskAmt)} ETB`} subtitle="expiring / expired / missing" />
                     </KpiCarousel>
                   ) : (
                     <AutoScrollKPIRow cards={[
                       { icon: 'fa-file-contract', iconBg: 'bg-primary/10', iconColor: 'text-primary', label: 'Total Bonds', value: bonds.length.toLocaleString(), subtitle: `Value: $${formatAmount(totalAmount)}` },
-                      { icon: 'fa-check-circle', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Valid / Received', value: activeCount.toLocaleString(), subtitle: 'in good standing' },
-                      { icon: 'fa-clock', iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Submitted / Expiring', value: pendingCount.toLocaleString(), subtitle: 'pending verification' },
-                      { icon: 'fa-exclamation-triangle', iconBg: 'bg-error/10', iconColor: 'text-error', label: 'Expired / Missing', value: expiredCount.toLocaleString(), subtitle: 'requires action' },
+                      { icon: 'fa-check-circle', iconBg: 'bg-success/10', iconColor: 'text-success', label: 'Valid', value: activeCount.toLocaleString(), subtitle: 'in good standing' },
+                      { icon: 'fa-paper-plane', iconBg: 'bg-warning/10', iconColor: 'text-warning', label: 'Submitted Not Received', value: submittedNotRecv?.count.toLocaleString() || '0', subtitle: `${formatAmount(submittedNotRecv?.total || 0)} ETB` },
+                      { icon: 'fa-calendar-xmark', iconBg: 'bg-error/10', iconColor: 'text-error', label: 'Expired', value: expiredCount.toLocaleString(), subtitle: `${formatAmount(statusGroups['EXPIRED']?.total || 0)} ETB` },
+                      { icon: 'fa-circle-exclamation', iconBg: 'bg-error/10', iconColor: 'text-error', label: 'Missing', value: missingCount.toLocaleString(), subtitle: `${formatAmount(statusGroups['MISSING']?.total || 0)} ETB` },
+                      { icon: 'fa-triangle-exclamation', iconBg: 'bg-error/10', iconColor: 'text-error', label: 'At Risk Open Value', value: `${formatAmount(atRiskAmt)} ETB`, subtitle: 'expiring / expired / missing' },
                     ]} />
                   )}
+                  <div className="flex items-center justify-between my-4">
+                    <span className="text-xs text-on-surface-variant font-medium">{filteredBonds.length} of {bonds.length} bonds</span>
+                    <select value={bondStatusFilter} onChange={(e) => setBondStatusFilter(e.target.value)}
+                      className="h-8 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      <option value="All">All Statuses</option>
+                      {[...new Set(bonds.map(b => b.status))].map(s => (
+                        <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                      ))}
+                    </select>
+                  </div>
                   <Table page={tp('bond')} setPage={sp('bond')}
                     headers={[
                       { key: 'bondNo', label: 'Bond No' },
@@ -306,7 +328,7 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                       { key: 'expiry', label: 'Expiry Date' },
                       { key: 'status', label: 'Status' },
                     ]}
-                    rows={data.performanceBonds}
+                    rows={filteredBonds}
                     renderRow={(row) => (
                       <>
                         <Td className="font-mono">{row.bondNo}</Td>

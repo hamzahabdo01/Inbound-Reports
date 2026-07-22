@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import KPICard from '../../components/KPICard';
 import KpiCarousel from '../../components/KpiCarousel';
 import IconButton from '../../components/IconButton';
 import ExportDropdown from '../../components/ExportDropdown';
-import StackedShareBar from '../../components/StackedShareBar';
-import { poStatusToStackedShareRows, formatPoValue } from './poStatusToStackedShareRows';
+import LandscapeToggle from '../../components/LandscapeToggle';
+import { formatPoValue } from './poStatusToStackedShareRows';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 
 const PROCUREMENT_STATUS_DATA = [
@@ -22,14 +22,21 @@ const PROCUREMENT_STATUS_DATA = [
   { stage: "PO Approval In Progress",        count: 1,    value: 282907.80,      pct: 0.04,  color: "#A0AEC0" }
 ];
 
-const { rows: stackedRows, colorMap: stackedColorMap } = poStatusToStackedShareRows(PROCUREMENT_STATUS_DATA);
-
 const fmtDuration = (days) => {
   if (days == null || days < 0) return null;
   return `${days}d`;
 };
 
 export default function ProcurementBreakdownTab({ data, activeSections, filteredOpenOverduePOs, overviewSearch, setOverviewSearch, overviewStatus, setOverviewStatus, procurementStatusFilter, setProcurementStatusFilter, filteredStatusDetails, tp, sp }: any) {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  const [procStatusLandscape, setProcStatusLandscape] = useState(false);
   const [itemSearch, setItemSearch] = useState('');
   const filteredOpenItems = data.openPOItemDetail?.data?.filter((row) => {
     if (!itemSearch) return true;
@@ -56,13 +63,13 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
         <section id="ppc-open-pos">
           <SectionPanel
             title="Open & Overdue Purchase Orders"
-            subtitle={`${filteredOpenOverduePOs.length} records requiring attention`}
-            action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-overdue" /><ExportDropdown headers={[{ key: 'poNo', label: 'PO No' }, { key: 'supplier', label: 'Supplier' }, { key: 'program', label: 'Program' }, { key: 'amount', label: 'Amount (ETB)' }, { key: 'issueDate', label: 'Issue Date' }, { key: 'dueDate', label: 'Due Date' }, { key: 'status', label: 'Status' }, { key: 'daysOverdue', label: 'Days Overdue' }]} rows={filteredOpenOverduePOs} filename="open-overdue-pos" /></div>}
+            subtitle={`${filteredOpenOverduePOs.filter(p => p.status === 'OPEN_OVERDUE').length} overdue schedule lines`}
+            action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-overdue" /><ExportDropdown headers={[{ key: 'poNo', label: 'PO No' }, { key: 'item', label: 'Item' }, { key: 'supplierName', label: 'Supplier' }, { key: 'materialDescription', label: 'Material' }, { key: 'poDate', label: 'PO Date' }, { key: 'deliveryDate', label: 'Delivery Date' }, { key: 'itemNetValue', label: 'Net Value (ETB)' }, { key: 'openQty', label: 'Open Qty' }, { key: 'openValue', label: 'Open Value (ETB)' }, { key: 'status', label: 'Status' }]} rows={filteredOpenOverduePOs} filename="open-overdue-pos" /></div>}
             searchBar={
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="relative">
                   <i className="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-on-surface-variant/60 text-xs"></i>
-                  <input type="text" placeholder="Search PO, supplier, program..." value={overviewSearch}
+                  <input type="text" placeholder="Search PO, supplier, material..." value={overviewSearch}
                     onChange={(e) => setOverviewSearch(e.target.value)}
                     className="pl-8 pr-3 py-1.5 h-9 rounded-md border border-outline-variant bg-white text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-full sm:w-64 transition-all"
                   />
@@ -71,50 +78,62 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
                   className="h-9 rounded-md border border-outline-variant bg-white px-3 text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="All">All Statuses</option>
-                  <option value="Open">Open</option>
-                  <option value="Overdue">Overdue</option>
+                  <option value="OPEN_OVERDUE">Open Overdue</option>
+                  <option value="DELIVERY_COMPLETED">Delivery Completed</option>
+                  <option value="FULLY_RECEIVED_OR_REDUCED">Fully Received</option>
                 </select>
               </div>
             }
           >
             {(() => {
-              const openCount = filteredOpenOverduePOs.filter((p) => p.status === 'Open').length;
-              const overdueCount = filteredOpenOverduePOs.filter((p) => p.status === 'Overdue').length;
-              const totalAmt = filteredOpenOverduePOs.reduce((s, p) => s + p.amount, 0);
-              const overduePOs = filteredOpenOverduePOs.filter((p) => p.status === 'Overdue' && p.daysOverdue);
-              const avgDays = overduePOs.length ? Math.round(overduePOs.reduce((s, p) => s + p.daysOverdue, 0) / overduePOs.length) : 0;
+              const overdue = filteredOpenOverduePOs.filter(p => p.status === 'OPEN_OVERDUE');
+              const totalNet = overdue.reduce((s, p) => s + p.itemNetValue, 0);
+              const totalOpenVal = overdue.reduce((s, p) => s + p.openValue, 0);
+              const suppliers = new Set(overdue.map(p => p.supplierName)).size;
               return (
                 <>
                 <KpiCarousel>
-                  <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-primary/10" iconColor="text-primary" label="Total Open POs" value={openCount.toLocaleString()} subtitle="awaiting action" />
-                  <KPICard variant="detailed" icon="fa-exclamation-triangle" iconBg="bg-error/10" iconColor="text-error" label="Total Overdue POs" value={overdueCount.toLocaleString()} subtitle="past due date" />
-                  <KPICard variant="detailed" icon="fa-coins" iconBg="bg-warning/10" iconColor="text-warning" label="Total Amount" value={`${totalAmt >= 1e9 ? (totalAmt / 1e9).toFixed(1) + 'B' : totalAmt >= 1e6 ? (totalAmt / 1e6).toFixed(1) + 'M' : totalAmt >= 1e3 ? (totalAmt / 1e3).toFixed(1) + 'K' : totalAmt.toLocaleString()} ETB`} subtitle="combined value" />
-                  <KPICard variant="detailed" icon="fa-clock" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Avg Overdue Duration" value={avgDays ? fmtDuration(avgDays) : '0d'} subtitle="overdue POs only" />
+                  <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-primary/10" iconColor="text-primary" label="Overdue Schedule Lines" value={overdue.length.toLocaleString()} subtitle={`${suppliers} suppliers`} />
+                  <KPICard variant="detailed" icon="fa-coins" iconBg="bg-warning/10" iconColor="text-warning" label="Total Net Value" value={`${totalNet >= 1e9 ? (totalNet / 1e9).toFixed(1) + 'B' : totalNet >= 1e6 ? (totalNet / 1e6).toFixed(1) + 'M' : totalNet >= 1e3 ? (totalNet / 1e3).toFixed(1) + 'K' : totalNet.toLocaleString()} ETB`} subtitle="item net value" />
+                  <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-error/10" iconColor="text-error" label="Total Open Value" value={`${totalOpenVal >= 1e9 ? (totalOpenVal / 1e9).toFixed(1) + 'B' : totalOpenVal >= 1e6 ? (totalOpenVal / 1e6).toFixed(1) + 'M' : totalOpenVal >= 1e3 ? (totalOpenVal / 1e3).toFixed(1) + 'K' : totalOpenVal.toLocaleString()} ETB`} subtitle="outstanding balance" />
+                  <KPICard variant="detailed" icon="fa-list" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total Open Qty" value={(() => { const v = overdue.reduce((s, p) => s + p.openQty, 0); return v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(1)}K` : v.toLocaleString(); })()} subtitle="units overdue" />
                 </KpiCarousel>
                   <Table page={tp('open-pos')} setPage={sp('open-pos')}
                     headers={[
                       { key: 'poNo', label: 'PO No' },
+                      { key: 'item', label: 'Item', className: 'text-center' },
                       { key: 'supplier', label: 'Supplier' },
-                      { key: 'program', label: 'Program' },
-                      { key: 'amount', label: 'Amount (ETB)', className: 'text-right' },
-                      { key: 'issueDate', label: 'Issue Date' },
-                      { key: 'dueDate', label: 'Due Date' },
+                      { key: 'material', label: 'Material' },
+                      { key: 'poDate', label: 'PO Date' },
+                      { key: 'deliveryDate', label: 'Delivery Date' },
+                      { key: 'netValue', label: 'Net Value (ETB)', className: 'text-right' },
+                      { key: 'openQty', label: 'Open Qty', className: 'text-right' },
+                      { key: 'openValue', label: 'Open Value (ETB)', className: 'text-right' },
                       { key: 'status', label: 'Status' },
-                      { key: 'overdue', label: 'Days Overdue', className: 'text-right' },
                     ]}
                     rows={filteredOpenOverduePOs}
-                    renderRow={(row) => (
+                    renderRow={(row) => {
+                      const statusColor = row.status === 'OPEN_OVERDUE' ? 'bg-error/10 text-error' :
+                        row.status === 'DELIVERY_COMPLETED' ? 'bg-success/10 text-success' :
+                        'bg-warning/10 text-warning';
+                      const fmt = (v: number) => {
+                        const abs = Math.abs(v);
+                        return abs >= 1e9 ? `${(abs / 1e9).toFixed(1)}B` : abs >= 1e6 ? `${(abs / 1e6).toFixed(1)}M` : abs >= 1e3 ? `${(abs / 1e3).toFixed(1)}K` : abs.toLocaleString();
+                      };
+                      return (
                       <>
                         <Td className="font-mono font-semibold">{row.poNo}</Td>
-                        <Td>{row.supplier}</Td>
-                        <Td>{row.program}</Td>
-                        <Td className="text-right font-mono font-medium">{formatAmount(row.amount)}</Td>
-                        <Td>{row.issueDate}</Td>
-                        <Td>{row.dueDate}</Td>
-                        <Td><StatusBadge status={row.status} /></Td>
-                        <Td className="text-right font-bold text-error">{row.status === 'Overdue' ? fmtDuration(row.daysOverdue) : '—'}</Td>
+                        <Td className="text-center font-mono text-on-surface-variant">{row.item}</Td>
+                        <Td className="whitespace-nowrap" title={row.supplierName}>{row.supplierName}</Td>
+                        <Td className="max-w-[200px] truncate" title={row.materialDescription}>{row.materialDescription}</Td>
+                        <Td>{row.poDate}</Td>
+                        <Td>{row.deliveryDate}</Td>
+                        <Td className="text-right font-mono font-medium">{fmt(row.itemNetValue)}</Td>
+                        <Td className="text-right font-mono">{fmt(row.openQty)}</Td>
+                        <Td className="text-right font-mono">{fmt(row.openValue)}</Td>
+                        <Td><span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md whitespace-nowrap ${statusColor}`}>{row.status.replace(/_/g, ' ')}</span></Td>
                       </>
-                    )}
+                    )}}
                   />
                 </>
               );
@@ -250,11 +269,42 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
       {activeSections.includes('ppc-status') && (
         <section id="ppc-status">
           <SectionPanel title="Procurement Status" subtitle="Contract → PO → LC Opened → Port Arrival → Received" action={<IconButton variant="info" contentId="po-proc-status" />}>
-            <StackedShareBar
-              rows={stackedRows}
-              colorMap={stackedColorMap}
-              formatValue={(value) => (value < 1e6 ? value.toLocaleString() : formatPoValue(value))}
-            />
+            {isMobile && (
+              <div className="flex justify-end px-5 pb-2 -mt-1">
+                <LandscapeToggle value={procStatusLandscape} onChange={setProcStatusLandscape} />
+              </div>
+            )}
+            <div className="overflow-x-auto" style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' } as any}>
+            <div style={{ minWidth: isMobile ? (procStatusLandscape ? '800px' : 'auto') : 'auto', transition: 'min-width 180ms ease' }}>
+              <Table page={undefined} setPage={() => {}}
+                headers={[
+                  { key: 'status', label: 'Status' },
+                  { key: 'count', label: 'PO Count', className: 'text-right' },
+                  { key: 'value', label: 'Value (ETB)', className: 'text-right' },
+                  { key: 'share', label: 'Share', className: 'text-right' },
+                ]}
+                rows={PROCUREMENT_STATUS_DATA}
+                mobileMinWidth="auto"
+                renderRow={(row) => (
+                  <>
+                    <Td>
+                      <span className={`font-medium ${isMobile && !procStatusLandscape ? 'block truncate max-w-[120px]' : ''}`}>{row.stage}</span>
+                    </Td>
+                    <Td className="text-right font-mono font-semibold">{row.count.toLocaleString()}</Td>
+                    <Td className="text-right font-mono font-semibold">{formatPoValue(row.value)}</Td>
+                    <Td className="text-right">
+                      <span className="inline-flex items-center gap-2 justify-end">
+                        <span className="w-16 h-1.5 rounded-full bg-surface-container overflow-hidden">
+                          <span className="block h-full rounded-full" style={{ width: `${row.pct}%`, backgroundColor: row.color }} />
+                        </span>
+                        <span className="text-xs font-bold text-on-surface-variant w-10 text-right">{row.pct.toFixed(1)}%</span>
+                      </span>
+                    </Td>
+                  </>
+                )}
+              />
+            </div>
+            </div>
           </SectionPanel>
         </section>
       )}

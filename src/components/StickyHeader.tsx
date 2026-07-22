@@ -11,7 +11,7 @@ function useMediaQuery(query: string) {
   return matches;
 }
 
-function StickyHeader({ children, className = '' }: any) {
+function StickyHeader({ children, className = '', mobileYearTabs }: any) {
   const isMobile = useMediaQuery('(max-width: 767px)');
   const sentinelRef = useRef(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -37,15 +37,22 @@ function StickyHeader({ children, className = '' }: any) {
   }, [isMobile]);
 
   if (isMobile) {
+    const yearTabsHeight = mobileYearTabs ? 40 : 0;
     return (
       <>
-        <div className="bg-surface" style={{ height: headerHeight }} />
+        <div className="bg-surface" style={{ height: headerHeight + yearTabsHeight }} />
         <div
           ref={headerRef}
           className={`flex flex-nowrap items-center justify-between gap-2 fixed left-0 right-0 top-[36px] z-30 bg-surface py-3 px-lg shadow-sm overflow-x-auto [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden ${className}`}
         >
           {children}
         </div>
+        {mobileYearTabs && (
+          <div className="fixed left-0 right-0 z-30 bg-surface border-b border-outline-variant px-lg py-2 flex gap-2 justify-center overflow-x-auto scrollbar-none"
+               style={{ top: `calc(36px + ${headerHeight}px)` }}>
+            {mobileYearTabs}
+          </div>
+        )}
       </>
     );
   }

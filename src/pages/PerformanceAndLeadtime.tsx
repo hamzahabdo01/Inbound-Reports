@@ -114,9 +114,9 @@ export default function PerformanceAndLeadtime() {
   }
 
   const kpiCards = useMemo(() => {
-    const totalPO = data.contractVsPO.reduce((s, c) => s + c.poAmount, 0);
-    const totalConsumption = data.contractVsPO.reduce((s, c) => s + c.consumption, 0);
-    const avgPct = totalPO ? Math.round((totalConsumption / totalPO) * 100) : 0;
+    const totalConsumed = data.contractVsPO.reduce((s, c) => s + c.consumedAmount, 0);
+    const totalRemaining = data.contractVsPO.reduce((s, c) => s + c.remaining, 0);
+    const avgPct = (totalConsumed + totalRemaining) ? Math.round((totalConsumed / (totalConsumed + totalRemaining)) * 100) : 0;
     const poIssued = data.procurementStatus.stages.find((s) => s.stage === 'PO Issued')?.count || 0;
     const received = data.procurementStatus.stages.find((s) => s.stage === 'Received at Warehouse')?.count || 0;
     const poToReceivePct = poIssued ? Math.round((received / poIssued) * 100) : 0;
@@ -135,9 +135,11 @@ export default function PerformanceAndLeadtime() {
 
   const filteredOpenOverduePOs = useMemo(() => {
     return data.openOverduePOs.filter((po) => {
-      const matchSearch = po.poNo.toLowerCase().includes(overviewSearch.toLowerCase()) ||
-        po.supplier.toLowerCase().includes(overviewSearch.toLowerCase()) ||
-        po.program.toLowerCase().includes(overviewSearch.toLowerCase());
+      const matchSearch = !overviewSearch ||
+        po.poNo.toLowerCase().includes(overviewSearch.toLowerCase()) ||
+        po.supplierName.toLowerCase().includes(overviewSearch.toLowerCase()) ||
+        po.materialDescription.toLowerCase().includes(overviewSearch.toLowerCase()) ||
+        po.poType.toLowerCase().includes(overviewSearch.toLowerCase());
       const matchStatus = overviewStatus === 'All' || po.status === overviewStatus;
       return matchSearch && matchStatus;
     });
@@ -159,11 +161,19 @@ export default function PerformanceAndLeadtime() {
   return (
     <div className="space-y-5">
       <SectionNavigator sections={navigatorSections} />
-      <StickyHeader>
+      <StickyHeader mobileYearTabs={isMobile ? years.map(y => (
+        <button key={y} onClick={() => setSelectedYear(y)}
+          className={`px-3 py-1.5 text-xs font-semibold whitespace-nowrap rounded-lg transition-all duration-150 ${
+            selectedYear === y
+              ? 'bg-primary text-white shadow-sm'
+              : 'bg-surface-container text-on-surface-variant hover:text-on-surface'
+          }`}
+        >{y}</button>
+      )) : undefined}>
         <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
           {TABS.map((tab) => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`px-2 sm:px-4 py-2 text-sm font-semibold whitespace-nowrap rounded-lg transition-all duration-150 ${
+              className={`px-2 sm:px-4 py-2 max-sm:px-1.5 max-sm:py-1.5 max-sm:text-[11px] text-sm font-semibold whitespace-nowrap rounded-lg transition-all duration-150 ${
                 activeTab === tab.key
                   ? 'bg-primary text-white shadow-sm'
                   : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
@@ -171,13 +181,15 @@ export default function PerformanceAndLeadtime() {
             ><i className={`fa-solid ${tab.icon} mr-2`}></i>{tab.label}</button>
           ))}
         </div>
-        <div className="relative shrink-0">
-          <select value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}
-            className="appearance-none h-8 min-w-[82px] rounded-md border border-outline-variant bg-white pl-2.5 pr-7 text-body-sm text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
-            {years.map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
-          <i className="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary pointer-events-none" />
-        </div>
+        {!isMobile && (
+          <div className="relative shrink-0">
+            <select value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}
+              className="appearance-none h-8 min-w-[82px] rounded-md border border-outline-variant bg-white pl-2.5 pr-7 text-body-sm text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <i className="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary pointer-events-none" />
+          </div>
+        )}
       </StickyHeader>
 
       {yearLoading ? (

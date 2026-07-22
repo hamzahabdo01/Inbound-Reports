@@ -208,7 +208,7 @@ function Sidebar({ activeSection, onNavigate, collapsed, onToggleCollapse, onLog
       </aside>
     </div>
   ) : (
-    <aside className={`${collapsed ? 'w-[60px]' : 'w-[240px]'} shrink-0 flex flex-col h-screen max-h-dvh sticky top-0 z-40 bg-sidebar-bg text-white overscroll-contain`}>
+    <aside className={`${collapsed ? 'w-[60px]' : 'w-[240px]'} shrink-0 flex flex-col h-screen max-h-dvh sticky top-0 z-40 bg-sidebar-bg text-white overscroll-contain transition-all duration-200`}>
       <div className="flex-1 overflow-y-hidden px-2 xl:px-4 py-5 scrollbar-thin">
           <div className={`flex items-center mb-8 justify-between`}>
           <div className="flex items-center gap-3 min-w-0">

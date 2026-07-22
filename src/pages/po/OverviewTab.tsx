@@ -447,11 +447,6 @@ export default function OverviewTab({ data, activeSections, kpiCards = [], suppl
                               aria-label={`${formatMonth(t)} ${selectedYear}: ${formatAmount(t.amount)} ETB`}
                               style={{ cursor: 'pointer', transition: 'all 0.3s ease-in-out' }}
                             />
-                            {isActive && (
-                              <text x={x + barWidth / 2} y={y - 10} textAnchor="middle" fontSize="12" fontWeight="800" fill="#D97706">
-                                {formatAmount(t.amount)}
-                              </text>
-                            )}
                             <text x={x + barWidth / 2} y={pad.top + chartH + 18} textAnchor="middle" fontSize="11" fontWeight="600" fill="#707979">
                               {formatMonth(t)}
                             </text>

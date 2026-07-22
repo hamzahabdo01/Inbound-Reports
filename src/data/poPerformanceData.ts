@@ -13,6 +13,8 @@ import overduePOSummaryRaw from './po-perfromance-and-compliance/OverduePOsSumma
 import fundYearSummaryRaw from './FundYearSummary_202607021033.json';
 import performanceBondsRaw from './performanceBondData';
 import leadtimeData from './leadtimeData';
+import { getContractVsPOData } from './contractVsPOData';
+import { getOpenPOData } from './openPOData';
 
 const FUND_NAME_MAP: Record<string, string> = {
   EPSSDEF: 'EPSS',
@@ -182,23 +184,6 @@ function generateLCCADExpiry() {
       expiryDate: expiryDate.toISOString().split('T')[0],
       status,
       daysToExpiry: diffDays,
-    };
-  });
-}
-
-function generateContractVsPO(contracts, pos) {
-  return contracts.slice(0, 20).map((c) => {
-    const relatedPOs = pos.filter((p) => p.supplier === c.supplier);
-    const poAmount = relatedPOs.reduce((s, p) => s + p.amount, 0);
-    const consumption = Math.round(poAmount * (0.3 + Math.random() * 0.5));
-    return {
-      contractNo: c.contractNo,
-      supplier: c.supplier,
-      contractAmount: c.amount,
-      poAmount,
-      consumption,
-      remaining: poAmount - consumption,
-      pctConsumed: Math.round((consumption / Math.max(poAmount, 1)) * 100),
     };
   });
 }
@@ -386,7 +371,7 @@ export default function generateAllData() {
   const leadtime = generateLeadtime(pos);
   return {
     kpis: getKpis(pos, contracts),
-    openOverduePOs: pos.filter((p) => p.status === 'Open' || p.status === 'Overdue'),
+    openOverduePOs: getOpenPOData(),
     allPOs: pos,
     supplierShare: generateSupplierShare(),
     commodityByProgram: generateCommodityByProgram(),
@@ -410,7 +395,7 @@ export default function generateAllData() {
       return a.daysToExpiry - b.daysToExpiry;
     }),
     lcCadExpirySummary: lcCadExpirySummaryRaw.data,
-    contractVsPO: generateContractVsPO(contracts, pos),
+    contractVsPO: getContractVsPOData(),
     contractPipeline: generateContractPipeline(contracts),
     performanceBonds: performanceBondsRaw,
     leadtime: { ...leadtimeData, milestone: computeMilestoneDistribution(contractToReceiveTrackingRaw.data) },

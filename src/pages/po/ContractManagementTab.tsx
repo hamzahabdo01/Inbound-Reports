@@ -291,6 +291,11 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
   const [ctrSearch, setCtrSearch] = useState('');
   const [ctrProcessFilter, setCtrProcessFilter] = useState('');
   const [ctrRouteFilter, setCtrRouteFilter] = useState('');
+  const fmtAmt = (v: number) => {
+    const abs = Math.abs(v);
+    let s = abs >= 1e9 ? `${(abs / 1e9).toFixed(1)}B` : abs >= 1e6 ? `${(abs / 1e6).toFixed(1)}M` : abs >= 1e3 ? `${(abs / 1e3).toFixed(1)}K` : abs.toLocaleString();
+    return v < 0 ? `-${s}` : s;
+  };
   const filteredCtr = (data.contractToReceiveTracking || [])
     .filter((row) => {
       const q = ctrSearch.toLowerCase();
@@ -401,43 +406,46 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
 
       {activeSections.includes('ppc-contract-vs-po') && (
         <section id="ppc-contract-vs-po">
-          <SectionPanel title="Contract vs PO - Consumption & Remaining" subtitle="Per contract with summary" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-contract-vs-po" /><ExportDropdown headers={[{ key: 'contractNo', label: 'Contract' }, { key: 'supplier', label: 'Supplier' }, { key: 'contractAmount', label: 'Contract Amt (ETB)' }, { key: 'poAmount', label: 'PO Amt (ETB)' }, { key: 'pctConsumed', label: 'PO Rate' }, { key: 'remaining', label: 'Remaining (ETB)' }]} rows={data.contractVsPO} filename="contract-vs-po" /></div>}>
+          <SectionPanel title="Contract vs PO - Consumption & Remaining" subtitle="Per contract with summary" action={<div className="flex items-center gap-1"><IconButton variant="info" contentId="po-contract-vs-po" /><ExportDropdown headers={[{ key: 'contractNo', label: 'Contract' }, { key: 'supplier', label: 'Supplier' }, { key: 'poCount', label: 'PO Count' }, { key: 'contractAmount', label: 'Contract Amt (ETB)' }, { key: 'consumedAmount', label: 'Consumed (ETB)' }, { key: 'remaining', label: 'Remaining (ETB)' }, { key: 'pctConsumed', label: 'Consumption %' }]} rows={data.contractVsPO} filename="contract-vs-po" /></div>}>
             <KpiCarousel>
-              <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total PO Amount" value={formatAmount(data.contractVsPO.reduce((s, c) => s + c.poAmount, 0))} subtitle="all contracts" />
-              <KPICard variant="detailed" icon="fa-cart-shopping" iconBg="bg-success/10" iconColor="text-success" label="Total Consumption" value={formatAmount(data.contractVsPO.reduce((s, c) => s + c.consumption, 0))} subtitle={`${data.contractVsPO.reduce((s, c) => s + c.poAmount, 0) ? Math.round((data.contractVsPO.reduce((s, c) => s + c.consumption, 0) / data.contractVsPO.reduce((s, c) => s + c.poAmount, 0)) * 100) : 0}% consumed`} />
-              <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-warning/10" iconColor="text-warning" label="Total Remaining" value={formatAmount(data.contractVsPO.reduce((s, c) => s + c.remaining, 0))} subtitle="yet to consume" />
-              <KPICard variant="detailed" icon="fa-file-contract" iconBg="bg-primary/10" iconColor="text-primary" label="Contracts" value={data.contractVsPO.length.toLocaleString()} subtitle={`avg ${data.contractVsPO.length ? Math.round(data.contractVsPO.reduce((s, c) => s + c.pctConsumed, 0) / data.contractVsPO.length) : 0}% consumed`} />
+              <KPICard variant="detailed" icon="fa-file-invoice" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total Contract" value={fmtAmt(data.contractVsPO.reduce((s, c) => s + c.contractAmount, 0))} subtitle={`${data.contractVsPO.length} contracts`} />
+              <KPICard variant="detailed" icon="fa-cart-shopping" iconBg="bg-success/10" iconColor="text-success" label="Total Consumed" value={fmtAmt(data.contractVsPO.reduce((s, c) => s + c.consumedAmount, 0))} subtitle={`${data.contractVsPO.reduce((s, c) => s + c.contractAmount, 0) ? Math.round((data.contractVsPO.reduce((s, c) => s + c.consumedAmount, 0) / data.contractVsPO.reduce((s, c) => s + c.contractAmount, 0)) * 100) : 0}% of contract`} />
+              <KPICard variant="detailed" icon="fa-warehouse" iconBg="bg-warning/10" iconColor="text-warning" label="Total Remaining" value={fmtAmt(data.contractVsPO.reduce((s, c) => s + Math.max(c.remaining, 0), 0))} subtitle="yet to consume" />
+              <KPICard variant="detailed" icon="fa-file-contract" iconBg="bg-primary/10" iconColor="text-primary" label="Over-Consumed" value={data.contractVsPO.filter(c => c.remaining < 0).length.toLocaleString()} subtitle={`${data.contractVsPO.length ? Math.round(data.contractVsPO.filter(c => c.remaining < 0).length / data.contractVsPO.length * 100) : 0}% of contracts`} />
             </KpiCarousel>
             <Table page={tp('contract-po')} setPage={sp('contract-po')}
               headers={[
                 { key: 'contract', label: 'Contract' },
                 { key: 'supplier', label: 'Supplier' },
+                { key: 'poCount', label: 'POs', className: 'text-right' },
                 { key: 'ctAmount', label: 'Contract Amt (ETB)', className: 'text-right' },
-                { key: 'poAmount', label: 'PO Amt (ETB)', className: 'text-right' },
-                { key: 'consumption', label: 'PO Rate', className: 'text-right' },
+                { key: 'consumed', label: 'Consumed (ETB)', className: 'text-right' },
                 { key: 'remaining', label: 'Remaining (ETB)', className: 'text-right' },
-                { key: 'progress', label: 'Progress' },
+                { key: 'progress', label: 'Consumption %' },
               ]}
               rows={data.contractVsPO}
-              renderRow={(row) => (
+              renderRow={(row) => {
+                const pct = row.pctConsumed;
+                const isOver = row.remaining < 0;
+                return (
                 <>
                   <Td className="font-mono">{row.contractNo}</Td>
                   <Td>{row.supplier}</Td>
-                  <Td className="text-right font-mono">{formatAmount(row.contractAmount)}</Td>
-                  <Td className="text-right font-mono">{formatAmount(row.poAmount)}</Td>
-                  <Td className="text-right font-mono">{row.pctConsumed}%</Td>
-                  <Td className="text-right font-mono">{formatAmount(row.remaining)}</Td>
+                  <Td className="text-right font-mono">{row.poCount.toLocaleString()}</Td>
+                  <Td className="text-right font-mono">{fmtAmt(row.contractAmount)}</Td>
+                  <Td className="text-right font-mono">{fmtAmt(row.consumedAmount)}</Td>
+                  <Td className={`text-right font-mono ${isOver ? 'text-error font-bold' : ''}`}>{fmtAmt(row.remaining)}</Td>
                   <Td className="min-w-[160px]">
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-2.5 bg-surface-container-low rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full ${row.pctConsumed > 80 ? 'bg-success' : row.pctConsumed > 50 ? 'bg-warning' : 'bg-error'}`}
-                          style={{ width: `${row.pctConsumed}%` }} />
+                        <div className={`h-full rounded-full ${isOver ? 'bg-error' : pct !== null && pct > 80 ? 'bg-success' : pct !== null && pct > 50 ? 'bg-warning' : 'bg-error'}`}
+                          style={{ width: `${Math.min(pct ?? 0, 100)}%` }} />
                       </div>
-                      <span className="text-xs font-bold text-on-surface shrink-0">{row.pctConsumed}%</span>
+                      <span className={`text-xs font-bold shrink-0 ${isOver ? 'text-error' : 'text-on-surface'}`}>{pct !== null ? `${pct}%` : '—'}</span>
                     </div>
                   </Td>
                 </>
-              )}
+              )}}
             />
           </SectionPanel>
         </section>
