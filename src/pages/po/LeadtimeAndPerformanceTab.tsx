@@ -313,7 +313,7 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                       className="h-8 rounded-md border border-outline-variant bg-white px-2 text-xs text-on-surface font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
                     >
                       <option value="All">All Statuses</option>
-                      {[...new Set(bonds.map(b => b.status))].map(s => (
+                      {[...new Set(bonds.map(b => b.status).filter(Boolean))].map((s: string) => (
                         <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
                       ))}
                     </select>
