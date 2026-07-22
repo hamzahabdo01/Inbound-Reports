@@ -1,15 +1,15 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { parseCSV, parseQuantity } from '../utils/csvParser';
-import { purchaseOrderCSVData } from '../data/purchaseOrderData';
-import KPICard from '../components/KPICard';
-import KpiCarousel from '../components/KpiCarousel';
-import AutoScrollKPIRow from '../components/AutoScrollKPIRow';
-import SearchInput from '../components/SearchInput';
-import SimplePagination from '../components/SimplePagination';
-import EmptyState from '../components/EmptyState';
-import SelectFilter from '../components/SelectFilter';
-import IconButton from '../components/IconButton';
-import ExportDropdown from '../components/ExportDropdown';
+import { parseCSV, parseQuantity } from '../../utils/csvParser';
+import { purchaseOrderCSVData } from '../../data/purchase-order/purchaseOrderData';
+import KPICard from '../../components/KPICard';
+import KpiCarousel from '../../components/KpiCarousel';
+import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
+import SearchInput from '../../components/SearchInput';
+import SimplePagination from '../../components/SimplePagination';
+import EmptyState from '../../components/EmptyState';
+import SelectFilter from '../../components/SelectFilter';
+import IconButton from '../../components/IconButton';
+import ExportDropdown from '../../components/ExportDropdown';
 
 
 const COLUMNS = [

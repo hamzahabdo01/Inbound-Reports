@@ -1,16 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
-import StickyHeader from '../components/StickyHeader';
-import IconButton from '../components/IconButton';
+import StickyHeader from '../../components/StickyHeader';
+import IconButton from '../../components/IconButton';
 
-import { shipmentStatusHPRData, shipmentStatusRDFData } from '../data/shipmentStatusData';
-import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../data/purchaseOrderDetailData';
-import KPICard from '../components/KPICard';
-import KpiCarousel from '../components/KpiCarousel';
-import AutoScrollKPIRow from '../components/AutoScrollKPIRow';
-import PieChart from '../components/PieChart';
-import HBarChart from '../components/HBarChart';
-import { Table, Td } from './po/poShared';
-import ExportDropdown from '../components/ExportDropdown';
+import { shipmentStatusHPRData, shipmentStatusRDFData } from '../../data/shipment/shipmentStatusData';
+import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../../data/shipment/purchaseOrderDetailData';
+import KPICard from '../../components/KPICard';
+import KpiCarousel from '../../components/KpiCarousel';
+import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
+import PieChart from '../../components/PieChart';
+import HBarChart from '../../components/HBarChart';
+import { Table, Td } from './performance-tabs/poShared';
+import ExportDropdown from '../../components/ExportDropdown';
 
 // ─── CSV Parser ────────────────────────────────────────────────────────────────
 function parseCSVLocal(raw) {

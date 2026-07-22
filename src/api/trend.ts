@@ -1,4 +1,4 @@
-import trendData from '../data/POTrend.json';
+import trendData from '../data/performance-and-leadtime/POTrend.json';
 
 export const getTrendData = () => {
   return trendData.data.map(item => ({

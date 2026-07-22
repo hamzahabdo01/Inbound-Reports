@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
-import KpiCarousel from '../../components/KpiCarousel';
-import KPICard from '../../components/KPICard';
-import IconButton from '../../components/IconButton';
-import MilestoneRingStepper from '../../components/MilestoneRingStepper';
-import { LEADTIME_MILESTONE_STEPS } from '../../utils/leadtimeMilestones';
+import AutoScrollKPIRow from '../../../components/AutoScrollKPIRow';
+import KpiCarousel from '../../../components/KpiCarousel';
+import KPICard from '../../../components/KPICard';
+import IconButton from '../../../components/IconButton';
+import MilestoneRingStepper from '../../../components/MilestoneRingStepper';
+import { LEADTIME_MILESTONE_STEPS } from '../../../utils/leadtimeMilestones';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
-import ExportDropdown from '../../components/ExportDropdown';
-import LandscapeToggle from '../../components/LandscapeToggle';
+import ExportDropdown from '../../../components/ExportDropdown';
+import LandscapeToggle from '../../../components/LandscapeToggle';
 
 const fmtDuration = (days) => {
   if (days == null || days < 0) return null;

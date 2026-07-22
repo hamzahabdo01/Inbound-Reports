@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import PieChart from '../../components/PieChart';
-import FundingSourceChart from '../../components/FundingSourceChart';
-import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
-import IconButton from '../../components/IconButton';
+import PieChart from '../../../components/PieChart';
+import FundingSourceChart from '../../../components/FundingSourceChart';
+import AutoScrollKPIRow from '../../../components/AutoScrollKPIRow';
+import IconButton from '../../../components/IconButton';
 import { SectionPanel, formatAmount } from './poShared';
 
 function useMediaQuery(query: string) {

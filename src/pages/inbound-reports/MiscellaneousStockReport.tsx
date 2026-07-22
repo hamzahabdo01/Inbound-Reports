@@ -1,16 +1,16 @@
 import { useState, useMemo, Fragment, useEffect, useRef } from 'react';
-import stockData from '../data/NationalStockStatus.json';
-import { parseCSV } from '../utils/csvParser';
-import { nationalAMCCSVData } from '../data/nationalAMCData';
-import AutoScrollKPIRow from '../components/AutoScrollKPIRow';
-import SearchInput from '../components/SearchInput';
-import SimplePagination from '../components/SimplePagination';
-import EmptyState from '../components/EmptyState';
-import SelectFilter from '../components/SelectFilter';
-import ExportDropdown from '../components/ExportDropdown';
-import StickyHeader from '../components/StickyHeader';
-import IconButton from '../components/IconButton';
-import LandscapeToggle from '../components/LandscapeToggle';
+import stockData from '../../data/stock-report/NationalStockStatus.json';
+import { parseCSV } from '../../utils/csvParser';
+import { nationalAMCCSVData } from '../../data/stock-report/nationalAMCData';
+import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
+import SearchInput from '../../components/SearchInput';
+import SimplePagination from '../../components/SimplePagination';
+import EmptyState from '../../components/EmptyState';
+import SelectFilter from '../../components/SelectFilter';
+import ExportDropdown from '../../components/ExportDropdown';
+import StickyHeader from '../../components/StickyHeader';
+import IconButton from '../../components/IconButton';
+import LandscapeToggle from '../../components/LandscapeToggle';
 
 
 // Status styling & logic helper

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import KPICard from '../../components/KPICard';
-import KpiCarousel from '../../components/KpiCarousel';
-import IconButton from '../../components/IconButton';
-import ExportDropdown from '../../components/ExportDropdown';
-import LandscapeToggle from '../../components/LandscapeToggle';
+import KPICard from '../../../components/KPICard';
+import KpiCarousel from '../../../components/KpiCarousel';
+import IconButton from '../../../components/IconButton';
+import ExportDropdown from '../../../components/ExportDropdown';
+import LandscapeToggle from '../../../components/LandscapeToggle';
 import { formatPoValue } from './poStatusToStackedShareRows';
 import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
 

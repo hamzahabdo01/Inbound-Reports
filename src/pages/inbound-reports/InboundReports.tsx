@@ -1,17 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
-import { parseCSV, parseDwellingTime, parseQuantity, parseDate } from '../utils/csvParser';
-import { shipmentCSVData } from '../data/shipmentData';
+import { parseCSV, parseDwellingTime, parseQuantity, parseDate } from '../../utils/csvParser';
+import { shipmentCSVData } from '../../data/inbound-reports/shipmentData';
 import PurchaseOrderFollowUp from './PurchaseOrderFollowUp';
-import KPICard from '../components/KPICard';
-import KpiCarousel from '../components/KpiCarousel';
-import AutoScrollKPIRow from '../components/AutoScrollKPIRow';
-import SearchInput from '../components/SearchInput';
-import SimplePagination from '../components/SimplePagination';
-import EmptyState from '../components/EmptyState';
-import SelectFilter from '../components/SelectFilter';
-import ExportDropdown from '../components/ExportDropdown';
-import StickyHeader from '../components/StickyHeader';
-import IconButton from '../components/IconButton';
+import KPICard from '../../components/KPICard';
+import KpiCarousel from '../../components/KpiCarousel';
+import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
+import SearchInput from '../../components/SearchInput';
+import SimplePagination from '../../components/SimplePagination';
+import EmptyState from '../../components/EmptyState';
+import SelectFilter from '../../components/SelectFilter';
+import ExportDropdown from '../../components/ExportDropdown';
+import StickyHeader from '../../components/StickyHeader';
+import IconButton from '../../components/IconButton';
 
 
 const ALL_COLUMNS = [

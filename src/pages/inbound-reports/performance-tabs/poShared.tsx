@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import React from 'react';
-import SimplePagination from '../../components/SimplePagination';
+import SimplePagination from '../../../components/SimplePagination';
 
 export const formatAmount = (v) => {
   if (v >= 1000000000) return `${(v / 1000000000).toFixed(1)}B`;

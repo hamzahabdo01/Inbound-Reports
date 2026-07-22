@@ -3,11 +3,11 @@ import Sidebar from './components/Sidebar';
 import MobileHeader from './components/MobileHeader';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import InboundReports from './pages/InboundReports';
-import Procurement from './pages/Procurement';
-import MiscellaneousStockReport from './pages/MiscellaneousStockReport';
-import ShipmentStatus from './pages/ShipmentStatus';
-import PerformanceAndLeadtime from './pages/PerformanceAndLeadtime';
+import InboundReports from './pages/inbound-reports/InboundReports';
+import Procurement from './pages/inbound-reports/Procurement';
+import MiscellaneousStockReport from './pages/inbound-reports/MiscellaneousStockReport';
+import ShipmentStatus from './pages/inbound-reports/ShipmentStatus';
+import PerformanceAndLeadtime from './pages/inbound-reports/PerformanceAndLeadtime';
 import ProgramDashboard from './pages/ProgramDashboard';
 
 function Placeholder({ title }: any) {

@@ -1,18 +1,18 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
-import StickyHeader from '../components/StickyHeader';
-import SectionNavigator from '../components/SectionNavigator';
-import { getTrendData } from '../api/trend';
-import generateAllData from '../data/poPerformanceData';
-import poSummaryRaw from '../data/POSummary.json';
-import poByMaterialTypeRaw from '../data/POByMaterialType.json';
-import poByTypeRaw from '../data/POByType.json';
-import poSummaryByYearRaw from '../data/POSummaryByYear.json';
-import poByMaterialTypeByYearRaw from '../data/POByMaterialTypeByYear.json';
-import { formatAmount } from './po/poShared';
-import OverviewTab from './po/OverviewTab';
-import ProcurementBreakdownTab from './po/ProcurementBreakdownTab';
-import ContractManagementTab from './po/ContractManagementTab';
-import LeadtimeAndPerformanceTab from './po/LeadtimeAndPerformanceTab';
+import StickyHeader from '../../components/StickyHeader';
+import SectionNavigator from '../../components/SectionNavigator';
+import { getTrendData } from '../../api/trend';
+import generateAllData from '../../data/performance-and-leadtime/poPerformanceData';
+import poSummaryRaw from '../../data/performance-and-leadtime/POSummary.json';
+import poByMaterialTypeRaw from '../../data/performance-and-leadtime/POByMaterialType.json';
+import poByTypeRaw from '../../data/performance-and-leadtime/POByType.json';
+import poSummaryByYearRaw from '../../data/performance-and-leadtime/POSummaryByYear.json';
+import poByMaterialTypeByYearRaw from '../../data/performance-and-leadtime/POByMaterialTypeByYear.json';
+import { formatAmount } from './performance-tabs/poShared';
+import OverviewTab from './performance-tabs/OverviewTab';
+import ProcurementBreakdownTab from './performance-tabs/ProcurementBreakdownTab';
+import ContractManagementTab from './performance-tabs/ContractManagementTab';
+import LeadtimeAndPerformanceTab from './performance-tabs/LeadtimeAndPerformanceTab';
 
 const TABS = [
   { key: 'overview',     label: 'Overview',              icon: 'fa-gauge-high',        sections: ['ppc-overview', 'ppc-procurement-breakdown', 'ppc-supplier-share', 'ppc-funding', 'ppc-local-intl', 'ppc-trend'] },

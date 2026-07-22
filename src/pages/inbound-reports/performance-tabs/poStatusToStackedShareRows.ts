@@ -1,4 +1,4 @@
-import type { StackedShareBarRow, StackedShareSegment } from '../../components/StackedShareBar';
+import type { StackedShareBarRow, StackedShareSegment } from '../../../components/StackedShareBar';
 
 type PoStatusInput = {
   stage: string;

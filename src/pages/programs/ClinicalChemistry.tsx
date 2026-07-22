@@ -10,7 +10,7 @@ import IssuedItemsTable from '../../components/program/IssuedItemsTable';
 import PieChart from '../../components/PieChart';
 import IconButton from '../../components/IconButton';
 import { LookUp, POD_WebApi } from '../../api/fanos';
-import { useClinicalChemistry, useCCIssuedItems, useCCFacilityDistribution, useCCOwnershipDistribution, useCCProcurementAgents, useCCFundingSource } from '../../data/useClinicalChemistry';
+import { useClinicalChemistry, useCCIssuedItems, useCCFacilityDistribution, useCCOwnershipDistribution, useCCProcurementAgents, useCCFundingSource } from '../../data/clinical-chemistry/useClinicalChemistry';
 
 const formatCompact = (v) =>
   new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(v || 0);

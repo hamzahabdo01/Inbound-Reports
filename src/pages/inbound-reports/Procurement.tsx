@@ -1,18 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
-import { parseCSV } from '../utils/csvParser';
-import tenderProcessCSV from '../data/tenderProcess.csv?raw';
-import contractProcessForSeaCSV from '../data/contractProcessforSea.csv?raw';
-import contractProcessForAirCSV from '../data/contractProcessforAir.csv?raw';
-import PieChart from '../components/PieChart';
-import SearchInput from '../components/SearchInput';
-import SimplePagination from '../components/SimplePagination';
-import EmptyState from '../components/EmptyState';
-import SelectFilter from '../components/SelectFilter';
-import KPICard from '../components/KPICard';
-import KpiCarousel from '../components/KpiCarousel';
-import StickyHeader from '../components/StickyHeader';
-import IconButton from '../components/IconButton';
-import LandscapeToggle from '../components/LandscapeToggle';
+import { parseCSV } from '../../utils/csvParser';
+import tenderProcessCSV from '../../data/procurement/tenderProcess.csv?raw';
+import contractProcessForSeaCSV from '../../data/procurement/contractProcessforSea.csv?raw';
+import contractProcessForAirCSV from '../../data/procurement/contractProcessforAir.csv?raw';
+import PieChart from '../../components/PieChart';
+import SearchInput from '../../components/SearchInput';
+import SimplePagination from '../../components/SimplePagination';
+import EmptyState from '../../components/EmptyState';
+import SelectFilter from '../../components/SelectFilter';
+import KPICard from '../../components/KPICard';
+import KpiCarousel from '../../components/KpiCarousel';
+import StickyHeader from '../../components/StickyHeader';
+import IconButton from '../../components/IconButton';
+import LandscapeToggle from '../../components/LandscapeToggle';
 
 
 const TENDER_STAGES = [

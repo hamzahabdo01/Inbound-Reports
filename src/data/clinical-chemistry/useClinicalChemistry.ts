@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IUBVIUI_WebApi, RCD_WebApi, OIH_WebApi, POD_WebApi } from '../api/fanos';
+import { IUBVIUI_WebApi, RCD_WebApi, OIH_WebApi, POD_WebApi } from '../../api/fanos';
 
 export interface CCData {
   stockRows: any[];

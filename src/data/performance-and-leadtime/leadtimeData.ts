@@ -1,5 +1,5 @@
 import csvText from './PO-Leadtime.csv?raw';
-import { computeMilestoneDistribution } from '../utils/leadtimeMilestones';
+import { computeMilestoneDistribution } from '../../utils/leadtimeMilestones';
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
