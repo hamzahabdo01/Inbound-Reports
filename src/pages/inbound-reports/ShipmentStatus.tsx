@@ -2,53 +2,25 @@ import { useState, useEffect, useMemo } from 'react';
 import StickyHeader from '../../components/StickyHeader';
 import IconButton from '../../components/IconButton';
 
-import { shipmentStatusHPRData, shipmentStatusRDFData } from '../../data/shipment/shipmentStatusData';
-import { purchaseOrderDetailHPRData, purchaseOrderDetailRDFData } from '../../data/shipment/purchaseOrderDetailData';
+import { PODRIDRQDPKOID_WebApi } from '../../api/fanos';
 import KPICard from '../../components/KPICard';
 import KpiCarousel from '../../components/KpiCarousel';
 import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
-import PieChart from '../../components/PieChart';
-import HBarChart from '../../components/HBarChart';
 import Table, { Td } from '../../components/BaseTable';
 import ExportDropdown from '../../components/ExportDropdown';
 
-// ─── CSV Parser ────────────────────────────────────────────────────────────────
-function parseCSVLocal(raw) {
-  if (!raw || !raw.trim()) return [];
-  const lines = raw.trim().split('\n');
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim().replace(/\r/g, ''));
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].replace(/\r/g, '');
-    if (!line.trim()) continue;
-    const values = [];
-    let cur = '';
-    let inQ = false;
-    for (let c = 0; c < line.length; c++) {
-      const ch = line[c];
-      if (ch === '"') { inQ = !inQ; }
-      else if (ch === ',' && !inQ) { values.push(cur.trim()); cur = ''; }
-      else { cur += ch; }
-    }
-    values.push(cur.trim());
-    const row = {};
-    headers.forEach((h, idx) => { row[h] = values[idx] || ''; });
-    rows.push(row);
-  }
-  return rows;
-}
-
-function parseCSVHeaders(raw) {
-  if (!raw || !raw.trim()) return [];
-  const first = raw.trim().split('\n')[0];
-  return first.split(',').map(h => h.trim().replace(/\r/g, ''));
-}
-
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-function parsePercent(str) {
-  if (!str) return null;
-  const n = parseFloat(str.replace('%', '').trim());
+function formatDate(dateStr: string): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function parsePercent(val) {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'number') return val;
+  const n = parseFloat(String(val).replace('%', '').trim());
   return isNaN(n) ? null : n;
 }
 
@@ -111,15 +83,17 @@ function PctBadge({ pct }: any) {
 
   const styles = {
     zero:    'bg-[#BA1A1A] text-white',
-    full:    'bg-[#059669] text-white',
-    high:    'bg-[#0B4F54] text-white',
+    full:    'bg-[#0B4F54] text-white',
+    high:    'bg-[#059669] text-white',
     partial: 'bg-[#D97706] text-white',
     unknown: 'bg-[#DFE3E5] text-[#404849]',
   };
 
+  const display = val !== null ? `${parseFloat(val.toFixed(2))}%` : '—';
+
   return (
     <span className={`inline-flex items-center justify-center min-w-[56px] px-2.5 py-1 rounded-md text-[11px] font-bold ${styles[cls]}`}>
-      {pct || '—'}
+      {display}
     </span>
   );
 }
@@ -280,9 +254,9 @@ function ShipmentTable({ rows, page, setPage }: any) {
             <>
               <Td className="font-bold text-[#0B4F54]">{row.PurchaseOrderNumber}</Td>
               <Td><POTypeBadge type={row.PurchaseOrderType} /></Td>
-              <Td className="whitespace-nowrap">{row.PurchaseOrderDate}</Td>
+              <Td className="whitespace-nowrap">{formatDate(row.PurchaseOrderDate)}</Td>
               <Td className="max-w-[160px]"><span className="break-all leading-tight block">{row.InvoiceNumber}</span></Td>
-              <Td className="whitespace-nowrap">{row.ReceiptInvoiceDate}</Td>
+              <Td className="whitespace-nowrap">{formatDate(row.ReceiptInvoiceDate)}</Td>
               <Td className="text-center font-medium text-[#707979]">{row.InvoiceGRNFGap || '0'}</Td>
               <Td className="text-center"><PctBadge pct={row.PAmountGRNFPrint} /></Td>
               <Td className="text-center"><PctBadge pct={row.PAmountGRVPrint} /></Td>
@@ -295,44 +269,56 @@ function ShipmentTable({ rows, page, setPage }: any) {
 }
 
 
-/** Purchase Order Detail Table */
-const LABEL_MAP = {
-  PONo: 'PO No',
-  TenderNumber: 'Tender No',
-  ItemName: 'Item',
-  Supplier: 'Supplier',
-  TenderType: 'Tender Type',
-  PODate: 'PO Date',
-  POType: 'PO Type',
-  FundingSource: 'Funding Source',
-  Unit: 'Unit',
-  Quantity: 'Quantity',
-  UnitPrice: 'Unit Price',
-  TotalAmount: 'Total Amount',
-  Currency: 'Currency',
-  Manufacturer: 'Manufacturer',
-  Country: 'Country',
-  LocalAgent: 'Local Agent',
-};
+const PO_DETAIL_COLUMNS = [
+  { key: 'PONo', label: 'PO No' },
+  { key: 'TenderNumber', label: 'Tender No' },
+  { key: 'ItemName', label: 'Item' },
+  { key: 'Supplier', label: 'Supplier' },
+  { key: 'TenderType', label: 'Tender Type' },
+  { key: 'PODate', label: 'PO Date' },
+  { key: 'POType', label: 'PO Type' },
+  { key: 'FundingSource', label: 'Funding Source' },
+  { key: 'Unit', label: 'Unit' },
+  { key: 'Quantity', label: 'Quantity' },
+  { key: 'UnitPrice', label: 'Unit Price' },
+  { key: 'TotalAmount', label: 'Total Amount' },
+  { key: 'Currency', label: 'Currency' },
+  { key: 'Manufacturer', label: 'Manufacturer' },
+  { key: 'Country', label: 'Country' },
+  { key: 'LocalAgent', label: 'Local Agent' },
+];
 
-function PODetailTable({ headers, rows, page, setPage }: any) {
-  const tableHeaders = headers.map(h => ({ key: h, label: LABEL_MAP[h] || h }));
-
+function PODetailTable({ rows, poTypes, selectedPoType, onPOTypeChange, page, setPage }: any) {
   return (
-    <Table
-      columns={tableHeaders}
-      rows={rows}
-      page={page}
-      setPage={setPage}
-      rowsPerPage={10}
-      renderRow={(row) => (
-        <>
-          {headers.map(h => (
-            <Td key={h}>{row[h] || '—'}</Td>
+    <div className="space-y-3">
+      <div className="relative w-full md:w-72">
+        <select
+          value={selectedPoType || ''}
+          onChange={e => { onPOTypeChange(e.target.value); if (setPage) setPage(1); }}
+          className="w-full appearance-none pl-3 pr-8 py-2 text-sm border border-[#CFD8DC] rounded-lg bg-white text-[#181C1E] focus:outline-none focus:border-[#0B4F54] focus:ring-2 focus:ring-[#0B4F54]/10 transition-all cursor-pointer"
+        >
+          {poTypes.map((t: string) => (
+            <option key={t} value={t}>{t}</option>
           ))}
-        </>
-      )}
-    />
+        </select>
+        <i className="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[#707979] text-[9px] pointer-events-none" />
+      </div>
+      <Table
+        columns={PO_DETAIL_COLUMNS}
+        rows={rows}
+        page={page}
+        setPage={setPage}
+        rowsPerPage={10}
+        minWidth="2400px"
+        renderRow={(row) => (
+          <>
+            {PO_DETAIL_COLUMNS.map(col => (
+              <Td key={col.key}>{col.key === 'PODate' ? formatDate(row[col.key]) : row[col.key] || '—'}</Td>
+            ))}
+          </>
+        )}
+      />
+    </div>
   );
 }
 
@@ -361,11 +347,13 @@ function RDFPlaceholder() {
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 function ShipmentStatus() {
   const [activeOrg, setActiveOrg] = useState('HPR');
-  const [isLoading, setIsLoading] = useState(true);
+  const [shipmentLoading, setShipmentLoading] = useState(true);
+  const [poLoading, setPOLoading] = useState(true);
   const [shipmentRows, setShipmentRows] = useState([]);
-  const [poHeaders, setPOHeaders] = useState([]);
   const [poRows, setPORows] = useState([]);
-  const [barOpenIdx, setBarOpenIdx] = useState(-1);
+  const [poAllRows, setPOAllRows] = useState<any[]>([]);
+  const [poTypes, setPOTypes] = useState<string[]>([]);
+  const [selectedPoType, setSelectedPoType] = useState('');
   const [shipmentPage, setShipmentPage] = useState(1);
   const [poDetailPage, setPODetailPage] = useState(1);
 
@@ -384,30 +372,60 @@ function ShipmentStatus() {
 
   // Load data when org changes
   useEffect(() => {
-    setIsLoading(true);
+    let cancelled = false;
+    setShipmentLoading(true);
+    setPOLoading(true);
     setShipmentPage(1);
     setPODetailPage(1);
-    
+
     const mainEl = document.querySelector('main');
-    if (mainEl) {
-      mainEl.scrollTop = 0;
-    }
+    if (mainEl) mainEl.scrollTop = 0;
 
-    const timer = setTimeout(() => {
-      const rawShipment = activeOrg === 'HPR' ? shipmentStatusHPRData : shipmentStatusRDFData;
-      const rawPO = activeOrg === 'HPR' ? purchaseOrderDetailHPRData : purchaseOrderDetailRDFData;
+    // PO detail — fetch all, then filter client-side by PO Type
+    PODRIDRQDPKOID_WebApi.getCenterPODetail({
+      ProcurerCode: 'PFSA',
+      ModeCode: activeOrg,
+    }).then((res) => {
+      if (!cancelled) {
+        const full = ((res?.data as any)?.Data || []) as any[];
+        setPOAllRows(full);
+        const types = Array.from(new Set<string>(full.map((r: any) => r.POType?.trim()).filter(Boolean))).sort();
+        setPOTypes(types);
+        const defaultType = types.includes('Local Purchase') ? 'Local Purchase' : (types[0] || '');
+        setSelectedPoType(defaultType);
+        setPORows(defaultType ? full.filter((r: any) => r.POType?.trim() === defaultType) : full);
+        setPOLoading(false);
+      }
+    }).catch(() => {
+      if (!cancelled) { setPOAllRows([]); setPOTypes([]); setSelectedPoType(''); setPOLoading(false); }
+    });
 
-      const parsed = parseCSVLocal(rawShipment);
-      setShipmentRows(parsed);
+    // Shipment status from API
+    PODRIDRQDPKOID_WebApi.getCenterInvoiceDistribution({
+      ProcurerCode: 'PFSA',
+      ModeCode: activeOrg,
+      State: 'InProgress',
+    }).then((res) => {
+      if (!cancelled) {
+        setShipmentRows(((res?.data as any)?.Data || []) as any[]);
+        setShipmentLoading(false);
+      }
+    }).catch(() => {
+      if (!cancelled) {
+        setShipmentRows([]);
+        setShipmentLoading(false);
+      }
+    });
 
-      const headers = parseCSVHeaders(rawPO);
-      setPOHeaders(headers);
-      const poData = parseCSVLocal(rawPO);
-      setPORows(poData);
-      setIsLoading(false);
-    }, 280);
-    return () => clearTimeout(timer);
+    return () => { cancelled = true; };
   }, [activeOrg]);
+
+  // Client-side filter when dropdown changes
+  useEffect(() => {
+    if (!selectedPoType || !poAllRows.length) return;
+    setPORows(poAllRows.filter((r: any) => r.POType?.trim() === selectedPoType));
+    setPODetailPage(1);
+  }, [selectedPoType, poAllRows]);
 
   // Derived KPI stats
   const stats = useMemo(() => {
@@ -424,32 +442,6 @@ function ShipmentStatus() {
     { icon: 'fa-circle-xmark', iconBg: 'bg-[#BA1A1A]/10', iconColor: 'text-[#BA1A1A]', label: '0% GRNF', value: stats.zeroGRNF, valueColor: 'text-[#BA1A1A]', subtitle: 'Requires attention' },
     { icon: 'fa-trophy', iconBg: 'bg-[#059669]/10', iconColor: 'text-[#059669]', label: '100% Complete', value: stats.fullGRNF, valueColor: 'text-[#059669]', subtitle: 'Fully received' },
   ], [stats]);
-
-  // Donut chart data — GRNF distribution
-  const donutData = useMemo(() => {
-    const full = shipmentRows.filter(r => { const p = parsePercent(r.PAmountGRNFPrint); return p !== null && p >= 100; }).length;
-    const high = shipmentRows.filter(r => { const p = parsePercent(r.PAmountGRNFPrint); return p !== null && p >= 99 && p < 100; }).length;
-    const zero = shipmentRows.filter(r => parsePercent(r.PAmountGRNFPrint) === 0).length;
-    const partial = shipmentRows.filter(r => { const p = parsePercent(r.PAmountGRNFPrint); return p !== null && p > 0 && p < 99; }).length;
-    return [
-      { label: '100% Complete', value: full, color: '#059669' },
-      { label: '≥99% GRNF', value: high, color: '#0B4F54' },
-      { label: '0% GRNF', value: zero, color: '#BA1A1A' },
-      { label: 'Partial (1–98%)', value: partial, color: '#D97706' },
-    ].filter(d => d.value > 0);
-  }, [shipmentRows]);
-
-  // Bar chart data — PO Type breakdown
-  const barData = useMemo(() => {
-    const counts: Record<string, number> = {};
-    shipmentRows.forEach(r => {
-      const t = r.PurchaseOrderType?.trim() || 'Unknown';
-      counts[t] = (counts[t] || 0) + 1;
-    });
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .map(([label, value]) => ({ label, value, color: '#0B4F54' }));
-  }, [shipmentRows]);
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -468,92 +460,30 @@ function ShipmentStatus() {
         </div>
       </StickyHeader>
 
-      {/* ── Loading Skeleton ──────────────────────────────────────────── */}
-      {isLoading && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-28 rounded-xl bg-[#F0F4F6] animate-pulse" />
-            ))}
-          </div>
-          <div className="h-64 rounded-xl bg-[#F0F4F6] animate-pulse" />
-          <div className="h-96 rounded-xl bg-[#F0F4F6] animate-pulse" />
+      {/* ── KPI Cards ──────────────────────────────────────────────────── */}
+      {shipmentLoading ? (
+        <div className="grid grid-cols-4 gap-4 mb-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-28 rounded-xl bg-white border border-outline-variant shadow-[0px_4px_20px_rgba(10,50,53,0.06)] animate-pulse flex items-end p-4">
+              <div className="space-y-2 w-full">
+                <div className="h-3 bg-surface-container-high rounded w-3/4" />
+                <div className="h-6 bg-surface-container-high rounded w-1/2" />
+                <div className="h-2 bg-surface-container-high rounded w-1/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : isMobile ? (
+        <KpiCarousel>
+          {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
+        </KpiCarousel>
+      ) : (
+        <div className="mb-lg">
+          <AutoScrollKPIRow cards={kpiCards} />
         </div>
       )}
 
-      {/* ── Content (HPR or RDF) ──────────────────────────────────────── */}
-      {!isLoading && (
-        <>
-          {/* KPI Cards */}
-          {isMobile ? (
-            <KpiCarousel>
-              {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
-            </KpiCarousel>
-          ) : (
-            <div className="mb-lg">
-              <AutoScrollKPIRow cards={kpiCards} />
-            </div>
-          )}
 
-          {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-            {/* Donut — GRNF Distribution */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-[#CFD8DC] shadow-[0px_4px_20px_rgba(10,50,53,0.06)] p-6">
-              <div className="mb-4 flex items-start justify-between gap-2">
-                <div>
-                  <h3 className="text-sm font-bold text-[#181C1E]">GRNF Status Distribution</h3>
-                  <p className="text-xs text-[#707979] mt-0.5">{activeOrg} — breakdown of receipt completion levels</p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <IconButton variant="expand" data={donutData} title="GRNF Status Distribution" />
-                  <IconButton variant="info" contentId="shipment-grnf-distribution" />
-                </div>
-              </div>
-              <div className="w-full h-[240px] flex items-center justify-center">
-                <PieChart data={donutData} />
-              </div>
-            </div>
-
-            {/* Horizontal Bar — PO Type */}
-            <div className="lg:col-span-3 bg-white rounded-xl border border-[#CFD8DC] shadow-[0px_4px_20px_rgba(10,50,53,0.06)] p-6 flex flex-col">
-              <div>
-                <h3 className="text-sm font-bold text-[#181C1E]">Shipments by PO Type</h3>
-                <p className="text-xs text-[#707979] mt-0.5">{activeOrg} — number of shipments per purchase order category</p>
-              </div>
-              {isMobile ? (
-                <div className="space-y-1 mt-2">
-                  {barData.map((d, i) => {
-                    const isOpen = barOpenIdx === i;
-                    return (
-                      <div key={d.label} className="rounded-xl border border-[#CFD8DC] bg-white overflow-hidden">
-                        <button onClick={() => setBarOpenIdx(prev => prev === i ? -1 : i)}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[#F6FAFC]"
-                        >
-                          <span className="flex-1 text-sm font-semibold text-[#181C1E] truncate">{d.label}</span>
-                          <span className="text-xs font-bold text-[#707979] tabular-nums">{d.value}</span>
-                          <i className={`fa-solid fa-chevron-down text-[10px] text-[#707979] transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} />
-                        </button>
-                        {isOpen && (
-                          <div className="px-4 pb-4 pt-0">
-                            <div className="h-px bg-[#CFD8DC]/50 mb-3" />
-                            <div className="bg-[#F6FAFC] rounded-lg p-4 space-y-2 text-sm">
-                              <div className="flex justify-between"><span className="text-[#707979]">Type</span><span className="font-bold text-[#181C1E]">{d.label}</span></div>
-                              <div className="flex justify-between"><span className="text-[#707979]">Count</span><span className="font-bold text-[#181C1E]">{d.value}</span></div>
-                              <div className="flex justify-between"><span className="text-[#707979]">Percentage</span><span className="font-bold text-[#181C1E]">{stats.total > 0 ? ((d.value / stats.total) * 100).toFixed(1) : 0}%</span></div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex-1 flex items-center">
-                  <HBarChart data={barData} />
-                </div>
-              )}
-            </div>
-          </div>
 
           {/* Shipment Status Table Section */}
           <div className="bg-white rounded-xl border border-[#CFD8DC] shadow-[0px_4px_20px_rgba(10,50,53,0.06)] overflow-hidden">
@@ -584,7 +514,24 @@ function ShipmentStatus() {
               <p className="text-xs text-[#707979] mt-1">{activeOrg} — Purchase order shipment tracking with GRNF/GRV completion</p>
             </div>
             <div className="p-6">
-              <ShipmentTable rows={shipmentRows} page={shipmentPage} setPage={setShipmentPage} />
+              {shipmentLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex gap-4">
+                      <div className="h-3.5 bg-surface-container-high rounded w-28" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-20" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-24" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-32" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-24" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-16" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-12" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-12" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <ShipmentTable rows={shipmentRows} page={shipmentPage} setPage={setShipmentPage} />
+              )}
             </div>
           </div>
 
@@ -599,7 +546,7 @@ function ShipmentStatus() {
                 <div className="flex items-center gap-2 shrink-0">
                   <IconButton variant="info" contentId="po-detail-report" />
                   <ExportDropdown
-                    headers={poHeaders.map(h => ({ key: h, label: LABEL_MAP[h] || h }))}
+                    headers={PO_DETAIL_COLUMNS}
                     rows={poRows}
                     filename="po-detail-report"
                   />
@@ -607,7 +554,7 @@ function ShipmentStatus() {
               </div>
               <div className="flex items-center gap-2 mt-1">
                 <p className="text-xs text-[#707979]">Detailed line-item view of purchase orders including supplier, funding, and pricing</p>
-                <span className="text-xs font-medium text-[#707979] bg-[#F0F4F6] px-2.5 py-1 rounded-full hidden md:inline">
+                <span className="text-xs font-medium text-[#707979] bg-[#F0F4F6] px-4 py-1.5 rounded-full hidden md:inline">
                   {poRows.length} records
                 </span>
               </div>
@@ -616,8 +563,31 @@ function ShipmentStatus() {
               </span>
             </div>
             <div className="p-6">
-              {poHeaders.length > 0 ? (
-                <PODetailTable headers={poHeaders} rows={poRows} page={poDetailPage} setPage={setPODetailPage} />
+              {poLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <div key={i} className="flex gap-4">
+                      <div className="h-3.5 bg-surface-container-high rounded w-20" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-24" />
+                      <div className="h-3.5 bg-surface-container-high rounded flex-1" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-28" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-20" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-24" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-20" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-24" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-12" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-16" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-20" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-24" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-16" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-24" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-16" />
+                      <div className="h-3.5 bg-surface-container-high rounded w-20" />
+                    </div>
+                  ))}
+                </div>
+              ) : poRows.length > 0 ? (
+                <PODetailTable rows={poRows} poTypes={poTypes} selectedPoType={selectedPoType} onPOTypeChange={setSelectedPoType} page={poDetailPage} setPage={setPODetailPage} />
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <i className="fa-solid fa-table text-3xl text-[#CFD8DC] mb-3" />
@@ -626,8 +596,7 @@ function ShipmentStatus() {
               )}
             </div>
           </div>
-        </>
-      )}
+
     </div>
   );
 }

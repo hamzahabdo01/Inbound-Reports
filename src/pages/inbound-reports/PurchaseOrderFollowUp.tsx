@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { parseCSV, parseQuantity } from '../../utils/csvParser';
-import { purchaseOrderCSVData } from '../../data/purchase-order/purchaseOrderData';
+import { PODRIDRQDPKOID_WebApi } from '../../api/fanos';
 import KPICard from '../../components/KPICard';
 import KpiCarousel from '../../components/KpiCarousel';
 import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
@@ -65,6 +64,7 @@ function StatusBadge({ status }: any) {
 
 function PurchaseOrderFollowUp() {
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [mobilePageSize, setMobilePageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,14 +86,18 @@ function PurchaseOrderFollowUp() {
   const effectiveRowsPerPage = isMobile ? mobilePageSize : ROWS_PER_PAGE;
 
   useEffect(() => {
-    const parsed = parseCSV(purchaseOrderCSVData);
-    const processed = parsed.map(row => ({
-      ...row,
-      POQuantity: parseInt(row.POQuantity, 10) || 0,
-      InvoicedQuantity: parseInt(row.InvoicedQuantity, 10) || 0,
-      RequestedQuantity: parseInt((row.RequestedQuantity || '').replace(/,/g, ''), 10) || 0,
-    }));
-    setData(processed);
+    setLoading(true);
+    PODRIDRQDPKOID_WebApi.getProcurementLifeCycleTrace({
+      CommodityTypeCode: 'PHAR',
+      ModeCode: 'HPR',
+    }).then((res) => {
+      const raw = ((res?.data as any)?.Data || []) as any[];
+      setData(raw);
+      setLoading(false);
+    }).catch(() => {
+      setData([]);
+      setLoading(false);
+    });
   }, []);
 
   // Reset page 1 when filters change
@@ -203,7 +207,19 @@ function PurchaseOrderFollowUp() {
   return (
     <div ref={mainRef}>
       {/* Stats cards */}
-      {isMobile ? (
+      {loading ? (
+        <div className="grid grid-cols-4 gap-4 mb-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-28 rounded-xl bg-white border border-outline-variant shadow-[0px_4px_20px_rgba(10,50,53,0.06)] animate-pulse flex items-end p-4">
+              <div className="space-y-2 w-full">
+                <div className="h-3 bg-surface-container-high rounded w-3/4" />
+                <div className="h-6 bg-surface-container-high rounded w-1/2" />
+                <div className="h-2 bg-surface-container-high rounded w-1/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : isMobile ? (
         <KpiCarousel>
           {kpiCards.map((card, i) => <KPICard key={i} variant="detailed" {...card} />)}
         </KpiCarousel>
@@ -246,6 +262,29 @@ function PurchaseOrderFollowUp() {
       </div>
 
       {/* Table */}
+      {loading ? (
+        <div className="bg-white border border-outline-variant rounded-xl shadow-[0px_4px_20px_rgba(10,50,53,0.06)] animate-pulse mb-md overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant">
+            <div className="space-y-1.5 flex-1">
+              <div className="h-4 bg-surface-container-high rounded w-48" />
+              <div className="h-3 bg-surface-container-high rounded w-32" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-surface-container-high rounded-xl" />
+              <div className="w-10 h-10 bg-surface-container-high rounded-xl" />
+            </div>
+          </div>
+          <div className="px-5 py-4 space-y-3 h-80">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex gap-4">
+                <div className="h-3.5 bg-surface-container-high rounded flex-1" />
+                <div className="h-3.5 bg-surface-container-high rounded w-16" />
+                <div className="h-3.5 bg-surface-container-high rounded w-20" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
       <div className="bg-surface-container-lowest border border-[#D1D5DB] rounded-lg overflow-hidden mb-md">
         <div className={`${isMobile ? 'relative before:absolute before:top-0 before:right-0 before:bottom-0 before:w-8 before:bg-gradient-to-l before:from-surface-container-lowest before:to-transparent before:pointer-events-none before:z-10 after:absolute after:top-0 after:left-0 after:bottom-0 after:w-8 after:bg-gradient-to-r after:from-surface-container-lowest after:to-transparent after:pointer-events-none after:z-10 focus-within:ring-2 focus-within:ring-primary/20 rounded-lg' : ''}`}>
         <div className={`${isMobile ? 'overflow-x-auto scroll-smooth -webkit-overflow-scrolling:touch' : 'overflow-x-auto'}`}>
@@ -302,6 +341,7 @@ function PurchaseOrderFollowUp() {
         </div>
       </div>
       </div>
+      )}
 
       {isMobile ? (
         <div className="flex items-center justify-between gap-3 py-2 px-lg bg-surface border-t border-outline-variant">

@@ -30,7 +30,7 @@ interface BaseTableProps {
   rowsPerPage?: number;
   renderRow?: (row: any, index: number, isExpanded: boolean) => ReactNode;
   expandedRow?: any;
-  rowKey?: string;
+  rowKey?: string | ((row: any, index: number) => any);
   onRowClick?: (id: any) => void;
   renderExpanded?: (row: any) => ReactNode;
   expandedRowClassName?: string;
@@ -148,8 +148,9 @@ function BaseTable({
           </tr>
         ) : renderRow ? (
           displayRows.flatMap((row, i) => {
-            const id = rowKey ? row[rowKey] : i;
-            const key = rowKey ? row[rowKey] : i;
+            const resolvedKey = typeof rowKey === 'function' ? rowKey(row, i) : (rowKey ? row[rowKey] : i);
+            const id = resolvedKey;
+            const key = resolvedKey;
             const isExpanded = expandedRow !== undefined && expandedRow === id;
             const renderedCells = renderRow(row, i, isExpanded);
             let processedCells = renderedCells;
@@ -188,7 +189,7 @@ function BaseTable({
           })
         ) : (
           rows.map((row, index) => {
-            const key = rowKey ? row[rowKey] : index;
+            const key = typeof rowKey === 'function' ? rowKey(row, index) : (rowKey ? row[rowKey] : index);
             const classes = typeof rowClassName === 'function' ? rowClassName(row) : rowClassName || '';
             return (
               <tr key={key} className={`border-b border-surface-container-low transition-colors ${classes}`}

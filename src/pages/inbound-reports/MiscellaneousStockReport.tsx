@@ -432,10 +432,51 @@ function MiscellaneousStockReport() {
       {dataLoading ? (
         <div className="space-y-4">
           <div className="grid grid-cols-5 gap-4">
-            {[...Array(5)].map((_, i) => <div key={i} className="h-28 rounded-xl bg-surface-container-low animate-pulse" />)}
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-28 rounded-xl bg-white border border-outline-variant shadow-[0px_4px_20px_rgba(10,50,53,0.06)] animate-pulse flex items-end p-4">
+                <div className="space-y-2 w-full">
+                  <div className="h-3 bg-surface-container-high rounded w-3/4" />
+                  <div className="h-6 bg-surface-container-high rounded w-1/2" />
+                  <div className="h-2 bg-surface-container-high rounded w-1/3" />
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="h-12 rounded-xl bg-surface-container-low animate-pulse" />
-          <div className="h-96 rounded-xl bg-surface-container-low animate-pulse" />
+          <div className="bg-white border border-outline-variant rounded-xl shadow-[0px_4px_20px_rgba(10,50,53,0.06)] animate-pulse overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant">
+              <div className="h-4 bg-surface-container-high rounded w-72" />
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-surface-container-high rounded-xl" />
+                <div className="w-10 h-10 bg-surface-container-high rounded-xl" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white border border-outline-variant rounded-xl shadow-[0px_4px_20px_rgba(10,50,53,0.06)] animate-pulse overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant">
+              <div className="space-y-1.5 flex-1">
+                <div className="h-4 bg-surface-container-high rounded w-48" />
+                <div className="h-3 bg-surface-container-high rounded w-32" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-surface-container-high rounded-xl" />
+                <div className="w-10 h-10 bg-surface-container-high rounded-xl" />
+              </div>
+            </div>
+            <div className="px-5 py-4 space-y-3 h-80">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="h-3.5 bg-surface-container-high rounded flex-[2]" />
+                  <div className="h-3.5 bg-surface-container-high rounded flex-1" />
+                  <div className="h-3.5 bg-surface-container-high rounded w-16" />
+                  <div className="h-3.5 bg-surface-container-high rounded w-12" />
+                  <div className="h-3.5 bg-surface-container-high rounded w-20" />
+                  <div className="h-3.5 bg-surface-container-high rounded w-16" />
+                  <div className="h-3.5 bg-surface-container-high rounded w-20" />
+                  <div className="h-3.5 bg-surface-container-high rounded w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : dataError ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -1562,9 +1603,36 @@ function MiscellaneousStockReport() {
       {activeTab === 'national-amc' && <>
       {amcLoading ? (
         <div className="space-y-4">
-          <div className="h-8 rounded-xl bg-surface-container-low animate-pulse" />
-          <div className="h-8 rounded-xl bg-surface-container-low animate-pulse" />
-          <div className="h-96 rounded-xl bg-surface-container-low animate-pulse" />
+          <div className="bg-white border border-outline-variant rounded-xl shadow-[0px_4px_20px_rgba(10,50,53,0.06)] animate-pulse overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant">
+              <div className="h-4 bg-surface-container-high rounded w-72" />
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-surface-container-high rounded-xl" />
+                <div className="w-10 h-10 bg-surface-container-high rounded-xl" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white border border-outline-variant rounded-xl shadow-[0px_4px_20px_rgba(10,50,53,0.06)] animate-pulse overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant">
+              <div className="space-y-1.5 flex-1">
+                <div className="h-4 bg-surface-container-high rounded w-48" />
+                <div className="h-3 bg-surface-container-high rounded w-32" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-surface-container-high rounded-xl" />
+                <div className="w-10 h-10 bg-surface-container-high rounded-xl" />
+              </div>
+            </div>
+            <div className="px-5 py-4 space-y-3 h-80">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="h-3.5 bg-surface-container-high rounded flex-1" />
+                  <div className="h-3.5 bg-surface-container-high rounded w-20" />
+                  <div className="h-3.5 bg-surface-container-high rounded w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : amcError ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">

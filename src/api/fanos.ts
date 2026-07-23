@@ -1563,6 +1563,40 @@ export const RRFSSNDPPLN_WebApi = {
   }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
     return fanosClient.get('/api/RRFSSNDPPLN_WebApi/GetItemAMC', { params })
   },
+
+  getShipmentDwellTimeReport(params?: {
+    ProcurerCode?: string
+    ModeCode?: string
+    State?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/RRFSSNDPPLN_WebApi/ShipmentDwellTimeReport', { params })
+  },
+}
+
+// ─── PODRIDRQDPKOID_WebApi ────────────────────────────────────────────────
+
+export const PODRIDRQDPKOID_WebApi = {
+  getCenterInvoiceDistribution(params?: {
+    ProcurerCode?: string
+    ModeCode?: string
+    State?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/PODRIDRQDPKOID_WebApi/CenterInvoiceDistribution', { params })
+  },
+
+  getCenterPODetail(params?: {
+    ProcurerCode?: string
+    ModeCode?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/PODRIDRQDPKOID_WebApi/CenterPODetail', { params })
+  },
+
+  getProcurementLifeCycleTrace(params?: {
+    CommodityTypeCode?: string
+    ModeCode?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/PODRIDRQDPKOID_WebApi/ProcurementLifeCycleTrace', { params })
+  },
 }
 
 // ─── Backward-compatible re-exports for existing code (auth.ts) ────────────
