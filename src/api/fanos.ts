@@ -1547,6 +1547,24 @@ export const OIDRCD_WebApi = {
   },
 }
 
+// ─── RRFSSNDPPLN_WebApi ────────────────────────────────────────────────────
+
+export const RRFSSNDPPLN_WebApi = {
+  getStockStatusWithPipeline(params?: {
+    ModeCode?: string
+    isPlacement?: boolean
+    isLabSupply?: boolean
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/RRFSSNDPPLN_WebApi/StockStatusWithPipelineByMode_SAP', { params })
+  },
+
+  getItemAMC(params?: {
+    ModeCode?: string
+  }): Promise<AxiosResponse<ListResult<Record<string, unknown>>>> {
+    return fanosClient.get('/api/RRFSSNDPPLN_WebApi/GetItemAMC', { params })
+  },
+}
+
 // ─── Backward-compatible re-exports for existing code (auth.ts) ────────────
 
 export async function getEnvironments(): Promise<En_ByEnvironmentCodeModel[]> {

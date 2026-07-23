@@ -9,7 +9,7 @@ import KpiCarousel from '../../components/KpiCarousel';
 import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
 import PieChart from '../../components/PieChart';
 import HBarChart from '../../components/HBarChart';
-import { Table, Td } from './performance-tabs/poShared';
+import Table, { Td } from '../../components/BaseTable';
 import ExportDropdown from '../../components/ExportDropdown';
 
 // ─── CSV Parser ────────────────────────────────────────────────────────────────
@@ -269,7 +269,7 @@ function ShipmentTable({ rows, page, setPage }: any) {
 
       {/* Table */}
       <Table
-        headers={headers}
+        columns={headers}
         rows={filtered}
         page={page}
         setPage={setPage}
@@ -320,7 +320,7 @@ function PODetailTable({ headers, rows, page, setPage }: any) {
 
   return (
     <Table
-      headers={tableHeaders}
+      columns={tableHeaders}
       rows={rows}
       page={page}
       setPage={setPage}

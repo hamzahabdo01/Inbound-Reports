@@ -4,8 +4,9 @@ import KpiCarousel from '../../../components/KpiCarousel';
 import IconButton from '../../../components/IconButton';
 import ExportDropdown from '../../../components/ExportDropdown';
 import LandscapeToggle from '../../../components/LandscapeToggle';
-import { formatPoValue } from './poStatusToStackedShareRows';
-import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
+
+import Table, { Td } from '../../../components/BaseTable';
+import { StatusBadge, SectionPanel, formatAmount } from './poShared';
 
 const PROCUREMENT_STATUS_DATA = [
   { stage: "Not Started / Not Captured", count: 1244, value: 79914528178.64, pct: 51.13, color: "#00373B" },
@@ -21,6 +22,13 @@ const PROCUREMENT_STATUS_DATA = [
   { stage: "Proforma Received",              count: 2,    value: 28079009.79,    pct: 0.08,  color: "#48BB78" },
   { stage: "PO Approval In Progress",        count: 1,    value: 282907.80,      pct: 0.04,  color: "#A0AEC0" }
 ];
+
+const formatPoValue = (value: number): string => {
+  if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
+  if (value >= 1e6) return (value / 1e6).toFixed(1) + 'M';
+  if (value >= 1e3) return (value / 1e3).toFixed(0) + 'K';
+  return value.toLocaleString();
+};
 
 const fmtDuration = (days) => {
   if (days == null || days < 0) return null;
@@ -99,7 +107,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
                   <KPICard variant="detailed" icon="fa-list" iconBg="bg-[#4A8EA5]/10" iconColor="text-[#4A8EA5]" label="Total Open Qty" value={(() => { const v = overdue.reduce((s, p) => s + p.openQty, 0); return v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(1)}K` : v.toLocaleString(); })()} subtitle="units overdue" />
                 </KpiCarousel>
                   <Table page={tp('open-pos')} setPage={sp('open-pos')}
-                    headers={[
+                    columns={[
                       { key: 'poNo', label: 'PO No' },
                       { key: 'item', label: 'Item', className: 'text-center' },
                       { key: 'supplier', label: 'Supplier' },
@@ -157,7 +165,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
               </div>
             }>
             <Table page={tp('open-po-items')} setPage={sp('open-po-items')} rowsPerPage={10}
-              headers={[
+              columns={[
                 { key: 'po', label: 'PO No' },
                 { key: 'item', label: 'Item', className: 'text-center' },
                 { key: 'supplier', label: 'Supplier' },
@@ -214,7 +222,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
               );
             })()}
             <Table page={tp('overdue-pos')} setPage={sp('overdue-pos')} rowsPerPage={10}
-              headers={[
+              columns={[
                 { key: 'po', label: 'PO No' },
                 { key: 'item', label: 'Item', className: 'text-center' },
                 { key: 'supplier', label: 'Supplier' },
@@ -277,7 +285,7 @@ export default function ProcurementBreakdownTab({ data, activeSections, filtered
             <div className="overflow-x-auto" style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' } as any}>
             <div style={{ minWidth: isMobile ? (procStatusLandscape ? '800px' : 'auto') : 'auto', transition: 'min-width 180ms ease' }}>
               <Table page={undefined} setPage={() => {}}
-                headers={[
+                columns={[
                   { key: 'status', label: 'Status' },
                   { key: 'count', label: 'PO Count', className: 'text-right' },
                   { key: 'value', label: 'Value (ETB)', className: 'text-right' },

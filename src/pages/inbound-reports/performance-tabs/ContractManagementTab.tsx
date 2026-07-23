@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import KPICard from '../../../components/KPICard';
 import KpiCarousel from '../../../components/KpiCarousel';
 import IconButton from '../../../components/IconButton';
-import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
+import Table, { Td } from '../../../components/BaseTable';
+import { StatusBadge, SectionPanel, formatAmount } from './poShared';
 import ExportDropdown from '../../../components/ExportDropdown';
 import PieChart from '../../../components/PieChart';
 
@@ -336,7 +337,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
                       }
                     }}
                     rowClassName={isMobile ? '' : 'group hover:bg-primary'} expandedRowClassName="bg-primary"
-                    headers={[
+                    columns={[
                       { key: 'contract', label: 'Contract' },
                       { key: 'supplier', label: 'Supplier' },
                       { key: 'ctAmount', label: 'Contract Amount (ETB)', className: 'text-right' },
@@ -414,7 +415,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
               <KPICard variant="detailed" icon="fa-file-contract" iconBg="bg-primary/10" iconColor="text-primary" label="Over-Consumed" value={data.contractVsPO.filter(c => c.remaining < 0).length.toLocaleString()} subtitle={`${data.contractVsPO.length ? Math.round(data.contractVsPO.filter(c => c.remaining < 0).length / data.contractVsPO.length * 100) : 0}% of contracts`} />
             </KpiCarousel>
             <Table page={tp('contract-po')} setPage={sp('contract-po')}
-              headers={[
+              columns={[
                 { key: 'contract', label: 'Contract' },
                 { key: 'supplier', label: 'Supplier' },
                 { key: 'poCount', label: 'POs', className: 'text-right' },
@@ -534,7 +535,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
                     onRowClick={(id) => setCtrExpanded(ctrExpanded === id ? null : id)}
                     rowClassName="group hover:bg-primary"
                     expandedRowClassName="bg-primary"
-                    headers={[
+                    columns={[
                       { key: 'poNo', label: 'PO No' },
                       { key: 'supplier', label: 'Supplier' },
                       { key: 'amount', label: 'Amount (ETB)', className: 'text-right' },
@@ -787,7 +788,7 @@ export default function ContractManagementTab({ data, activeSections, tp, sp }: 
               );
             })()}
             <Table page={tp('lc-cad')} setPage={sp('lc-cad')}
-              headers={[
+              columns={[
                 { key: 'lcNo', label: 'LC No' },
                 { key: 'supplier', label: 'Supplier' },
                 { key: 'amount', label: 'Amount (ETB)', className: 'text-right' },

@@ -1,7 +1,5 @@
 import { useState, useMemo, Fragment, useEffect, useRef } from 'react';
-import stockData from '../../data/stock-report/NationalStockStatus.json';
-import { parseCSV } from '../../utils/csvParser';
-import { nationalAMCCSVData } from '../../data/stock-report/nationalAMCData';
+import { RRFSSNDPPLN_WebApi } from '../../api/fanos';
 import AutoScrollKPIRow from '../../components/AutoScrollKPIRow';
 import SearchInput from '../../components/SearchInput';
 import SimplePagination from '../../components/SimplePagination';
@@ -81,6 +79,61 @@ function MiscellaneousStockReport() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
+  // Stock data from API
+  const [stockData, setStockData] = useState<any[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState<string | null>(null);
+
+  const mapApiRecord = (r: any) => {
+    const parseExpiry = (raw: string) =>
+      (raw || '').split(',').map(s => s.trim()).filter(Boolean).map(s => {
+        const m = s.match(/^(.+?)\s*\(([\d.]+)\)/);
+        return m ? { date: m[1].trim(), quantity: parseFloat(m[2]) } : null;
+      }).filter(Boolean);
+    const hubMap: Record<string, string> = {
+      HomeOffice: 'center', CenterToHubGIT: 'git', Adama: 'adama', AddisAbaba: 'addis_ababa',
+      AddisAbaba2: 'addis_ababa_2', ArbaMinch: 'arba_minch', Assosa: 'assosa', BahirDar: 'bahir_dar',
+      Dessie: 'dessie', DireDawa: 'dire_dawa', Gambella: 'gambella', Gondar: 'gondar',
+      Hawassa: 'hawassa', Jigjiga: 'jigjiga', Jimma: 'jimma', KebriDehar: 'kebri_dehar',
+      Mekele: 'mekele', NegeleBorena: 'negele_borena', Nekemte: 'nekemte', Semera: 'semera', Shire: 'shire',
+    };
+    const hubs: any = {};
+    for (const [apiKey, localKey] of Object.entries(hubMap)) {
+      hubs[localKey] = r[apiKey] ?? 0;
+    }
+    return {
+      sn: r.ItemSN,
+      item: r.Item,
+      unit: r.Unit,
+      ven: r.VEN,
+      national: {
+        soh: r.NationalSOH ?? 0,
+        dos: r.NationalDOS ?? 0,
+        amc: r.NationalAMC ?? 0,
+        adjusted_amc: r.MOHNationalAMC ?? 0,
+        mos: r.NationalMOS ?? 0,
+        adjusted_mos: r.MOHNationalMOS ?? 0,
+      },
+      contract: { quantity: r.ContractQuantity ?? 0, mos: r.ContractMOS ?? 0 },
+      ordered: { po: r.OrderPONumbers || '', quantity: r.OrderedQuantity ?? 0, mos: r.OrderedMOS ?? 0 },
+      shipped: { po: r.ShippedPONumbers || '', quantity: r.ShippedQuantity ?? 0, mos: r.ShippedMOS ?? 0 },
+      delivered: { po: r.DeliveredPONumbers || '', quantity: r.DeliveredQuantity ?? 0, mos: r.DeliveredMOS ?? 0 },
+      quantity_left: { quantity: r.QuantityLeft ?? 0, mos: r.QuantityLeftMOS ?? 0 },
+      expiry_raw: r.ExpiryDates || '',
+      expiry_list: parseExpiry(r.ExpiryDates),
+      hubs,
+    };
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    setDataLoading(true);
+    RRFSSNDPPLN_WebApi.getStockStatusWithPipeline({ ModeCode: 'RDF', isPlacement: false, isLabSupply: false })
+      .then((res) => { if (!cancelled) { setStockData(((res?.data as any)?.Data || []).map(mapApiRecord)); setDataLoading(false); } })
+      .catch((err) => { if (!cancelled) { setDataError(err?.message || 'Failed to load'); setDataLoading(false); } });
+    return () => { cancelled = true; };
+  }, []);
+
   // Search query
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -132,20 +185,34 @@ function MiscellaneousStockReport() {
   const [dismissedHints, setDismissedHints] = useState<Record<string, boolean>>({});
 
   // National AMC tab state
-  const [amcData, setAmcData] = useState([]);
+  const [amcData, setAmcData] = useState<any[]>([]);
+  const [amcLoading, setAmcLoading] = useState(true);
+  const [amcError, setAmcError] = useState<string | null>(null);
   const [amcSearchQuery, setAmcSearchQuery] = useState('');
   const [amcPage, setAmcPage] = useState(1);
-  const [amcEditing, setAmcEditing] = useState({}); // { rowIndex: true }
-  const [amcDirtyValues, setAmcDirtyValues] = useState({}); // { rowIndex: 'newValue' }
+  const [amcEditing, setAmcEditing] = useState<Record<number, boolean>>({});
+  const [amcDirtyValues, setAmcDirtyValues] = useState<Record<number, string>>({});
   const [amcMobilePageSize, setAmcMobilePageSize] = useState(10);
   const amcRowsPerPage = isMobile ? amcMobilePageSize : 20;
 
   useEffect(() => {
-    const parsed = parseCSV(nationalAMCCSVData);
-    setAmcData(parsed.map(row => ({
-      ...row,
-      NationalAMC: row.NationalAMC || '0'
-    })));
+    let cancelled = false;
+    setAmcLoading(true);
+    RRFSSNDPPLN_WebApi.getItemAMC({ ModeCode: 'RDF' })
+      .then((res) => {
+        if (!cancelled) {
+          const raw = ((res?.data as any)?.Data || []) as any[];
+          setAmcData(raw.map((r: any) => ({ ...r, NationalAMC: r.NationalAMC ?? '0' })));
+          setAmcLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setAmcError(err?.message || 'Failed to load AMC data');
+          setAmcLoading(false);
+        }
+      });
+    return () => { cancelled = true; };
   }, []);
 
   const filteredAmcData = useMemo(() => {
@@ -187,7 +254,7 @@ function MiscellaneousStockReport() {
       adequate,
       overstocked
     };
-  }, []);
+  }, [stockData]);
 
   // Filtered dataset
   const filteredData = useMemo(() => {
@@ -208,7 +275,7 @@ function MiscellaneousStockReport() {
 
       return matchesSearch && matchesVen && matchesStatus;
     });
-  }, [searchQuery, venFilter, statusFilter]);
+  }, [stockData, searchQuery, venFilter, statusFilter]);
 
   // Paginated data
   const paginatedData = useMemo(() => {
@@ -221,7 +288,7 @@ function MiscellaneousStockReport() {
   // Derive the currently expanded item for the mobile bottom-sheet
   const expandedItem = useMemo(
     () => expandedRow != null ? stockData.find((i: any) => i.sn === expandedRow) ?? null : null,
-    [expandedRow]
+    [expandedRow, stockData]
   );
 
   const handlePageChange = (page) => {
@@ -362,6 +429,22 @@ function MiscellaneousStockReport() {
       </StickyHeader>
 
       {activeTab === 'stock-report' && <>
+      {dataLoading ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-5 gap-4">
+            {[...Array(5)].map((_, i) => <div key={i} className="h-28 rounded-xl bg-surface-container-low animate-pulse" />)}
+          </div>
+          <div className="h-12 rounded-xl bg-surface-container-low animate-pulse" />
+          <div className="h-96 rounded-xl bg-surface-container-low animate-pulse" />
+        </div>
+      ) : dataError ? (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <i className="fa-solid fa-triangle-exclamation text-3xl text-error mb-3" />
+          <p className="text-body-sm text-on-surface-variant mb-2">Failed to load stock data</p>
+          <p className="text-xs text-on-surface-variant/60">{dataError}</p>
+        </div>
+      ) : (
+      <>
       {/* KPI Cards Grid */}
       <AutoScrollKPIRow cards={kpiCardProps} />
 
@@ -1102,7 +1185,7 @@ function MiscellaneousStockReport() {
                                     <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-sm">Hub Distribution</h4>
                                     
                                     {(() => {
-                                      const hubList = Object.entries(item.hubs)
+                                      const hubList = Object.entries(item.hubs as Record<string, any>)
                                         .filter(([key]) => key !== 'center' && key !== 'git')
                                         .map(([key, val]) => ({
                                           name: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
@@ -1472,9 +1555,24 @@ function MiscellaneousStockReport() {
         );
       })()}
 
-      </>}
+            </>
+          )}
+        </>}
 
       {activeTab === 'national-amc' && <>
+      {amcLoading ? (
+        <div className="space-y-4">
+          <div className="h-8 rounded-xl bg-surface-container-low animate-pulse" />
+          <div className="h-8 rounded-xl bg-surface-container-low animate-pulse" />
+          <div className="h-96 rounded-xl bg-surface-container-low animate-pulse" />
+        </div>
+      ) : amcError ? (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <i className="fa-solid fa-triangle-exclamation text-3xl text-error mb-3" />
+          <p className="text-body-sm text-on-surface-variant mb-2">Failed to load AMC data</p>
+          <p className="text-xs text-on-surface-variant/60">{amcError}</p>
+        </div>
+      ) : (
       <div className="space-y-lg animate-fade-in">
         {/* AMC Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-md">
@@ -1515,7 +1613,6 @@ function MiscellaneousStockReport() {
               <table className={`text-left border-collapse ${isMobile && !amcLandscape ? 'whitespace-nowrap' : 'w-full'}`}>
               <thead>
                 <tr className="bg-surface-container border-b border-outline-variant text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">
-                  <th className="px-4 py-3 w-16 text-center">#</th>
                   <th className="px-4 py-3 w-20 text-center">SN</th>
                   <th className={`px-4 py-3 min-w-[300px] ${isMobile && !amcLandscape ? 'sticky left-0 z-20 bg-surface-container-low shadow-[2px_0_4px_rgba(0,0,0,0.06)] min-w-[150px]' : ''}`}>Item Name</th>
                   <th className="px-4 py-3 w-24">Unit</th>
@@ -1530,9 +1627,6 @@ function MiscellaneousStockReport() {
                     const isEditing = amcEditing[globalIdx] === true;
                     return (
                       <tr key={globalIdx} className="hover:bg-surface-container-low transition-colors">
-                        <td className="px-4 py-3 text-center text-xs text-on-surface-variant font-mono">
-                          {row.RowNumber}
-                        </td>
                         <td className="px-4 py-3 text-center font-mono text-xs text-on-surface-variant">
                           {row.ItemSN}
                         </td>
@@ -1621,7 +1715,7 @@ function MiscellaneousStockReport() {
                     );
                   })
                 ) : (
-                  <EmptyState colSpan={6} message="No items found matching the search query." icon="fa-box-open" />
+                  <EmptyState colSpan={5} message="No items found matching the search query." icon="fa-box-open" />
                 )}
               </tbody>
             </table>
@@ -1690,6 +1784,7 @@ function MiscellaneousStockReport() {
           )}
         </div>
       </div>
+      )}
       </>}
     </div>
   );

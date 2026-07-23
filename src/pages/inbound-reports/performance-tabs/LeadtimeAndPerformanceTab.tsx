@@ -5,7 +5,8 @@ import KPICard from '../../../components/KPICard';
 import IconButton from '../../../components/IconButton';
 import MilestoneRingStepper from '../../../components/MilestoneRingStepper';
 import { LEADTIME_MILESTONE_STEPS } from '../../../utils/leadtimeMilestones';
-import { Table, Td, StatusBadge, SectionPanel, formatAmount } from './poShared';
+import Table, { Td } from '../../../components/BaseTable';
+import { StatusBadge, SectionPanel, formatAmount } from './poShared';
 import ExportDropdown from '../../../components/ExportDropdown';
 import LandscapeToggle from '../../../components/LandscapeToggle';
 
@@ -94,7 +95,7 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
               );
             })()}
             <Table page={tp('leadtime')} setPage={sp('leadtime')}
-              headers={[
+              columns={[
                 { key: 'poNo', label: 'PO No' },
                 { key: 'supplier', label: 'Supplier' },
                 { key: 'ctPO', label: 'C→PO', className: 'text-right' },
@@ -158,7 +159,7 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                 >
 <div style={{ minWidth: isMobile ? (supplierPerfLandscape ? '1200px' : 'auto') : 'auto', transition: 'min-width 180ms ease' }}>
                      <Table page={tp('supplier-perf')} setPage={sp('supplier-perf')}
-                  headers={[
+                  columns={[
                     { key: 'supplier', label: 'Supplier', className: 'truncate' },
                     { key: 'country', label: 'Country', className: 'text-center' },
                     { key: 'pos', label: 'POs', className: 'text-right' },
@@ -222,7 +223,7 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                 >
 <div style={{ minWidth: isMobile ? (supplierRiskLandscape ? '1200px' : 'auto') : 'auto', transition: 'min-width 180ms ease' }}>
                      <Table page={tp('supplier-risk')} setPage={sp('supplier-risk')}
-                  headers={[
+                  columns={[
                     { key: 'supplier', label: 'Supplier', className: 'truncate' },
                     { key: 'country', label: 'Country', className: `text-center ${supplierRiskLandscape ? '' : 'hidden md:table-cell'}` },
                     { key: 'poItems', label: 'PO Items', className: `text-right ${supplierRiskLandscape ? '' : 'hidden md:table-cell'}` },
@@ -319,7 +320,7 @@ export default function LeadtimeAndPerformanceTab({ data, activeSections, tp, sp
                     </select>
                   </div>
                   <Table page={tp('bond')} setPage={sp('bond')}
-                    headers={[
+                    columns={[
                       { key: 'bondNo', label: 'Bond No' },
                       { key: 'supplier', label: 'Supplier' },
                       { key: 'amount', label: 'Amount (ETB)', className: 'text-right' },
